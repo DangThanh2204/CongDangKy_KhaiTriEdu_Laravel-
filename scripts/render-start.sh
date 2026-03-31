@@ -34,4 +34,4 @@ php artisan db:seed --class=Database\\Seeders\\RenderDemoSeeder --force
 php artisan storage:link || true
 php artisan view:cache || true
 
-apache2-foreground
+exec apache2-foreground
