@@ -9,9 +9,19 @@ if [ -n "${RENDER_EXTERNAL_URL:-}" ]; then
   export VNPAY_IPN_URL="${VNPAY_IPN_URL:-$RENDER_EXTERNAL_URL/payments/vnpay/ipn}"
 fi
 
-if [ -z "${APP_KEY:-}" ]; then
+if ! php -r '
+$key = getenv("APP_KEY") ?: "";
+if ($key === "") {
+    exit(1);
+}
+if (str_starts_with($key, "base64:")) {
+    $decoded = base64_decode(substr($key, 7), true);
+    exit(is_string($decoded) && strlen($decoded) === 32 ? 0 : 1);
+}
+exit(strlen($key) === 32 ? 0 : 1);
+'; then
   export APP_KEY="base64:$(php -r 'echo base64_encode(random_bytes(32));')"
-  echo "APP_KEY was missing, generated a temporary key for this container."
+  echo "APP_KEY was missing or invalid, generated a valid Laravel key for this container."
 fi
 
 if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
