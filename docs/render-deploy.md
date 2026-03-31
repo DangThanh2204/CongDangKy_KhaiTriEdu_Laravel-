@@ -1,74 +1,94 @@
 # Deploy Render Free
 
-Project `khai-tri-edu` đã được chuẩn bị sẵn để demo trên Render free bằng `Docker + SQLite`.
+Project `khai-tri-edu` đã được chuẩn bị sẵn để demo trên Render bằng `Docker` và hỗ trợ 2 chế độ dữ liệu:
 
-## Cách dùng nhanh
+- `SQLite fallback` cho demo nhanh, ít lỗi
+- `MySQL/MariaDB public` để gần giống môi trường local hơn
 
-1. Đẩy source code của thư mục `khai-tri-edu` lên GitHub.
-2. Trên Render chọn `New +` -> `Blueprint`.
-3. Chọn repo chứa project, Render sẽ đọc file `render.yaml`.
-4. Deploy lần đầu để Render tạo web service.
-5. Sau khi service lên, cấu hình các biến môi trường trong mục `Environment` nếu muốn bật đủ tính năng.
+## Chế độ khuyến nghị nếu muốn giống local
 
-## Dữ liệu demo mặc định
+Dùng `MySQL/MariaDB public` và để Render kết nối bằng các biến môi trường:
 
-Seeder `Database\Seeders\RenderDemoSeeder` sẽ tạo:
+- `DB_CONNECTION=mysql`
+- `DB_HOST=...`
+- `DB_PORT=3306`
+- `DB_DATABASE=...`
+- `DB_USERNAME=...`
+- `DB_PASSWORD=...`
 
-- 1 admin
-- 1 giảng viên
-- 3 học viên
-- 3 khóa học mẫu gồm online và offline
+## Import schema/data từ dump local
+
+Repo hiện có file dump:
+
+- `khaitriedu.sql`
+
+File này có cả schema và dữ liệu, nên có thể dùng để khởi tạo public database gần giống local hơn.
+
+### Muốn Render tự import dump khi DB đang trống
+
+Thêm trên Render `Environment`:
+
+- `DB_CONNECTION=mysql`
+- `DB_HOST=...`
+- `DB_PORT=3306`
+- `DB_DATABASE=...`
+- `DB_USERNAME=...`
+- `DB_PASSWORD=...`
+- `RENDER_IMPORT_SQL_DUMP=true`
+- `RENDER_SQL_DUMP_PATH=/var/www/html/khaitriedu.sql`
+
+Khi database chưa có bảng nào, start script sẽ tự import file dump này.
+
+## Muốn luôn có dữ liệu mẫu/demo
+
+Nếu ngoài dump local bạn vẫn muốn thêm bộ dữ liệu demo ổn định cho màn trình diễn, bật:
+
+- `RENDER_SEED_DEMO=true`
+
+Seeder `Database\Seeders\RenderDemoSeeder` sẽ bổ sung / cập nhật:
+
+- admin demo
+- giảng viên demo
+- học viên demo
+- khóa học demo online/offline
 - module, nội dung học, đợt học
 - đăng ký học mẫu
 - thanh toán mẫu
-- ví và yêu cầu nạp trực tiếp mẫu
+- ví và nạp trực tiếp mẫu
 - tin tức mẫu
 
-## Tài khoản demo
+## Trường hợp không có public MySQL ngay
 
-- Admin: `admin@khaitri.edu.vn` / `Demo@123`
-- Giảng viên: `giangvien@khaitri.edu.vn` / `Demo@123`
-- Học viên 1: `hocvien1@khaitri.edu.vn` / `Demo@123`
-- Học viên 2: `hocvien2@khaitri.edu.vn` / `Demo@123`
-- Học viên 3: `hocvien3@khaitri.edu.vn` / `Demo@123`
+Nếu chưa có MySQL/MariaDB public, bạn có thể để Render fallback về SQLite bằng:
 
-## Lưu ý quan trọng
+- `RENDER_FALLBACK_SQLITE=true`
 
-- Render free sẽ sleep khi không có truy cập.
-- SQLite trên Render free là dữ liệu tạm thời. Khi redeploy hoặc restart, dữ liệu có thể reset.
-- Start script sẽ tự chạy migrate baseline và seed demo data để link demo luôn có dữ liệu.
+Khi không set `DB_CONNECTION`, start script sẽ tự dùng:
 
-## Biến môi trường nên cấu hình để đủ chức năng
+- `sqlite`
+- file: `/tmp/render.sqlite`
 
-### Bắt buộc cho social login
+## Các biến môi trường khác nên có nếu muốn bật đủ chức năng
+
+### Social login
 
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `FACEBOOK_CLIENT_ID`
 - `FACEBOOK_CLIENT_SECRET`
 
-### Tùy chọn cho redirect URI social login
-
-Nếu không nhập 2 biến này, hệ thống sẽ tự dùng `APP_URL` hoặc `RENDER_EXTERNAL_URL`:
+Tùy chọn:
 
 - `GOOGLE_REDIRECT_URI`
 - `FACEBOOK_REDIRECT_URI`
 
-Ví dụ nếu domain Render là `https://khai-tri-edu.onrender.com` thì callback là:
+Nếu không nhập 2 biến redirect này, hệ thống sẽ tự fallback theo `APP_URL` hoặc `RENDER_EXTERNAL_URL`.
 
-- `https://khai-tri-edu.onrender.com/auth/google/callback`
-- `https://khai-tri-edu.onrender.com/auth/facebook/callback`
-
-### Bật trợ lý ảo Gemini
+### Gemini assistant
 
 - `GEMINI_API_KEY`
 
-Có thể giữ mặc định:
-
-- `GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta`
-- `GEMINI_ASSISTANT_MODEL=gemini-2.5-flash-lite`
-
-### Bật gửi mail thật
+### Mail
 
 - `MAIL_MAILER`
 - `MAIL_SCHEME`
@@ -79,45 +99,24 @@ Có thể giữ mặc định:
 - `MAIL_FROM_ADDRESS`
 - `MAIL_FROM_NAME`
 
-### Bật VNPay
+### VNPay
 
 - `VNPAY_TMN_CODE`
 - `VNPAY_HASH_SECRET`
+- `VNPAY_RETURN_URL`
+- `VNPAY_IPN_URL`
 
-Nếu không nhập thì có thể để start script tự gán theo domain Render, hoặc nhập rõ:
+## Tài khoản demo của RenderDemoSeeder
 
-- `VNPAY_RETURN_URL=https://khai-tri-edu.onrender.com/payments/vnpay/return`
-- `VNPAY_IPN_URL=https://khai-tri-edu.onrender.com/payments/vnpay/ipn`
+- Admin: `admin@khaitri.edu.vn` / `Demo@123`
+- Giảng viên: `giangvien@khaitri.edu.vn` / `Demo@123`
+- Học viên 1: `hocvien1@khaitri.edu.vn` / `Demo@123`
+- Học viên 2: `hocvien2@khaitri.edu.vn` / `Demo@123`
+- Học viên 3: `hocvien3@khaitri.edu.vn` / `Demo@123`
 
-### Tính năng blockchain / FireFly
+## Lưu ý
 
-Nếu bạn muốn demo phần này thì thêm:
-
-- `FIREFLY_URL`
-- `FIREFLY_API_KEY`
-- `FIREFLY_NAMESPACE`
-- `FIREFLY_TOKEN_POOL`
-- `FIREFLY_SIGNER`
-
-## Sau khi cập nhật Environment
-
-Sau mỗi lần sửa biến môi trường trên Render:
-
-1. `Save changes`
-2. `Manual Deploy` -> `Deploy latest commit`
-
-## Thiết lập Developer Console cho OAuth
-
-### Google
-
-Authorized redirect URI:
-
-- `https://khai-tri-edu.onrender.com/auth/google/callback`
-
-### Facebook
-
-Valid OAuth Redirect URI:
-
-- `https://khai-tri-edu.onrender.com/auth/facebook/callback`
-
-Khi domain Render thay đổi, nhớ cập nhật lại redirect URI tương ứng.
+- Render free vẫn sleep khi không có truy cập.
+- Nếu dùng MySQL/MariaDB public, dữ liệu sẽ bền hơn SQLite fallback rất nhiều.
+- Nếu `RENDER_IMPORT_SQL_DUMP=true`, dump chỉ tự import khi database đang trống.
+- Nếu đã import dump local rồi mà vẫn bật `RENDER_SEED_DEMO=true`, seeder demo sẽ bổ sung / cập nhật thêm dữ liệu demo chứ không thay toàn bộ DB.

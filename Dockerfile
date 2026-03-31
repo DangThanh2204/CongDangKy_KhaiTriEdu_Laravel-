@@ -14,6 +14,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+        default-mysql-client \
         git \
         unzip \
         libicu-dev \

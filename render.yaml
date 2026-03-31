@@ -12,9 +12,17 @@ services:
       - key: APP_DEBUG
         value: false
       - key: DB_CONNECTION
-        value: sqlite
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
       - key: DB_DATABASE
-        value: /tmp/render.sqlite
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
       - key: SESSION_DRIVER
         value: file
       - key: CACHE_STORE
@@ -27,6 +35,16 @@ services:
         value: info
       - key: FILESYSTEM_DISK
         value: public
+      - key: RENDER_FALLBACK_SQLITE
+        value: true
+      - key: RENDER_SQLITE_PATH
+        value: /tmp/render.sqlite
+      - key: RENDER_IMPORT_SQL_DUMP
+        value: false
+      - key: RENDER_SQL_DUMP_PATH
+        value: /var/www/html/khaitriedu.sql
+      - key: RENDER_SEED_DEMO
+        value: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
