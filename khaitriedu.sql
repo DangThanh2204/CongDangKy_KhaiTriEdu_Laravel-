@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 20, 2026 at 07:51 AM
+-- Generation Time: Apr 01, 2026 at 01:36 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,85 @@ SET time_zone = "+00:00";
 --
 -- Database: `khaitriedu`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `assistant_conversations`
+--
+
+CREATE TABLE `assistant_conversations` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `session_id` varchar(120) NOT NULL,
+  `started_at` timestamp NULL DEFAULT NULL,
+  `last_message_at` timestamp NULL DEFAULT NULL,
+  `meta` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`meta`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `assistant_conversations`
+--
+
+INSERT INTO `assistant_conversations` (`id`, `user_id`, `session_id`, `started_at`, `last_message_at`, `meta`, `created_at`, `updated_at`) VALUES
+(1, 1, 'I2leaoS5DutaujgebjjkOfCF7KzGbfPICWsS6sqC', '2026-03-24 22:18:47', '2026-03-24 23:26:57', NULL, '2026-03-24 22:18:47', '2026-03-24 23:26:57'),
+(2, NULL, 'hRB29lIhUqnD2AYHgHOnkFwHVLVlM8DiTcdpwptX', '2026-03-25 00:02:56', '2026-03-25 00:02:57', NULL, '2026-03-25 00:02:56', '2026-03-25 00:02:57'),
+(3, 1, '6If01aqK5jr8Pfz8FyUuEkadZKfhH1WHaSg4V0Sg', '2026-03-26 07:19:39', '2026-03-26 14:16:49', NULL, '2026-03-26 07:19:39', '2026-03-26 14:16:49'),
+(4, 5, 'JASXCaDFhVkncle7SK43NucrpQmtFS4N2VIlRUNv', '2026-03-26 14:37:39', '2026-03-26 14:38:22', NULL, '2026-03-26 14:37:39', '2026-03-26 14:38:22'),
+(5, 1, 'zRIiFKk2Esn2qUqjtRYDJzbk85csr3cl47TXF8XQ', '2026-03-30 07:52:55', '2026-03-30 07:52:57', NULL, '2026-03-30 07:52:55', '2026-03-30 07:52:57');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `assistant_messages`
+--
+
+CREATE TABLE `assistant_messages` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `assistant_conversation_id` bigint(20) UNSIGNED NOT NULL,
+  `role` varchar(20) NOT NULL,
+  `message` text NOT NULL,
+  `recommended_courses` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`recommended_courses`)),
+  `meta` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`meta`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `assistant_messages`
+--
+
+INSERT INTO `assistant_messages` (`id`, `assistant_conversation_id`, `role`, `message`, `recommended_courses`, `meta`, `created_at`, `updated_at`) VALUES
+(1, 1, 'user', 'Tôi muốn đăng ký học', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-24 22:18:47', '2026-03-24 22:18:47'),
+(2, 1, 'assistant', 'Tro ly AI tam thoi gap loi ket noi, nen minh dang goi y nhanh theo du lieu san co tren website.\n\nBan co the tham khao:\n1. Lập trình java (Lập trình, 2.000 VND)\n2. Lập trình C# (Lập trình, 10.000 VND)\n\nBan co the noi ro hon ban muon hoc mon gi, muc tieu la di lam, thi chung chi hay hoc co ban de minh goi y dung hon.', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":100,\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"phu hop voi nhu cau hien tai\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":100,\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"phu hop voi nhu cau hien tai\"}]', '{\"source\":\"fallback_local\",\"status\":429}', '2026-03-24 22:18:49', '2026-03-24 22:18:49'),
+(3, 1, 'user', 'Hé lô', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-24 22:38:30', '2026-03-24 22:38:30'),
+(4, 1, 'assistant', 'Trợ lý AI tạm thời gặp lỗi kết nối, nên mình đang gợi ý nhanh theo dữ liệu sẵn có trên website.\n\nBạn có thể tham khảo:\n1. Lập trình java (Lập trình, 2.000 VND)\n2. Lập trình C# (Lập trình, 10.000 VND)\n\nBạn có thể nói rõ hơn bạn muốn học môn gì, mục tiêu là đi làm, thi chứng chỉ hay học cơ bản để mình gợi ý đúng hơn.', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":100,\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":100,\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"}]', '{\"source\":\"fallback_local\",\"status\":429}', '2026-03-24 22:38:31', '2026-03-24 22:38:31'),
+(5, 1, 'user', 'hé lô', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-24 22:46:43', '2026-03-24 22:46:43'),
+(6, 1, 'assistant', 'Chào bạn, Khai Tri Edu rất vui được hỗ trợ bạn!\n\nBạn có thể tham khảo các khóa học Lập trình hiện có:\n*   Lập trình Java (offline, 2.000 VND, trình độ intermediate)\n*   Lập trình C# (online, 10.000 VND, trình độ beginner)\n\nBạn quan tâm đến khóa học nào hay có mục tiêu học tập cụ thể không ạ?', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":100,\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":100,\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"}]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-24 22:46:45', '2026-03-24 22:46:45'),
+(7, 1, 'user', 'Bạn có thể hướng dẫn tui đăng nhập được không', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-24 22:47:07', '2026-03-24 22:47:07'),
+(8, 1, 'assistant', 'Chào bạn, rất tiếc Khai Tri Edu chưa có thông tin về chức năng đăng nhập trên website.\n\nĐể được hỗ trợ tốt nhất, bạn vui lòng liên hệ trực tiếp bộ phận tư vấn của Khai Tri Edu nhé.', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":100,\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":100,\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"}]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-24 22:47:08', '2026-03-24 22:47:08'),
+(9, 1, 'user', 'Hiện tại bạn hướng dẫn tui đăng ký tài khoản được không', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-24 23:26:55', '2026-03-24 23:26:55'),
+(10, 1, 'assistant', 'Chào bạn, Khai Tri Edu rất tiếc chưa có thông tin hướng dẫn đăng ký tài khoản trên website.\n\nĐể được hỗ trợ nhanh nhất, bạn vui lòng liên hệ trực tiếp bộ phận tư vấn của Khai Tri Edu nhé.', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":100,\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":100,\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"}]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-24 23:26:57', '2026-03-24 23:26:57'),
+(11, 2, 'user', 'Tôi muốn biết học phí', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-25 00:02:56', '2026-03-25 00:02:56'),
+(12, 2, 'assistant', 'Chào bạn, Khai Tri Edu có các khóa học Lập trình Java và Lập trình C# với các mức học phí khác nhau.\n\n*   **Lập trình Java:** 2.000 VND\n*   **Lập trình C#:** 10.000 VND\n\nBạn quan tâm đến khóa học nào ạ?', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":100,\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":100,\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"}]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-25 00:02:57', '2026-03-25 00:02:57'),
+(13, 3, 'user', 'hé lô', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-26 07:19:39', '2026-03-26 07:19:39'),
+(14, 3, 'assistant', 'Chào bạn, Khai Tri Edu có các khóa học Lập trình. Bạn quan tâm đến khóa học nào ạ?\n\nHiện tại, mình có thông tin về:\n*   **Lập trình Java:** Học offline, giá 2.000 VND, trình độ intermediate.\n*   **Lập trình C#:** Học online, giá 10.000 VND, trình độ beginner.', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":100,\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":100,\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"}]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-26 07:19:41', '2026-03-26 07:19:41'),
+(15, 3, 'user', 'đụ má', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-26 07:19:53', '2026-03-26 07:19:53'),
+(16, 3, 'assistant', 'Xin lỗi, mình không hiểu câu hỏi của bạn. Bạn có thể nói rõ hơn được không?', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":100,\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":100,\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"}]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-26 07:19:54', '2026-03-26 07:19:54'),
+(17, 3, 'user', 'hướng dẫn đăng ký tài khoản', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-26 07:21:04', '2026-03-26 07:21:04'),
+(18, 3, 'assistant', 'Chào bạn, Khai Tri Edu là nền tảng học tập trực tuyến. Hiện tại, mình chưa có thông tin về cách đăng ký tài khoản trên trang web.\n\nBạn vui lòng liên hệ bộ phận tư vấn để được hỗ trợ tốt nhất nhé.', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":100,\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":100,\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"}]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-26 07:21:10', '2026-03-26 07:21:10'),
+(19, 3, 'user', 'hướng dẫn đăng ký tài khoản đi', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang Ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-26 14:16:48', '2026-03-26 14:16:48'),
+(20, 3, 'assistant', 'Chào bạn, Khai Tri Edu là nền tảng học tập trực tuyến. Hiện tại, mình chưa có thông tin về cách đăng ký tài khoản trên trang web.\n\nBạn vui lòng liên hệ bộ phận tư vấn để được hỗ trợ tốt nhất nhé.', '[]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-26 14:16:49', '2026-03-26 14:16:49'),
+(21, 4, 'user', 'tôi nạp tiền thêm vào ví saon', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/profile\\/edit\",\"page_title\":\"Ch\\u1ec9nh s\\u1eeda th\\u00f4ng tin c\\u00e1 nh\\u00e2n - Khai Tri Edu\"}', '2026-03-26 14:37:39', '2026-03-26 14:37:39'),
+(22, 4, 'assistant', 'Chào bạn, để nạp tiền vào ví, bạn vui lòng thực hiện các bước sau:\n1. Truy cập vào mục \"Ví\" trên trang web.\n2. Chọn tùy chọn \"Nạp tiền\".\n3. Làm theo hướng dẫn để hoàn tất giao dịch.\n\nNếu gặp khó khăn, bạn có thể liên hệ bộ phận hỗ trợ để được giúp đỡ nhé.', '[]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-26 14:37:40', '2026-03-26 14:37:40'),
+(23, 4, 'user', 'trung tâm học ở đâu vậy', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/profile\\/edit\",\"page_title\":\"Ch\\u1ec9nh s\\u1eeda th\\u00f4ng tin c\\u00e1 nh\\u00e2n - Khai Tri Edu\"}', '2026-03-26 14:37:59', '2026-03-26 14:37:59'),
+(24, 4, 'assistant', 'Chào bạn, Khai Tri Edu là nền tảng học tập trực tuyến nên chúng mình không có địa điểm học tập cố định ạ.', '[]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-26 14:38:00', '2026-03-26 14:38:00'),
+(25, 4, 'user', 'tui mua khóa học xong hủy thì có được hoàn tiền không', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/profile\\/edit\",\"page_title\":\"Ch\\u1ec9nh s\\u1eeda th\\u00f4ng tin c\\u00e1 nh\\u00e2n - Khai Tri Edu\"}', '2026-03-26 14:38:21', '2026-03-26 14:38:21'),
+(26, 4, 'assistant', 'Chào bạn, về chính sách hoàn tiền khi hủy khóa học, bạn vui lòng liên hệ bộ phận hỗ trợ của Khai Tri Edu để được tư vấn chi tiết nhé.', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":\"1 gi\\u1edd 40 ph\\u00fat\",\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":\"1 gi\\u1edd 40 ph\\u00fat\",\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00f9 h\\u1ee3p v\\u1edbi nhu c\\u1ea7u hi\\u1ec7n t\\u1ea1i\"}]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-26 14:38:22', '2026-03-26 14:38:22'),
+(27, 5, 'user', 'Tôi muốn tư vấn khóa học', NULL, '{\"current_url\":\"http:\\/\\/localhost:8000\\/\",\"page_title\":\"Trang ch\\u1ee7 - Khai Tri Edu\"}', '2026-03-30 07:52:55', '2026-03-30 07:52:55'),
+(28, 5, 'assistant', 'Chào bạn, bạn quan tâm đến lĩnh vực lập trình phải không ạ?', '[{\"id\":2,\"title\":\"L\\u1eadp tr\\u00ecnh java\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"offline\",\"level\":\"intermediate\",\"duration\":\"1 gi\\u1edd 40 ph\\u00fat\",\"price_label\":\"2.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/2\",\"reason\":\"ph\\u00c3\\u00b9 h\\u00e1\\u00bb\\u00a3p v\\u00e1\\u00bb\\u203ai nhu c\\u00e1\\u00ba\\u00a7u hi\\u00e1\\u00bb\\u2021n t\\u00e1\\u00ba\\u00a1i\"},{\"id\":1,\"title\":\"L\\u1eadp tr\\u00ecnh C#\",\"category\":\"L\\u1eadp tr\\u00ecnh\",\"learning_type\":\"online\",\"level\":\"beginner\",\"duration\":\"1 gi\\u1edd 40 ph\\u00fat\",\"price_label\":\"10.000 VND\",\"url\":\"http:\\/\\/localhost:8000\\/courses\\/1\",\"reason\":\"ph\\u00c3\\u00b9 h\\u00e1\\u00bb\\u00a3p v\\u00e1\\u00bb\\u203ai nhu c\\u00e1\\u00ba\\u00a7u hi\\u00e1\\u00bb\\u2021n t\\u00e1\\u00ba\\u00a1i\"}]', '{\"source\":\"gemini\",\"status\":null}', '2026-03-30 07:52:57', '2026-03-30 07:52:57');
 
 -- --------------------------------------------------------
 
@@ -67,6 +146,57 @@ CREATE TABLE `classes` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `classes`
+--
+
+INSERT INTO `classes` (`id`, `name`, `course_id`, `instructor_id`, `start_date`, `end_date`, `schedule`, `meeting_info`, `max_students`, `price_override`, `status`, `created_at`, `updated_at`) VALUES
+(6, 'Fashion men', 2, 3, '2026-03-31', '2026-04-10', NULL, NULL, 10, NULL, 'active', '2026-03-22 13:22:39', '2026-03-22 13:22:39'),
+(7, 'Lập trình C# 01', 2, 3, '2026-04-08', '2026-04-15', NULL, NULL, 50, NULL, 'active', '2026-03-22 13:51:19', '2026-03-22 13:56:31'),
+(8, 'Lập trình C#', 1, 3, '2026-03-26', '2031-03-26', NULL, NULL, 0, NULL, 'active', '2026-03-26 14:02:49', '2026-03-26 14:02:49');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `class_change_logs`
+--
+
+CREATE TABLE `class_change_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `old_class_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `new_class_id` bigint(20) UNSIGNED NOT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `class_schedules`
+--
+
+CREATE TABLE `class_schedules` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `class_id` bigint(20) UNSIGNED NOT NULL,
+  `weekday` varchar(5) NOT NULL COMMENT '2..7 or CN',
+  `start_time` time DEFAULT NULL,
+  `end_time` time DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `class_schedules`
+--
+
+INSERT INTO `class_schedules` (`id`, `class_id`, `weekday`, `start_time`, `end_time`, `created_at`, `updated_at`) VALUES
+(2, 6, '2', '18:00:00', '20:00:00', '2026-03-22 13:38:42', '2026-03-22 13:38:42'),
+(5, 7, '2', '07:30:00', '09:30:00', '2026-03-22 13:56:31', '2026-03-22 13:56:31'),
+(6, 7, '2', '17:30:00', '19:30:00', '2026-03-22 13:56:31', '2026-03-22 13:56:31');
+
 -- --------------------------------------------------------
 
 --
@@ -106,6 +236,14 @@ CREATE TABLE `courses` (
   `series_key` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `courses`
+--
+
+INSERT INTO `courses` (`id`, `title`, `slug`, `description`, `short_description`, `price`, `sale_price`, `thumbnail`, `banner_image`, `level`, `duration`, `lessons_count`, `students_count`, `rating`, `total_rating`, `category_id`, `status`, `learning_type`, `announcement`, `has_default_quiz`, `default_quiz_data`, `is_featured`, `is_popular`, `meta`, `created_at`, `updated_at`, `deleted_at`, `video_url`, `pdf_path`, `series_key`) VALUES
+(1, 'Lập trình C#', 'lap-trinh-c', 'cucwcw', 'scscasc', 10000.00, NULL, 'courses/thumbnails/ifRYzz6XJEFCSLsWq4TEtNhakLF7K57m4IDmxhb1.png', 'courses/banners/XmGAs77vwoiTIxF9MaLYJ51TeuRrbKLi8c8lRJoq.png', 'beginner', 100, 0, 0, 0.0, 0, 1, 'published', 'online', 'fefefef', 0, NULL, 0, 0, NULL, '2026-03-20 00:30:09', '2026-03-26 14:13:06', NULL, NULL, NULL, NULL),
+(2, 'Lập trình java', 'lap-trinh-java', '2d32f23f2fwfdwdwqd', 'aocjao', 10000.00, 2000.00, 'courses/thumbnails/tfTyJYc5sauaVR50Cn6Q4o3m66TXnfsfGyDEkMgA.png', 'courses/banners/LXDdna0cJlLfHY3QGSmxHDpLFUdCOBCmERukhwK1.png', 'intermediate', 100, 0, 1, 0.0, 0, 1, 'published', 'offline', 'đwdqwdq', 0, NULL, 0, 0, NULL, '2026-03-20 19:25:28', '2026-03-26 16:42:42', NULL, NULL, NULL, NULL);
+
 -- --------------------------------------------------------
 
 --
@@ -126,6 +264,31 @@ CREATE TABLE `course_categories` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `course_categories`
+--
+
+INSERT INTO `course_categories` (`id`, `name`, `slug`, `description`, `parent_id`, `icon`, `color`, `order`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Lập trình', 'lap-trinh', 'Lập trình web', NULL, 'fas fa-yoga', '#2c5aa0', 0, 1, '2026-03-20 00:20:57', '2026-03-20 00:20:57');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_certificates`
+--
+
+CREATE TABLE `course_certificates` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `course_id` bigint(20) UNSIGNED NOT NULL,
+  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `certificate_no` varchar(255) NOT NULL,
+  `issued_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `meta` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`meta`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- --------------------------------------------------------
 
 --
@@ -136,12 +299,23 @@ CREATE TABLE `course_enrollments` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `class_id` bigint(20) UNSIGNED NOT NULL,
-  `status` enum('pending','approved','rejected','completed') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','approved','rejected','cancelled','completed') NOT NULL DEFAULT 'pending',
   `enrolled_at` timestamp NULL DEFAULT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
+  `rejected_at` timestamp NULL DEFAULT NULL,
+  `cancelled_at` timestamp NULL DEFAULT NULL,
+  `notes` text DEFAULT NULL,
   `completed_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `course_enrollments`
+--
+
+INSERT INTO `course_enrollments` (`id`, `user_id`, `class_id`, `status`, `enrolled_at`, `approved_at`, `rejected_at`, `cancelled_at`, `notes`, `completed_at`, `created_at`, `updated_at`) VALUES
+(12, 5, 7, 'approved', '2026-03-26 16:42:42', '2026-03-26 16:42:42', NULL, NULL, NULL, NULL, '2026-03-26 16:42:24', '2026-03-26 16:42:42');
 
 -- --------------------------------------------------------
 
@@ -152,11 +326,74 @@ CREATE TABLE `course_enrollments` (
 CREATE TABLE `course_materials` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `course_id` bigint(20) UNSIGNED NOT NULL,
-  `type` enum('video','pdf','assignment','quiz') NOT NULL DEFAULT 'video',
+  `course_module_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `type` enum('video','pdf','assignment','quiz','meeting') NOT NULL DEFAULT 'video',
   `title` varchar(255) DEFAULT NULL,
   `content` text DEFAULT NULL,
   `file_path` varchar(255) DEFAULT NULL,
   `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
+  `estimated_duration_minutes` int(10) UNSIGNED DEFAULT NULL,
+  `order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_material_progress`
+--
+
+CREATE TABLE `course_material_progress` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
+  `course_material_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `progress_percent` tinyint(3) UNSIGNED NOT NULL DEFAULT 0,
+  `started_at` timestamp NULL DEFAULT NULL,
+  `last_viewed_at` timestamp NULL DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `best_quiz_score` decimal(5,2) DEFAULT NULL,
+  `quiz_attempts_count` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `passed_at` timestamp NULL DEFAULT NULL,
+  `meta` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`meta`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_material_quiz_attempts`
+--
+
+CREATE TABLE `course_material_quiz_attempts` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `enrollment_id` bigint(20) UNSIGNED NOT NULL,
+  `course_material_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `attempt_number` int(10) UNSIGNED NOT NULL DEFAULT 1,
+  `total_questions` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `correct_answers` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `score_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `is_passed` tinyint(1) NOT NULL DEFAULT 0,
+  `answers_summary` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`answers_summary`)),
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `course_modules`
+--
+
+CREATE TABLE `course_modules` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `course_id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
   `order` smallint(5) UNSIGNED NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -264,7 +501,22 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (20, '2026_03_16_133623_create_quiz_attempts_table', 1),
 (21, '2026_03_16_133633_create_quiz_answers_table', 1),
 (22, '2026_03_16_133641_create_course_videos_table', 1),
-(23, '2026_03_16_164740_create_cache_table', 1);
+(23, '2026_03_16_164740_create_cache_table', 1),
+(24, '2026_03_21_000001_create_class_change_logs_table', 2),
+(25, '2026_03_21_000002_create_class_schedules_table', 2),
+(26, '2026_03_21_000003_change_payments_method_to_string', 3),
+(27, '2026_03_21_120000_create_system_logs_table', 4),
+(28, '2026_03_25_120000_create_course_material_progress_table', 5),
+(29, '2026_03_25_120100_create_course_material_quiz_attempts_table', 5),
+(30, '2026_03_25_120200_create_course_certificates_table', 5),
+(31, '2026_03_25_150000_create_assistant_conversations_table', 5),
+(32, '2026_03_25_150100_create_assistant_messages_table', 5),
+(33, '2026_03_26_090000_create_course_modules_table', 6),
+(34, '2026_03_26_090100_add_course_module_id_to_course_materials_table', 6),
+(35, '2026_03_27_100000_add_estimated_duration_minutes_to_course_materials_table', 7),
+(36, '2026_03_27_120000_add_enrollment_workflow_fields_to_course_enrollments_table', 7),
+(37, '2026_03_28_090000_add_meeting_type_to_course_materials_table', 8),
+(38, '2026_03_28_140000_add_expiration_to_wallet_transactions_table', 8);
 
 -- --------------------------------------------------------
 
@@ -277,7 +529,7 @@ CREATE TABLE `payments` (
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `class_id` bigint(20) UNSIGNED NOT NULL,
   `amount` decimal(12,2) NOT NULL,
-  `method` enum('wallet','bank_transfer','qr') NOT NULL DEFAULT 'wallet',
+  `method` varchar(50) DEFAULT NULL,
   `status` enum('pending','completed','failed') NOT NULL DEFAULT 'pending',
   `paid_at` timestamp NULL DEFAULT NULL,
   `notes` text DEFAULT NULL,
@@ -444,6 +696,65 @@ CREATE TABLE `settings` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `settings`
+--
+
+INSERT INTO `settings` (`id`, `key`, `value`, `created_at`, `updated_at`) VALUES
+(1, 'site_logo', 'logos/mjaZXiQxENmSxToFyuuz6cHVG6svtycF1KT1BsBR.png', '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(2, 'site_favicon', 'favicons/uGeJbrQlYAVzACkha5MOZG68m14GgSkffo4f17wu.png', '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(3, 'site_name', 'Khai Trí Edu', '2026-03-22 16:21:34', '2026-03-30 22:57:53'),
+(4, 'site_tagline', 'Nền tảng của Thành đẹp trai', '2026-03-22 16:21:34', '2026-03-30 22:57:53'),
+(5, 'contact_email', NULL, '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(6, 'contact_phone', NULL, '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(7, 'contact_address', NULL, '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(8, 'facebook_url', NULL, '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(9, 'twitter_url', NULL, '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(10, 'instagram_url', NULL, '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(11, 'footer_text', NULL, '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(12, 'ai_assistant_prompt', NULL, '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(13, 'class_change_deadline_days', '0', '2026-03-22 16:21:34', '2026-03-22 16:21:34'),
+(14, 'allow_class_change', '0', '2026-03-22 16:21:34', '2026-03-22 16:21:34');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `system_logs`
+--
+
+CREATE TABLE `system_logs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `category` varchar(50) NOT NULL,
+  `action` varchar(100) NOT NULL,
+  `details` text DEFAULT NULL,
+  `reference` varchar(255) DEFAULT NULL,
+  `ip` varchar(45) DEFAULT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `system_logs`
+--
+
+INSERT INTO `system_logs` (`id`, `user_id`, `category`, `action`, `details`, `reference`, `ip`, `user_agent`, `created_at`, `updated_at`) VALUES
+(1, 4, 'transaction', 'topup_requested', '{\"amount\":1000000,\"method\":\"direct\",\"tx_id\":22}', 'DEP69BEC11F72659', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-03-21 09:02:39', '2026-03-21 09:02:39'),
+(2, 2, 'transaction', 'refund_issued', '{\"purchase_id\":17,\"refund_tx_id\":24,\"amount\":\"2000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-03-22 09:43:18', '2026-03-22 09:43:18'),
+(3, 2, 'transaction', 'topup_requested', '{\"amount\":1000000,\"method\":\"direct\",\"tx_id\":25}', 'DEP69C029C0051AF', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-03-22 10:41:20', '2026-03-22 10:41:20'),
+(4, 1, 'transaction', 'topup_confirmed', '{\"wallet_tx_id\":25,\"amount\":\"1000000.00\",\"reference\":\"DEP69C029C0051AF\",\"method\":\"direct\",\"confirmed_by\":1}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-03-22 10:50:27', '2026-03-22 10:50:27'),
+(5, 4, 'security', 'login_success', '{\"user_id\":4}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-03-22 10:53:02', '2026-03-22 10:53:02'),
+(6, 4, 'transaction', 'topup_requested', '{\"amount\":100000,\"method\":\"direct\",\"tx_id\":26}', 'DEP69C02C8A9E172', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-03-22 10:53:14', '2026-03-22 10:53:14'),
+(7, 5, 'security', 'login_success', '{\"user_id\":5}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-03-26 14:10:41', '2026-03-26 14:10:41'),
+(8, 5, 'transaction', 'topup_requested', '{\"amount\":10000,\"method\":\"direct\",\"tx_id\":27}', 'DEP69C5A0DFE8622', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-03-26 14:10:55', '2026-03-26 14:10:55'),
+(9, 1, 'transaction', 'topup_confirmed', '{\"wallet_tx_id\":27,\"amount\":\"10000.00\",\"reference\":\"DEP69C5A0DFE8622\",\"method\":\"direct\",\"confirmed_by\":1}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-03-26 14:11:14', '2026-03-26 14:11:14'),
+(10, 5, 'transaction', 'refund_issued', '{\"purchase_id\":28,\"refund_tx_id\":29,\"amount\":\"2000.00\"}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-03-26 14:12:25', '2026-03-26 14:12:25'),
+(11, 5, 'transaction', 'topup_requested', '{\"amount\":10000,\"method\":\"direct\",\"tx_id\":31}', 'DEP69C5C3CE16B9B', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-03-26 16:39:58', '2026-03-26 16:39:58'),
+(12, 1, 'transaction', 'topup_confirmed', '{\"wallet_tx_id\":31,\"amount\":\"10000.00\",\"reference\":\"DEP69C5C3CE16B9B\",\"method\":\"direct\",\"confirmed_by\":1}', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', '2026-03-26 16:40:11', '2026-03-26 16:40:11'),
+(13, 2, 'transaction', 'topup_requested', '{\"amount\":100000,\"method\":\"qr\",\"tx_id\":35}', '10f8a536-c260-4c38-87a3-da7a557059c9', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-03-30 23:58:21', '2026-03-30 23:58:21'),
+(14, 2, 'transaction', 'topup_requested', '{\"amount\":10000,\"method\":\"qr\",\"tx_id\":36}', 'a4f0a440-68eb-4057-875e-863a8cabec62', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0', '2026-03-31 00:26:13', '2026-03-31 00:26:13');
+
 -- --------------------------------------------------------
 
 --
@@ -476,7 +787,11 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `username`, `fullname`, `email`, `google_id`, `facebook_id`, `provider`, `provider_id`, `password`, `avatar`, `otp`, `role`, `is_verified`, `rating`, `total_rating`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'Đặnghoàngthành', 'Đặng Hoàng Thành', 'dhthanh2004@gmail.com', '112375129696642063235', NULL, 'google', '112375129696642063235', NULL, 'avatars/oauth_112375129696642063235.jpg', NULL, 'admin', 1, 0.0, 0, 'oR4RwZlvZELcNBZk2cu7bQzDIudXOeOwmPrV7PB8F3sv5HSso5JgakfHjqBS', '2026-03-19 23:48:20', '2026-03-19 23:48:20');
+(1, 'Đặnghoàngthành', 'Đặng Hoàng Thành', 'dhthanh2004@gmail.com', '112375129696642063235', NULL, 'google', '112375129696642063235', NULL, 'avatars/oauth_112375129696642063235.jpg', NULL, 'admin', 1, 0.0, 0, NULL, '2026-03-20 00:20:04', '2026-03-27 20:14:55'),
+(2, 'hoàngthành', 'Hoàng Thành', 'hoangthanh2004pubg@gmail.com', NULL, '968984065708084', 'facebook', '968984065708084', NULL, 'avatars/oauth_968984065708084.jpg', NULL, 'student', 1, 0.0, 0, NULL, '2026-03-20 18:12:33', '2026-03-30 23:23:49'),
+(3, 'giangvien1', 'Nguyễn Văn A', 'dhthanh20041@gmail.com', NULL, NULL, NULL, NULL, '$2y$12$P5VGMS1q8lMId9i2GmzBUOmPwE0YS0w8ekoGN.JPb8ePEbwY8rff.', NULL, NULL, 'instructor', 1, 0.0, 0, NULL, '2026-03-20 18:37:39', '2026-03-20 18:37:39'),
+(4, 'student1', 'Nguyễn Văn A', 'thanh_dth225765@student.agu.edu.vn', NULL, NULL, NULL, NULL, '$2y$12$SBrEyXFd3Nucx3D1Bhlnm.A5ElAEdB4biRNzQ2/f2Td8ttMiYOYTS', NULL, NULL, 'student', 1, 0.0, 0, NULL, '2026-03-21 09:01:53', '2026-03-21 09:02:24'),
+(5, 'student2', 'Nguyễn Văn A', 'genshincloneryo1@gmail.com', NULL, NULL, NULL, NULL, '$2y$12$QeaugDDG8H9j3HzUam5H1ukgyoYZBJOuRf1wOW4qlFeHukDOLRVw.', NULL, NULL, 'student', 1, 0.0, 0, NULL, '2026-03-26 07:00:12', '2026-03-26 07:00:43');
 
 -- --------------------------------------------------------
 
@@ -493,6 +808,16 @@ CREATE TABLE `wallets` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `wallets`
+--
+
+INSERT INTO `wallets` (`id`, `user_id`, `balance`, `firefly_identity`, `created_at`, `updated_at`) VALUES
+(1, 2, 12596000.00, 'user:2', '2026-03-20 18:25:02', '2026-03-30 23:58:30'),
+(2, 1, 0.00, 'user:1', '2026-03-20 20:30:02', '2026-03-20 20:30:02'),
+(3, 4, 0.00, 'user:4', '2026-03-21 09:02:28', '2026-03-21 09:02:28'),
+(4, 5, 4000.00, 'user:5', '2026-03-26 07:00:48', '2026-03-26 16:42:24');
+
 -- --------------------------------------------------------
 
 --
@@ -505,16 +830,76 @@ CREATE TABLE `wallet_transactions` (
   `course_id` bigint(20) UNSIGNED DEFAULT NULL,
   `type` enum('deposit','purchase','refund') NOT NULL DEFAULT 'deposit',
   `amount` decimal(14,2) NOT NULL,
-  `status` enum('pending','completed','failed') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','completed','failed','expired') NOT NULL DEFAULT 'pending',
   `reference` varchar(255) DEFAULT NULL,
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `expired_at` timestamp NULL DEFAULT NULL,
   `metadata` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`metadata`)),
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
+-- Dumping data for table `wallet_transactions`
+--
+
+INSERT INTO `wallet_transactions` (`id`, `wallet_id`, `course_id`, `type`, `amount`, `status`, `reference`, `expires_at`, `expired_at`, `metadata`, `created_at`, `updated_at`) VALUES
+(1, 1, NULL, 'deposit', 10000000.00, 'completed', NULL, '2026-03-22 18:38:59', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 18:38:59', '2026-03-20 18:38:59'),
+(2, 1, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":3,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 18:39:07', '2026-03-20 18:39:07'),
+(3, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":4,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 19:27:33', '2026-03-20 19:27:33'),
+(4, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":5,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 19:36:04', '2026-03-20 19:36:04'),
+(5, 1, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":3,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:30:19', '2026-03-20 20:30:19'),
+(6, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":3,\"course_id\":2,\"class_id\":4,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 20:30:28', '2026-03-20 20:30:28'),
+(7, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":4,\"course_id\":2,\"class_id\":5,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 20:30:36', '2026-03-20 20:30:36'),
+(8, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":4,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:30:49', '2026-03-20 20:30:49'),
+(9, 1, NULL, 'deposit', 500000.00, 'completed', NULL, '2026-03-22 20:49:26', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:49:26', '2026-03-20 20:49:26'),
+(10, 1, NULL, 'deposit', 1000.00, 'completed', NULL, '2026-03-22 20:49:39', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:49:39', '2026-03-20 20:49:39'),
+(11, 1, NULL, 'deposit', 10000.00, 'completed', NULL, '2026-03-22 20:50:01', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:50:01', '2026-03-20 20:50:01'),
+(12, 1, NULL, 'deposit', 1000000.00, 'completed', NULL, '2026-03-22 20:51:22', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:51:22', '2026-03-20 20:51:22'),
+(13, 1, NULL, 'deposit', 1000.00, 'completed', 'DEP69BE168AD0415', '2026-03-22 20:54:50', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:54:50', '2026-03-20 20:55:05'),
+(14, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":8,\"course_id\":2,\"class_id\":4,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 21:02:15', '2026-03-20 21:02:15'),
+(15, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":4,\"course_id\":2,\"class_id\":5,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 21:02:30', '2026-03-20 21:02:30'),
+(16, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":8,\"course_id\":2,\"class_id\":4,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 21:26:15', '2026-03-20 21:26:15'),
+(17, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":4,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 21:26:24', '2026-03-20 21:26:24'),
+(18, 1, NULL, 'deposit', 10000.00, 'expired', 'DEP69BE1DF96DD6E', '2026-03-22 21:26:33', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 21:26:33', '2026-03-20 21:26:33'),
+(19, 1, NULL, 'deposit', 10000.00, 'completed', 'DEP69BE1EC1A4853', '2026-03-22 21:29:53', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 21:29:53', '2026-03-20 21:30:02'),
+(20, 1, NULL, 'deposit', 10000.00, 'expired', 'DEP69BE21C703037', '2026-03-22 21:42:47', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 21:42:47', '2026-03-20 21:42:47'),
+(21, 1, NULL, 'deposit', 100000.00, 'expired', 'DEP69BE221D8B246', '2026-03-22 21:44:13', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 21:44:13', '2026-03-20 21:44:13'),
+(22, 3, NULL, 'deposit', 1000000.00, 'expired', 'DEP69BEC11F72659', '2026-03-23 09:02:39', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":4}', '2026-03-21 09:02:39', '2026-03-21 09:02:39'),
+(23, 1, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":3,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-22 09:42:55', '2026-03-22 09:42:56'),
+(24, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":17,\"course_id\":2,\"class_id\":4,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-22 09:43:18', '2026-03-22 09:43:18'),
+(25, 1, NULL, 'deposit', 1000000.00, 'completed', 'DEP69C029C0051AF', '2026-03-24 10:41:20', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"confirmed_by\":1,\"confirmed_at\":\"2026-03-22 17:50:27\"}', '2026-03-22 10:41:20', '2026-03-22 10:50:27'),
+(26, 3, NULL, 'deposit', 100000.00, 'expired', 'DEP69C02C8A9E172', '2026-03-24 10:53:14', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":4}', '2026-03-22 10:53:14', '2026-03-22 10:53:14'),
+(27, 4, NULL, 'deposit', 10000.00, 'completed', 'DEP69C5A0DFE8622', '2026-03-28 14:10:55', NULL, '{\"method\":\"direct\",\"requested_by\":5,\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.topup_confirmed_by_admin\"},\"confirmed_by\":1,\"confirmed_at\":\"2026-03-26 21:11:14\",\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"}}', '2026-03-26 14:10:55', '2026-03-26 14:11:14'),
+(28, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":7,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 14:11:37', '2026-03-26 14:11:37'),
+(29, 4, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":28,\"course_id\":2,\"class_id\":7,\"reason\":\"refund_on_unenroll_before_start\",\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.refund_issued\"}}', '2026-03-26 14:12:25', '2026-03-26 14:12:25'),
+(30, 4, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":8,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 14:12:49', '2026-03-26 14:12:49'),
+(31, 4, NULL, 'deposit', 10000.00, 'completed', 'DEP69C5C3CE16B9B', '2026-03-28 16:39:58', NULL, '{\"method\":\"direct\",\"requested_by\":5,\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.topup_confirmed_by_admin\"},\"confirmed_by\":1,\"confirmed_at\":\"2026-03-26 23:40:11\",\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"}}', '2026-03-26 16:39:58', '2026-03-26 16:40:11'),
+(32, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":6,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 16:40:21', '2026-03-26 16:40:21'),
+(33, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":7,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 16:41:12', '2026-03-26 16:41:12'),
+(34, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":7,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 16:42:24', '2026-03-26 16:42:24'),
+(35, 1, NULL, 'deposit', 100000.00, 'completed', '10f8a536-c260-4c38-87a3-da7a557059c9', NULL, NULL, '{\"method\":\"qr\",\"requested_by\":2,\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.topup_confirmed\"},\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"}}', '2026-03-30 23:58:21', '2026-03-30 23:58:30'),
+(36, 1, NULL, 'deposit', 10000.00, 'pending', 'a4f0a440-68eb-4057-875e-863a8cabec62', NULL, NULL, '{\"method\":\"qr\",\"requested_by\":2,\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.topup_requested\"}}', '2026-03-31 00:26:13', '2026-03-31 00:26:13');
+
+--
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `assistant_conversations`
+--
+ALTER TABLE `assistant_conversations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `assistant_conversations_user_id_session_id_index` (`user_id`,`session_id`),
+  ADD KEY `assistant_conversations_session_id_index` (`session_id`),
+  ADD KEY `assistant_conversations_last_message_at_index` (`last_message_at`);
+
+--
+-- Indexes for table `assistant_messages`
+--
+ALTER TABLE `assistant_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `assistant_messages_assistant_conversation_id_created_at_index` (`assistant_conversation_id`,`created_at`);
 
 --
 -- Indexes for table `cache`
@@ -537,6 +922,21 @@ ALTER TABLE `classes`
   ADD KEY `classes_instructor_id_foreign` (`instructor_id`);
 
 --
+-- Indexes for table `class_change_logs`
+--
+ALTER TABLE `class_change_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `class_change_logs_enrollment_id_foreign` (`enrollment_id`),
+  ADD KEY `class_change_logs_user_id_foreign` (`user_id`);
+
+--
+-- Indexes for table `class_schedules`
+--
+ALTER TABLE `class_schedules`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `class_schedules_class_id_index` (`class_id`);
+
+--
 -- Indexes for table `courses`
 --
 ALTER TABLE `courses`
@@ -554,6 +954,16 @@ ALTER TABLE `course_categories`
   ADD KEY `course_categories_parent_id_foreign` (`parent_id`);
 
 --
+-- Indexes for table `course_certificates`
+--
+ALTER TABLE `course_certificates`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `course_certificates_course_id_enrollment_id_unique` (`course_id`,`enrollment_id`),
+  ADD UNIQUE KEY `course_certificates_certificate_no_unique` (`certificate_no`),
+  ADD KEY `course_certificates_enrollment_id_foreign` (`enrollment_id`),
+  ADD KEY `course_certificates_user_id_foreign` (`user_id`);
+
+--
 -- Indexes for table `course_enrollments`
 --
 ALTER TABLE `course_enrollments`
@@ -566,7 +976,33 @@ ALTER TABLE `course_enrollments`
 --
 ALTER TABLE `course_materials`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `course_materials_course_id_foreign` (`course_id`);
+  ADD KEY `course_materials_course_id_foreign` (`course_id`),
+  ADD KEY `course_materials_course_module_id_foreign` (`course_module_id`);
+
+--
+-- Indexes for table `course_material_progress`
+--
+ALTER TABLE `course_material_progress`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `course_material_progress_enrollment_id_course_material_id_unique` (`enrollment_id`,`course_material_id`),
+  ADD KEY `course_material_progress_course_material_id_foreign` (`course_material_id`),
+  ADD KEY `course_material_progress_user_id_completed_at_index` (`user_id`,`completed_at`);
+
+--
+-- Indexes for table `course_material_quiz_attempts`
+--
+ALTER TABLE `course_material_quiz_attempts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `course_material_quiz_attempts_enrollment_id_foreign` (`enrollment_id`),
+  ADD KEY `course_material_quiz_attempts_user_id_foreign` (`user_id`),
+  ADD KEY `course_material_quiz_attempts_course_material_id_user_id_index` (`course_material_id`,`user_id`);
+
+--
+-- Indexes for table `course_modules`
+--
+ALTER TABLE `course_modules`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `course_modules_course_id_order_index` (`course_id`,`order`);
 
 --
 -- Indexes for table `course_reviews`
@@ -678,6 +1114,17 @@ ALTER TABLE `settings`
   ADD UNIQUE KEY `settings_key_unique` (`key`);
 
 --
+-- Indexes for table `system_logs`
+--
+ALTER TABLE `system_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `system_logs_category_action_index` (`category`,`action`),
+  ADD KEY `system_logs_user_id_index` (`user_id`),
+  ADD KEY `system_logs_category_index` (`category`),
+  ADD KEY `system_logs_action_index` (`action`),
+  ADD KEY `system_logs_reference_index` (`reference`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -710,33 +1157,81 @@ ALTER TABLE `wallet_transactions`
 --
 
 --
+-- AUTO_INCREMENT for table `assistant_conversations`
+--
+ALTER TABLE `assistant_conversations`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `assistant_messages`
+--
+ALTER TABLE `assistant_messages`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+--
 -- AUTO_INCREMENT for table `classes`
 --
 ALTER TABLE `classes`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `class_change_logs`
+--
+ALTER TABLE `class_change_logs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `class_schedules`
+--
+ALTER TABLE `class_schedules`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `courses`
 --
 ALTER TABLE `courses`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `course_categories`
 --
 ALTER TABLE `course_categories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `course_certificates`
+--
+ALTER TABLE `course_certificates`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `course_enrollments`
 --
 ALTER TABLE `course_enrollments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `course_materials`
 --
 ALTER TABLE `course_materials`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_material_progress`
+--
+ALTER TABLE `course_material_progress`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_material_quiz_attempts`
+--
+ALTER TABLE `course_material_quiz_attempts`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `course_modules`
+--
+ALTER TABLE `course_modules`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
@@ -761,13 +1256,13 @@ ALTER TABLE `course_videos`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `payments`
 --
 ALTER TABLE `payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `posts`
@@ -809,29 +1304,47 @@ ALTER TABLE `quiz_questions`
 -- AUTO_INCREMENT for table `settings`
 --
 ALTER TABLE `settings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `system_logs`
+--
+ALTER TABLE `system_logs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `wallets`
 --
 ALTER TABLE `wallets`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `wallet_transactions`
 --
 ALTER TABLE `wallet_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `assistant_conversations`
+--
+ALTER TABLE `assistant_conversations`
+  ADD CONSTRAINT `assistant_conversations_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `assistant_messages`
+--
+ALTER TABLE `assistant_messages`
+  ADD CONSTRAINT `assistant_messages_assistant_conversation_id_foreign` FOREIGN KEY (`assistant_conversation_id`) REFERENCES `assistant_conversations` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `classes`
@@ -839,6 +1352,19 @@ ALTER TABLE `wallet_transactions`
 ALTER TABLE `classes`
   ADD CONSTRAINT `classes_course_id_foreign` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `classes_instructor_id_foreign` FOREIGN KEY (`instructor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `class_change_logs`
+--
+ALTER TABLE `class_change_logs`
+  ADD CONSTRAINT `class_change_logs_enrollment_id_foreign` FOREIGN KEY (`enrollment_id`) REFERENCES `course_enrollments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `class_change_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `class_schedules`
+--
+ALTER TABLE `class_schedules`
+  ADD CONSTRAINT `class_schedules_class_id_foreign` FOREIGN KEY (`class_id`) REFERENCES `classes` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `courses`
@@ -853,6 +1379,14 @@ ALTER TABLE `course_categories`
   ADD CONSTRAINT `course_categories_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `course_categories` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `course_certificates`
+--
+ALTER TABLE `course_certificates`
+  ADD CONSTRAINT `course_certificates_course_id_foreign` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_certificates_enrollment_id_foreign` FOREIGN KEY (`enrollment_id`) REFERENCES `course_enrollments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_certificates_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `course_enrollments`
 --
 ALTER TABLE `course_enrollments`
@@ -863,7 +1397,30 @@ ALTER TABLE `course_enrollments`
 -- Constraints for table `course_materials`
 --
 ALTER TABLE `course_materials`
-  ADD CONSTRAINT `course_materials_course_id_foreign` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `course_materials_course_id_foreign` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_materials_course_module_id_foreign` FOREIGN KEY (`course_module_id`) REFERENCES `course_modules` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `course_material_progress`
+--
+ALTER TABLE `course_material_progress`
+  ADD CONSTRAINT `course_material_progress_course_material_id_foreign` FOREIGN KEY (`course_material_id`) REFERENCES `course_materials` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_material_progress_enrollment_id_foreign` FOREIGN KEY (`enrollment_id`) REFERENCES `course_enrollments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_material_progress_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_material_quiz_attempts`
+--
+ALTER TABLE `course_material_quiz_attempts`
+  ADD CONSTRAINT `course_material_quiz_attempts_course_material_id_foreign` FOREIGN KEY (`course_material_id`) REFERENCES `course_materials` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_material_quiz_attempts_enrollment_id_foreign` FOREIGN KEY (`enrollment_id`) REFERENCES `course_enrollments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `course_material_quiz_attempts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `course_modules`
+--
+ALTER TABLE `course_modules`
+  ADD CONSTRAINT `course_modules_course_id_foreign` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `course_reviews`

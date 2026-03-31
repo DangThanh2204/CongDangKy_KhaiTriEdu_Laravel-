@@ -82,15 +82,23 @@ if [ "$DB_DRIVER" = "mysql" ] || [ "$DB_DRIVER" = "mariadb" ]; then
     sleep 2
   done
 
+  if [ "${RENDER_RESET_DATABASE:-false}" = "true" ]; then
+    echo "Resetting MySQL/MariaDB database before bootstrap..."
+    php artisan db:wipe --force
+  fi
+
   table_count="$(mysql_table_count || echo 0)"
 
   if [ "$table_count" = "0" ]; then
     if [ "${RENDER_IMPORT_SQL_DUMP:-false}" = "true" ] && [ -f "${RENDER_SQL_DUMP_PATH:-/var/www/html/khaitriedu.sql}" ]; then
       echo "Importing SQL dump into public MySQL/MariaDB database..."
       mysql_exec "$DB_DATABASE" < "${RENDER_SQL_DUMP_PATH:-/var/www/html/khaitriedu.sql}"
+    elif [ -f "${RENDER_SCHEMA_DUMP_PATH:-/var/www/html/database/schema/mysql-schema.sql}" ]; then
+      echo "Importing MySQL schema dump into public MySQL/MariaDB database..."
+      mysql_exec "$DB_DATABASE" < "${RENDER_SCHEMA_DUMP_PATH:-/var/www/html/database/schema/mysql-schema.sql}"
     else
-      echo "Database is empty. Running archived Laravel baseline migrations..."
-      php artisan migrate --path=database/migrations_archive/2026-03-28_mysql_baseline --realpath --force
+      echo "Database is empty but no SQL bootstrap source was found."
+      exit 1
     fi
   fi
 

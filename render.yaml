@@ -36,15 +36,19 @@ services:
       - key: FILESYSTEM_DISK
         value: public
       - key: RENDER_FALLBACK_SQLITE
-        value: true
+        value: false
       - key: RENDER_SQLITE_PATH
         value: /tmp/render.sqlite
       - key: RENDER_IMPORT_SQL_DUMP
         value: false
       - key: RENDER_SQL_DUMP_PATH
         value: /var/www/html/khaitriedu.sql
+      - key: RENDER_SCHEMA_DUMP_PATH
+        value: /var/www/html/database/schema/mysql-schema.sql
+      - key: RENDER_RESET_DATABASE
+        sync: false
       - key: RENDER_SEED_DEMO
-        value: false
+        value: true
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
