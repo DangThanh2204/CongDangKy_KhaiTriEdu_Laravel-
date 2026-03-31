@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
@@ -73,15 +74,9 @@ class AdminController extends Controller
             ->get()
             ->pluck('count', 'month');
 
-        $securityAlertsCount = SystemLog::where('category', 'security')
-            ->where('action', 'security_alert')
-            ->where('created_at', '>=', now()->subDay())
-            ->count();
-
-        $latestSecurityAlert = SystemLog::where('category', 'security')
-            ->where('action', 'security_alert')
-            ->latest()
-            ->first();
+        $securitySnapshot = $this->securityAlertSnapshot();
+        $securityAlertsCount = $securitySnapshot['count'];
+        $latestSecurityAlert = $securitySnapshot['latest'];
 
         $dailyEnrollmentTrend = $this->buildDailyTrend(CourseEnrollment::class, 14);
         $dailyCourseTrend = $this->buildDailyTrend(Course::class, 14);
@@ -253,12 +248,39 @@ class AdminController extends Controller
      */
     public function alertsCount()
     {
-        $count = SystemLog::where('category', 'security')
-            ->where('action', 'security_alert')
-            ->where('created_at', '>=', now()->subDay())
-            ->count();
+        $count = $this->securityAlertSnapshot()['count'];
 
         return response()->json(['count' => $count]);
+    }
+
+    private function securityAlertSnapshot(): array
+    {
+        try {
+            if (! Schema::hasTable((new SystemLog())->getTable())) {
+                return [
+                    'count' => 0,
+                    'latest' => null,
+                ];
+            }
+
+            return [
+                'count' => SystemLog::where('category', 'security')
+                    ->where('action', 'security_alert')
+                    ->where('created_at', '>=', now()->subDay())
+                    ->count(),
+                'latest' => SystemLog::where('category', 'security')
+                    ->where('action', 'security_alert')
+                    ->latest()
+                    ->first(),
+            ];
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return [
+                'count' => 0,
+                'latest' => null,
+            ];
+        }
     }
 
     private function buildDailyTrend(string $modelClass, int $days = 14): array

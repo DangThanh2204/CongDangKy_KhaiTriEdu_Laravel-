@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class AuthController extends Controller
@@ -136,6 +137,24 @@ class AuthController extends Controller
             return redirect()->route('staff.dashboard')->with('success', $message);
         } else {
             return redirect()->route('home')->with('success', $message);
+        }
+    }
+
+    private function recentLoginFailureCount(string $ip): int
+    {
+        try {
+            if (! Schema::hasTable((new \App\Models\SystemLog())->getTable())) {
+                return 0;
+            }
+
+            return \App\Models\SystemLog::where('action', 'login_failure')
+                ->where('ip', $ip)
+                ->where('created_at', '>=', now()->subMinutes(15))
+                ->count();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return 0;
         }
     }
 
@@ -304,10 +323,7 @@ class AuthController extends Controller
             \App\Services\SystemLogService::record('security', 'login_failure', ['username' => $req->username, 'reason' => 'not_found']);
 
             // detect multiple failures from same IP
-            $recent = \App\Models\SystemLog::where('action', 'login_failure')
-                ->where('ip', $req->ip())
-                ->where('created_at', '>=', now()->subMinutes(15))
-                ->count();
+            $recent = $this->recentLoginFailureCount($req->ip());
             if ($recent >= 5) {
                 \App\Services\SystemLogService::record('security', 'security_alert', ['type' => 'many_failed_logins', 'ip' => $req->ip(), 'count' => $recent]);
             }
@@ -374,10 +390,7 @@ class AuthController extends Controller
         \App\Services\SystemLogService::record('security', 'login_failure', ['user_id' => $user->id, 'reason' => 'wrong_password']);
 
         // detect multiple failures from same IP
-        $recent = \App\Models\SystemLog::where('action', 'login_failure')
-            ->where('ip', $req->ip())
-            ->where('created_at', '>=', now()->subMinutes(15))
-            ->count();
+        $recent = $this->recentLoginFailureCount($req->ip());
         if ($recent >= 5) {
             \App\Services\SystemLogService::record('security', 'security_alert', ['type' => 'many_failed_logins', 'ip' => $req->ip(), 'count' => $recent, 'user_id' => $user->id]);
         }
