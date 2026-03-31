@@ -24,6 +24,10 @@ mkdir -p storage/app storage/framework/cache storage/framework/sessions storage/
 chown -R www-data:www-data storage bootstrap/cache database || true
 chmod -R ug+rwx storage bootstrap/cache database || true
 
+RENDER_PORT="${PORT:-10000}"
+sed -ri "s/Listen 80/Listen ${RENDER_PORT}/" /etc/apache2/ports.conf
+sed -ri "s/:80>/:${RENDER_PORT}>/" /etc/apache2/sites-available/*.conf /etc/apache2/sites-enabled/*.conf 2>/dev/null || true
+
 php artisan optimize:clear || true
 php artisan migrate --path=database/migrations_archive/2026-03-28_mysql_baseline --realpath --force
 php artisan db:seed --class=Database\\Seeders\\RenderDemoSeeder --force
