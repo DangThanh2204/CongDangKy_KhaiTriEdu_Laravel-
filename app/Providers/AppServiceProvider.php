@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Setting;
 use App\View\Composers\AdminLayoutComposer;
 use App\View\Composers\AppLayoutComposer;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +24,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $renderUrl = env('RENDER_EXTERNAL_URL');
+        $appUrl = env('APP_URL');
+        $shouldForceHttps = app()->environment('production') || filled($renderUrl) || str_contains((string) $appUrl, '.onrender.com');
+
+        if (filled($renderUrl)) {
+            config(['app.url' => $renderUrl]);
+            URL::forceRootUrl($renderUrl);
+        } elseif (filled($appUrl)) {
+            URL::forceRootUrl($appUrl);
+        }
+
+        if ($shouldForceHttps) {
+            URL::forceScheme('https');
+        }
+
         View::composer('*', function ($view) {
             $defaults = [
                 'siteName' => 'Khai Tri Education',
