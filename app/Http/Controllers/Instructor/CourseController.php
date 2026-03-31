@@ -92,7 +92,7 @@ class CourseController extends Controller
         if ($moduleId && ! $course->modules()->whereKey($moduleId)->exists()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Module khÃ´ng thuá»™c khÃ³a há»c nÃ y.',
+                'message' => 'Module không thuộc khóa học này.',
             ], 422);
         }
 
@@ -234,7 +234,7 @@ class CourseController extends Controller
         $this->syncClasses($course, $request->input('classes', []));
         $course->syncStudyMetrics();
 
-        return redirect()->route('instructor.courses.index')->with('success', 'KhÃ³a há»c Ä‘Ã£ Ä‘Æ°á»£c cáº­p nháº­t.');
+        return redirect()->route('instructor.courses.index')->with('success', 'Khóa học đã được cập nhật.');
     }
 
     public function store(Request $request)
@@ -311,7 +311,7 @@ class CourseController extends Controller
         $this->syncClasses($course, $request->input('classes', []));
         $course->syncStudyMetrics();
 
-        return redirect()->route('instructor.courses.index')->with('success', 'KhÃ³a há»c Ä‘Ã£ Ä‘Æ°á»£c táº¡o.');
+        return redirect()->route('instructor.courses.index')->with('success', 'Khóa học đã được tạo.');
     }
 
     protected function syncClasses(Course $course, array $classes): void
@@ -410,7 +410,7 @@ class CourseController extends Controller
 
         $course->syncStudyMetrics();
 
-        return redirect()->route('instructor.courses.quiz.index', $course)->with('success', 'BÃ i kiá»ƒm tra Ä‘Ã£ Ä‘Æ°á»£c táº¡o.');
+        return redirect()->route('instructor.courses.quiz.index', $course)->with('success', 'Bài kiểm tra đã được tạo.');
     }
 
     public function quizEdit(Course $course, CourseMaterial $material)
@@ -450,7 +450,7 @@ class CourseController extends Controller
 
         $course->syncStudyMetrics();
 
-        return redirect()->route('instructor.courses.quiz.index', $course)->with('success', 'BÃ i kiá»ƒm tra Ä‘Ã£ Ä‘Æ°á»£c cáº­p nháº­t.');
+        return redirect()->route('instructor.courses.quiz.index', $course)->with('success', 'Bài kiểm tra đã được cập nhật.');
     }
 
     public function quizDestroy(Course $course, CourseMaterial $material)
@@ -463,7 +463,7 @@ class CourseController extends Controller
         $material->delete();
         $course->syncStudyMetrics();
 
-        return redirect()->route('instructor.courses.quiz.index', $course)->with('success', 'BÃ i kiá»ƒm tra Ä‘Ã£ Ä‘Æ°á»£c xÃ³a.');
+        return redirect()->route('instructor.courses.quiz.index', $course)->with('success', 'Bài kiểm tra đã được xóa.');
     }
 
     protected function authorizeCourse(Course $course): void
@@ -500,10 +500,10 @@ class CourseController extends Controller
 
         $quizMaterial = $course->materials()->firstOrCreate(
             ['type' => 'quiz'],
-            ['title' => 'BÃ i kiá»ƒm tra tá»± Ä‘á»™ng']
+            ['title' => 'Bài kiểm tra tự động']
         );
 
-        $quizMaterial->title = $quizMaterial->title ?: 'BÃ i kiá»ƒm tra tá»± Ä‘á»™ng';
+        $quizMaterial->title = $quizMaterial->title ?: 'Bài kiểm tra tự động';
         $quizMaterial->metadata = $durationEstimate['metadata'];
         $quizMaterial->estimated_duration_minutes = $durationEstimate['minutes'];
         $quizMaterial->save();

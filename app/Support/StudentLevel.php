@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class StudentLevel
 {
@@ -53,104 +54,112 @@ class StudentLevel
             return self::emptyProfile();
         }
 
-        $enrollments = $user->relationLoaded('enrollments')
-            ? $user->enrollments
-            : $user->enrollments()->select(['id', 'user_id', 'status', 'completed_at'])->get();
+        try {
+            $enrollments = $user->relationLoaded('enrollments')
+                ? $user->enrollments
+                : $user->enrollments()->select(['id', 'user_id', 'status', 'completed_at'])->get();
 
-        $progressRecords = $user->relationLoaded('materialProgress')
-            ? $user->materialProgress
-            : $user->materialProgress()->with('material:id,estimated_duration_minutes')->get();
+            $progressRecords = $user->relationLoaded('materialProgress')
+                ? $user->materialProgress
+                : $user->materialProgress()->with('material:id,estimated_duration_minutes')->get();
 
-        if ($progressRecords instanceof EloquentCollection) {
-            $progressRecords->loadMissing('material:id,estimated_duration_minutes');
-        }
-
-        $certificates = $user->relationLoaded('certificates')
-            ? $user->certificates
-            : $user->certificates()->select(['id', 'user_id'])->get();
-
-        $approvedEnrollments = $enrollments->filter(fn ($enrollment) => in_array($enrollment->status, ['approved', 'completed'], true));
-        $completedEnrollments = $enrollments->filter(fn ($enrollment) => $enrollment->isCompleted());
-        $completedMaterials = $progressRecords->filter(fn ($progress) => ! is_null($progress->completed_at));
-        $passedQuizzes = $progressRecords->filter(fn ($progress) => ! is_null($progress->passed_at));
-
-        $studyMinutes = (int) round($progressRecords->sum(function ($progress) {
-            $estimatedMinutes = (int) ($progress->material?->estimated_duration_minutes ?? 0);
-
-            if ($estimatedMinutes <= 0) {
-                return 0;
+            if ($progressRecords instanceof EloquentCollection) {
+                $progressRecords->loadMissing('material:id,estimated_duration_minutes');
             }
 
-            $progressPercent = ! is_null($progress->completed_at)
-                ? 100
-                : max(0, min(100, (int) ($progress->progress_percent ?? 0)));
+            $certificates = $user->relationLoaded('certificates')
+                ? $user->certificates
+                : $user->certificates()->select(['id', 'user_id'])->get();
 
-            return $estimatedMinutes * ($progressPercent / 100);
-        }));
+            $approvedEnrollments = $enrollments->filter(fn ($enrollment) => in_array($enrollment->status, ['approved', 'completed'], true));
+            $completedEnrollments = $enrollments->filter(fn ($enrollment) => $enrollment->isCompleted());
+            $completedMaterials = $progressRecords->filter(fn ($progress) => ! is_null($progress->completed_at));
+            $passedQuizzes = $progressRecords->filter(fn ($progress) => ! is_null($progress->passed_at));
 
-        $activeStudyDays = $progressRecords
-            ->map(function ($progress) {
-                $moment = $progress->last_viewed_at ?? $progress->completed_at ?? $progress->started_at;
+            $studyMinutes = (int) round($progressRecords->sum(function ($progress) {
+                $estimatedMinutes = (int) ($progress->material?->estimated_duration_minutes ?? 0);
 
-                return $moment?->toDateString();
-            })
-            ->filter()
-            ->unique()
-            ->count();
+                if ($estimatedMinutes <= 0) {
+                    return 0;
+                }
 
-        $certificateCount = $certificates->count();
+                $progressPercent = ! is_null($progress->completed_at)
+                    ? 100
+                    : max(0, min(100, (int) ($progress->progress_percent ?? 0)));
 
-        $pointsBreakdown = [
-            'study_minutes' => (int) floor($studyMinutes / 8),
-            'completed_materials' => $completedMaterials->count() * 12,
-            'passed_quizzes' => $passedQuizzes->count() * 18,
-            'approved_courses' => $approvedEnrollments->count() * 30,
-            'completed_courses' => $completedEnrollments->count() * 140,
-            'certificates' => $certificateCount * 180,
-            'active_days' => $activeStudyDays * 5,
-        ];
+                return $estimatedMinutes * ($progressPercent / 100);
+            }));
 
-        $points = array_sum($pointsBreakdown);
-        $currentLevel = self::resolveLevel($points);
-        $nextLevel = self::resolveNextLevel($points);
+            $activeStudyDays = $progressRecords
+                ->map(function ($progress) {
+                    $moment = $progress->last_viewed_at ?? $progress->completed_at ?? $progress->started_at;
 
-        if ($nextLevel) {
-            $range = max(1, $nextLevel['min_points'] - $currentLevel['min_points']);
-            $earnedSinceCurrentLevel = max(0, $points - $currentLevel['min_points']);
-            $progressToNext = (int) round(min(100, ($earnedSinceCurrentLevel / $range) * 100));
-            $pointsToNext = max(0, $nextLevel['min_points'] - $points);
-        } else {
-            $progressToNext = 100;
-            $pointsToNext = 0;
-        }
+                    return $moment?->toDateString();
+                })
+                ->filter()
+                ->unique()
+                ->count();
 
-        return [
-            'points' => $points,
-            'points_label' => number_format($points),
-            'level' => $currentLevel,
-            'badge' => [
-                'name' => $currentLevel['badge_name'],
-                'icon' => $currentLevel['icon'],
-                'key' => $currentLevel['key'],
-                'accent' => $currentLevel['accent'],
-            ],
-            'next_level' => $nextLevel,
-            'progress_to_next' => $progressToNext,
-            'points_to_next' => $pointsToNext,
-            'study_duration_label' => StudyDuration::formatMinutes($studyMinutes),
-            'breakdown' => $pointsBreakdown,
-            'metrics' => [
-                'approved_courses' => $approvedEnrollments->count(),
-                'completed_courses' => $completedEnrollments->count(),
-                'completed_materials' => $completedMaterials->count(),
-                'passed_quizzes' => $passedQuizzes->count(),
-                'certificates' => $certificateCount,
-                'active_study_days' => $activeStudyDays,
-                'study_minutes' => $studyMinutes,
+            $certificateCount = $certificates->count();
+
+            $pointsBreakdown = [
+                'study_minutes' => (int) floor($studyMinutes / 8),
+                'completed_materials' => $completedMaterials->count() * 12,
+                'passed_quizzes' => $passedQuizzes->count() * 18,
+                'approved_courses' => $approvedEnrollments->count() * 30,
+                'completed_courses' => $completedEnrollments->count() * 140,
+                'certificates' => $certificateCount * 180,
+                'active_days' => $activeStudyDays * 5,
+            ];
+
+            $points = array_sum($pointsBreakdown);
+            $currentLevel = self::resolveLevel($points);
+            $nextLevel = self::resolveNextLevel($points);
+
+            if ($nextLevel) {
+                $range = max(1, $nextLevel['min_points'] - $currentLevel['min_points']);
+                $earnedSinceCurrentLevel = max(0, $points - $currentLevel['min_points']);
+                $progressToNext = (int) round(min(100, ($earnedSinceCurrentLevel / $range) * 100));
+                $pointsToNext = max(0, $nextLevel['min_points'] - $points);
+            } else {
+                $progressToNext = 100;
+                $pointsToNext = 0;
+            }
+
+            return [
+                'points' => $points,
+                'points_label' => number_format($points),
+                'level' => $currentLevel,
+                'badge' => [
+                    'name' => $currentLevel['badge_name'],
+                    'icon' => $currentLevel['icon'],
+                    'key' => $currentLevel['key'],
+                    'accent' => $currentLevel['accent'],
+                ],
+                'next_level' => $nextLevel,
+                'progress_to_next' => $progressToNext,
+                'points_to_next' => $pointsToNext,
                 'study_duration_label' => StudyDuration::formatMinutes($studyMinutes),
-            ],
-            'summary' => self::buildSummaryCopy($currentLevel, $nextLevel, $pointsToNext),
-        ];
+                'breakdown' => $pointsBreakdown,
+                'metrics' => [
+                    'approved_courses' => $approvedEnrollments->count(),
+                    'completed_courses' => $completedEnrollments->count(),
+                    'completed_materials' => $completedMaterials->count(),
+                    'passed_quizzes' => $passedQuizzes->count(),
+                    'certificates' => $certificateCount,
+                    'active_study_days' => $activeStudyDays,
+                    'study_minutes' => $studyMinutes,
+                    'study_duration_label' => StudyDuration::formatMinutes($studyMinutes),
+                ],
+                'summary' => self::buildSummaryCopy($currentLevel, $nextLevel, $pointsToNext),
+            ];
+        } catch (\Throwable $exception) {
+            Log::warning('Student level summary skipped: ' . $exception->getMessage(), [
+                'user_id' => $user->id,
+            ]);
+
+            return self::emptyProfile();
+        }
     }
 
     public static function attachSummaries(EloquentCollection $users): EloquentCollection
@@ -162,12 +171,16 @@ class StudentLevel
         $students = $users->filter(fn ($user) => $user instanceof User && $user->isStudent())->values();
 
         if ($students->isNotEmpty()) {
-            $students->loadMissing([
-                'enrollments:id,user_id,status,completed_at',
-                'certificates:id,user_id',
-                'materialProgress:id,user_id,course_material_id,progress_percent,started_at,last_viewed_at,completed_at,passed_at',
-                'materialProgress.material:id,estimated_duration_minutes',
-            ]);
+            try {
+                $students->loadMissing([
+                    'enrollments:id,user_id,status,completed_at',
+                    'certificates:id,user_id',
+                    'materialProgress:id,user_id,course_material_id,progress_percent,started_at,last_viewed_at,completed_at,passed_at',
+                    'materialProgress.material:id,estimated_duration_minutes',
+                ]);
+            } catch (\Throwable $exception) {
+                Log::warning('Student level eager load skipped: ' . $exception->getMessage());
+            }
         }
 
         $users->each(function (User $user) {
@@ -182,56 +195,68 @@ class StudentLevel
 
     public static function buildLeaderboard(int $limit = 10, ?int $highlightUserId = null): array
     {
-        $students = User::students()
-            ->select(['id', 'username', 'fullname', 'email', 'avatar', 'created_at'])
-            ->get();
+        try {
+            $students = User::students()
+                ->select(['id', 'username', 'fullname', 'email', 'avatar', 'created_at'])
+                ->get();
 
-        if ($students->isEmpty()) {
+            if ($students->isEmpty()) {
+                return [
+                    'entries' => collect(),
+                    'current_user' => null,
+                    'total_students' => 0,
+                ];
+            }
+
+            self::attachSummaries($students);
+
+            $sorted = $students->sort(function (User $left, User $right) {
+                $leftSummary = $left->getAttribute('student_level_summary') ?? self::emptyProfile();
+                $rightSummary = $right->getAttribute('student_level_summary') ?? self::emptyProfile();
+
+                if ($leftSummary['points'] !== $rightSummary['points']) {
+                    return $rightSummary['points'] <=> $leftSummary['points'];
+                }
+
+                if ($leftSummary['metrics']['completed_courses'] !== $rightSummary['metrics']['completed_courses']) {
+                    return $rightSummary['metrics']['completed_courses'] <=> $leftSummary['metrics']['completed_courses'];
+                }
+
+                if ($leftSummary['metrics']['study_minutes'] !== $rightSummary['metrics']['study_minutes']) {
+                    return $rightSummary['metrics']['study_minutes'] <=> $leftSummary['metrics']['study_minutes'];
+                }
+
+                return strcmp((string) ($left->fullname ?? $left->username), (string) ($right->fullname ?? $right->username));
+            })->values();
+
+            $entries = $sorted->values()->map(function (User $student, int $index) {
+                $summary = $student->getAttribute('student_level_summary') ?? self::emptyProfile();
+
+                return [
+                    'rank' => $index + 1,
+                    'user' => $student,
+                    'summary' => $summary,
+                    'points' => $summary['points'],
+                    'points_label' => $summary['points_label'],
+                ];
+            });
+
+            return [
+                'entries' => $entries->take($limit)->values(),
+                'current_user' => $highlightUserId ? $entries->firstWhere('user.id', $highlightUserId) : null,
+                'total_students' => $entries->count(),
+            ];
+        } catch (\Throwable $exception) {
+            Log::warning('Student leaderboard skipped: ' . $exception->getMessage(), [
+                'highlight_user_id' => $highlightUserId,
+            ]);
+
             return [
                 'entries' => collect(),
                 'current_user' => null,
                 'total_students' => 0,
             ];
         }
-
-        self::attachSummaries($students);
-
-        $sorted = $students->sort(function (User $left, User $right) {
-            $leftSummary = $left->getAttribute('student_level_summary') ?? self::emptyProfile();
-            $rightSummary = $right->getAttribute('student_level_summary') ?? self::emptyProfile();
-
-            if ($leftSummary['points'] !== $rightSummary['points']) {
-                return $rightSummary['points'] <=> $leftSummary['points'];
-            }
-
-            if ($leftSummary['metrics']['completed_courses'] !== $rightSummary['metrics']['completed_courses']) {
-                return $rightSummary['metrics']['completed_courses'] <=> $leftSummary['metrics']['completed_courses'];
-            }
-
-            if ($leftSummary['metrics']['study_minutes'] !== $rightSummary['metrics']['study_minutes']) {
-                return $rightSummary['metrics']['study_minutes'] <=> $leftSummary['metrics']['study_minutes'];
-            }
-
-            return strcmp((string) ($left->fullname ?? $left->username), (string) ($right->fullname ?? $right->username));
-        })->values();
-
-        $entries = $sorted->values()->map(function (User $student, int $index) {
-            $summary = $student->getAttribute('student_level_summary') ?? self::emptyProfile();
-
-            return [
-                'rank' => $index + 1,
-                'user' => $student,
-                'summary' => $summary,
-                'points' => $summary['points'],
-                'points_label' => $summary['points_label'],
-            ];
-        });
-
-        return [
-            'entries' => $entries->take($limit)->values(),
-            'current_user' => $highlightUserId ? $entries->firstWhere('user.id', $highlightUserId) : null,
-            'total_students' => $entries->count(),
-        ];
     }
 
     public static function emptyProfile(): array

@@ -20,8 +20,24 @@ class DashboardController extends Controller
         $approvedCourses = $enrollments->where('status', 'approved');
         $pendingCourses = $enrollments->where('status', 'pending');
         $completedCourses = $enrollments->filter(fn ($enrollment) => $enrollment->isCompleted());
-        $studentLevel = $user->buildStudentLevelSummary();
-        $leaderboard = StudentLevel::buildLeaderboard(10, $user->id);
+
+        try {
+            $studentLevel = $user->buildStudentLevelSummary();
+        } catch (\Throwable $exception) {
+            report($exception);
+            $studentLevel = StudentLevel::emptyProfile();
+        }
+
+        try {
+            $leaderboard = StudentLevel::buildLeaderboard(10, $user->id);
+        } catch (\Throwable $exception) {
+            report($exception);
+            $leaderboard = [
+                'entries' => collect(),
+                'current_user' => null,
+                'total_students' => 0,
+            ];
+        }
 
         return view('student.dashboard', compact(
             'user',

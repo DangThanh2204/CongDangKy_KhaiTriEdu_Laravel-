@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (materialType.value === 'video') {
             durationHelpText.textContent = 'Video chưa đọc được độ dài tự động từ link nên nếu để trống hệ thống sẽ dùng mặc định 15 phút.';
-            durationNotes.textContent = 'Video: náº¿u báº¡n khÃ´ng nháº­p tay, há» thá»ng dÃ¹ng máº·c Äá»nh 15 phÃºt cho má»i ná»i dung video.';
+            durationNotes.textContent = 'Video: nếu bạn không nhập tay, hệ thống dùng mặc định 15 phút cho mỗi nội dung video.';
             return;
         }
 
