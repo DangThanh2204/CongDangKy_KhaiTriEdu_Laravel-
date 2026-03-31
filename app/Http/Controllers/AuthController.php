@@ -371,17 +371,21 @@ class AuthController extends Controller
 
             \App\Services\SystemLogService::record('security', 'login_success', ['user_id' => $user->id]);
 
-            $this->blockchainAudit->record('security.login_success', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'session_id' => $req->session()->getId(),
-            ], [
-                'reference' => 'LOGIN-' . $user->id . '-' . now()->format('YmdHis'),
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'role' => $user->role,
-                'ip' => $req->ip(),
-            ]);
+            try {
+                $this->blockchainAudit->record('security.login_success', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'session_id' => $req->session()->getId(),
+                ], [
+                    'reference' => 'LOGIN-' . $user->id . '-' . now()->format('YmdHis'),
+                    'user_id' => $user->id,
+                    'username' => $user->username,
+                    'role' => $user->role,
+                    'ip' => $req->ip(),
+                ]);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
 
             // Redirect theo role
             return $this->redirectToRole($user);
