@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/storage/*.sqlite
+/storage/*.sqlite-*
+/storage/route_debug.php
