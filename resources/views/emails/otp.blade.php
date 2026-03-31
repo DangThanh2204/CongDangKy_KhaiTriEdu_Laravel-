@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mã OTP kích hoạt tài khoản</title>
+    <title>Mã OTP</title>
     <style>
         body {
             font-family: 'Inter', Arial, sans-serif;
@@ -68,7 +68,7 @@
         </div>
         
         <div class="content">
-            <h2>Kích Hoạt Tài Khoản</h2>
+            <h2>{{ $purpose ?? 'Kích Hoạt Tài Khoản' }}</h2>
             <p>Xin chào <strong>{{ $user->fullname }}</strong>,</p>
             
             <p>Cảm ơn bạn đã đăng ký tài khoản tại <strong>Khai Trí Edu</strong>. 

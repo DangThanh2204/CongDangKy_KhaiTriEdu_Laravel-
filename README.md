@@ -158,6 +158,23 @@ MAIL_USERNAME=null
 MAIL_PASSWORD=null
 MAIL_ENCRYPTION=null
 MAIL_FROM_ADDRESS="noreply@khai-tri-edu.local"
+
+# OAuth (Google / Facebook)
+# Để bật tính năng đăng nhập bằng Google/Facebook, bạn cần tạo ứng dụng trên
+# Google Cloud Console / Facebook Developers và nhập thông tin vào file .env.
+#
+# 1) Đăng ký OAuth redirect URI:
+#    - Google:  http://localhost/auth/google/callback
+#    - Facebook: http://localhost/auth/facebook/callback
+#
+# 2) Thêm vào .env (ví dụ):
+# GOOGLE_CLIENT_ID=...
+# GOOGLE_CLIENT_SECRET=...
+# GOOGLE_REDIRECT_URI=http://localhost/auth/google/callback
+#
+# FACEBOOK_CLIENT_ID=...
+# FACEBOOK_CLIENT_SECRET=...
+# FACEBOOK_REDIRECT_URI=http://localhost/auth/facebook/callback
 ```
 
 ### Bước 4: Tạo Application Key

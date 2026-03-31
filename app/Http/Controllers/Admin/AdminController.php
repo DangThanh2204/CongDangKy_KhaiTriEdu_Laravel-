@@ -1,56 +1,68 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Course;
+use App\Models\CourseEnrollment;
 use App\Models\Post;
 use App\Models\PostCategory;
+use App\Models\SystemLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon;
 
 class AdminController extends Controller
 {
     /**
-     * Hiển thị dashboard admin
+     * Hiển thị dashboard admin.
      */
     public function dashboard()
     {
-        // Thống kê tổng quan
+        $today = now();
+        $currentMonthStart = $today->copy()->startOfMonth();
+        $currentMonthEnd = $today->copy()->endOfMonth();
+
         $stats = [
             'total_users' => User::count(),
+            'total_courses' => Course::count(),
+            'published_courses' => Course::published()->count(),
+            'total_enrollments' => CourseEnrollment::count(),
             'total_admins' => User::where('role', 'admin')->count(),
             'total_staff' => User::where('role', 'staff')->count(),
-            'total_instructors' => User::where('role', 'instructor')->count(), 
+            'total_instructors' => User::where('role', 'instructor')->count(),
             'total_students' => User::where('role', 'student')->count(),
             'verified_users' => User::where('is_verified', true)->count(),
             'unverified_users' => User::where('is_verified', false)->count(),
-            'today_registrations' => User::whereDate('created_at', today())->count(),
-            'weekly_registrations' => User::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'today_registrations' => User::whereDate('created_at', $today)->count(),
+            'weekly_registrations' => User::whereBetween('created_at', [$today->copy()->startOfWeek(), $today->copy()->endOfWeek()])->count(),
+            'today_enrollments' => CourseEnrollment::whereDate('created_at', $today)->count(),
+            'monthly_enrollments' => CourseEnrollment::whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count(),
+            'today_course_openings' => Course::whereDate('created_at', $today)->count(),
+            'monthly_course_openings' => Course::whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count(),
+            'pending_enrollments' => CourseEnrollment::pending()->count(),
+            'approved_enrollments' => CourseEnrollment::approved()->count(),
+            'completed_enrollments' => CourseEnrollment::completed()->count(),
         ];
 
-        // Thống kê user theo role (cho biểu đồ)
         $usersByRole = User::select('role', DB::raw('count(*) as count'))
             ->groupBy('role')
             ->get()
             ->pluck('count', 'role');
 
-        // User mới đăng ký trong 7 ngày qua (cho biểu đồ)
         $recentRegistrations = User::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
-            ->where('created_at', '>=', now()->subDays(7))
+            ->where('created_at', '>=', $today->copy()->subDays(7))
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
-        // User mới nhất (cho activity feed)
-        $recentUsers = User::with([])
-            ->orderBy('created_at', 'desc')
-            ->take(8)
+        $recentUsers = User::query()
+            ->latest('created_at')
+            ->take(6)
             ->get();
 
-        // Thống kê đăng ký theo tháng (năm nay)
         $monthlyRegistrations = User::select(
                 DB::raw('MONTH(created_at) as month'),
                 DB::raw('COUNT(*) as count')
@@ -61,32 +73,73 @@ class AdminController extends Controller
             ->get()
             ->pluck('count', 'month');
 
+        $securityAlertsCount = SystemLog::where('category', 'security')
+            ->where('action', 'security_alert')
+            ->where('created_at', '>=', now()->subDay())
+            ->count();
+
+        $latestSecurityAlert = SystemLog::where('category', 'security')
+            ->where('action', 'security_alert')
+            ->latest()
+            ->first();
+
+        $dailyEnrollmentTrend = $this->buildDailyTrend(CourseEnrollment::class, 14);
+        $dailyCourseTrend = $this->buildDailyTrend(Course::class, 14);
+        $monthlyEnrollmentTrend = $this->buildMonthlyTrend(CourseEnrollment::class, 12);
+        $monthlyCourseTrend = $this->buildMonthlyTrend(Course::class, 12);
+
+        $dashboardTrend = [
+            'daily' => [
+                'labels' => $dailyEnrollmentTrend['labels'],
+                'enrollments' => $dailyEnrollmentTrend['data'],
+                'courses' => $dailyCourseTrend['data'],
+                'meta' => [
+                    'range_label' => $dailyEnrollmentTrend['range_label'],
+                    'enrollments_total' => $dailyEnrollmentTrend['total'],
+                    'courses_total' => $dailyCourseTrend['total'],
+                ],
+            ],
+            'monthly' => [
+                'labels' => $monthlyEnrollmentTrend['labels'],
+                'enrollments' => $monthlyEnrollmentTrend['data'],
+                'courses' => $monthlyCourseTrend['data'],
+                'meta' => [
+                    'range_label' => $monthlyEnrollmentTrend['range_label'],
+                    'enrollments_total' => $monthlyEnrollmentTrend['total'],
+                    'courses_total' => $monthlyCourseTrend['total'],
+                ],
+            ],
+        ];
+
         return view('admin.dashboard', compact(
             'stats',
             'usersByRole',
             'recentRegistrations',
             'recentUsers',
-            'monthlyRegistrations'
+            'monthlyRegistrations',
+            'dashboardTrend',
+            'securityAlertsCount',
+            'latestSecurityAlert'
         ));
     }
 
     /**
-     * Lấy dữ liệu cho biểu đồ (API)
+     * Lấy dữ liệu cho biểu đồ (API).
      */
     public function getChartData(Request $request)
     {
         $type = $request->get('type', 'registrations');
-        
+
         switch ($type) {
             case 'role_distribution':
                 $data = User::select('role', DB::raw('count(*) as count'))
                     ->groupBy('role')
                     ->get();
-                
+
                 return response()->json([
                     'labels' => $data->pluck('role'),
                     'data' => $data->pluck('count'),
-                    'colors' => ['#2c5aa0', '#28a745', '#ff6b35', '#6f42c1', '#20c997'] // admin, staff, instructor, student, etc.
+                    'colors' => ['#2c5aa0', '#28a745', '#ff6b35', '#6f42c1', '#20c997'],
                 ]);
 
             case 'monthly_registrations':
@@ -100,16 +153,15 @@ class AdminController extends Controller
                     ->orderBy('month')
                     ->get();
 
-                // Fill missing months with 0
                 $monthlyData = [];
-                for ($i = 1; $i <= 12; $i++) {
-                    $monthData = $data->where('month', $i)->first();
+                for ($month = 1; $month <= 12; $month++) {
+                    $monthData = $data->where('month', $month)->first();
                     $monthlyData[] = $monthData ? $monthData->count : 0;
                 }
 
                 return response()->json([
                     'labels' => ['Th1', 'Th2', 'Th3', 'Th4', 'Th5', 'Th6', 'Th7', 'Th8', 'Th9', 'Th10', 'Th11', 'Th12'],
-                    'data' => $monthlyData
+                    'data' => $monthlyData,
                 ]);
 
             case 'weekly_activity':
@@ -121,7 +173,7 @@ class AdminController extends Controller
 
                 return response()->json([
                     'labels' => $data->pluck('date'),
-                    'data' => $data->pluck('count')
+                    'data' => $data->pluck('count'),
                 ]);
         }
 
@@ -129,21 +181,22 @@ class AdminController extends Controller
     }
 
     /**
-     * Hiển thị profile admin
+     * Hiển thị profile admin.
      */
     public function profile()
     {
         $user = auth()->user();
+
         return view('admin.profile', compact('user'));
     }
 
     /**
-     * Cập nhật profile admin
+     * Cập nhật profile admin.
      */
     public function updateProfile(Request $request)
     {
         $user = auth()->user();
-        
+
         $request->validate([
             'fullname' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email,' . $user->id,
@@ -157,129 +210,199 @@ class AdminController extends Controller
             'email' => $request->email,
         ];
 
-        // Xử lý đổi mật khẩu
         if ($request->filled('current_password')) {
-            if (!Hash::check($request->current_password, $user->password)) {
+            if (! Hash::check($request->current_password, $user->password)) {
                 return back()->withErrors(['current_password' => 'Mật khẩu hiện tại không đúng']);
             }
-            
+
             $data['password'] = Hash::make($request->new_password);
         }
 
-        // Xử lý avatar
         if ($request->hasFile('avatar')) {
-            // Xóa avatar cũ nếu có
             if ($user->avatar) {
                 Storage::disk('public')->delete($user->avatar);
             }
+
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
         }
 
         $user->update($data);
 
-        return redirect()->route('admin.profile')
+        return redirect()
+            ->route('admin.profile')
             ->with('success', 'Cập nhật thông tin thành công!');
     }
 
     /**
-     * Hiển thị hệ thống logs (đơn giản)
+     * Hiển thị hệ thống logs đơn giản.
      */
     public function systemLogs()
     {
-        // Lấy file log mới nhất
         $logFile = storage_path('logs/laravel.log');
         $logs = [];
-        
+
         if (file_exists($logFile)) {
-            $logs = $this->readLogFile($logFile, 100); // Đọc 100 dòng cuối
+            $logs = $this->readLogFile($logFile, 100);
         }
 
         return view('admin.system.logs', compact('logs'));
     }
 
     /**
-     * Đọc file log
+     * Return count of recent security alerts (JSON) for dashboard polling.
+     */
+    public function alertsCount()
+    {
+        $count = SystemLog::where('category', 'security')
+            ->where('action', 'security_alert')
+            ->where('created_at', '>=', now()->subDay())
+            ->count();
+
+        return response()->json(['count' => $count]);
+    }
+
+    private function buildDailyTrend(string $modelClass, int $days = 14): array
+    {
+        $endDate = now()->startOfDay();
+        $startDate = $endDate->copy()->subDays($days - 1);
+
+        $rows = $modelClass::query()
+            ->selectRaw('DATE(created_at) as aggregate_date, COUNT(*) as aggregate_count')
+            ->whereBetween('created_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
+            ->groupBy('aggregate_date')
+            ->orderBy('aggregate_date')
+            ->pluck('aggregate_count', 'aggregate_date');
+
+        $labels = [];
+        $data = [];
+
+        for ($cursor = $startDate->copy(); $cursor->lte($endDate); $cursor->addDay()) {
+            $key = $cursor->toDateString();
+            $labels[] = $cursor->format('d/m');
+            $data[] = (int) ($rows[$key] ?? 0);
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $data,
+            'total' => array_sum($data),
+            'range_label' => $days . ' ngày gần nhất',
+        ];
+    }
+
+    private function buildMonthlyTrend(string $modelClass, int $months = 12): array
+    {
+        $endMonth = now()->startOfMonth();
+        $startMonth = $endMonth->copy()->subMonths($months - 1);
+
+        $rows = $modelClass::query()
+            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as aggregate_month, COUNT(*) as aggregate_count")
+            ->whereBetween('created_at', [$startMonth->copy()->startOfMonth(), $endMonth->copy()->endOfMonth()])
+            ->groupBy('aggregate_month')
+            ->orderBy('aggregate_month')
+            ->pluck('aggregate_count', 'aggregate_month');
+
+        $labels = [];
+        $data = [];
+
+        for ($cursor = $startMonth->copy(); $cursor->lte($endMonth); $cursor->addMonth()) {
+            $key = $cursor->format('Y-m');
+            $labels[] = $cursor->format('m/y');
+            $data[] = (int) ($rows[$key] ?? 0);
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $data,
+            'total' => array_sum($data),
+            'range_label' => $months . ' tháng gần nhất',
+        ];
+    }
+
+    /**
+     * Đọc file log.
      */
     private function readLogFile($filePath, $lines = 100)
     {
         $file = new \SplFileObject($filePath, 'r');
         $file->seek(PHP_INT_MAX);
         $lastLine = $file->key();
-        
+
         $start = max(0, $lastLine - $lines);
         $file->seek($start);
-        
+
         $logContent = [];
-        while (!$file->eof()) {
+        while (! $file->eof()) {
             $line = $file->current();
             if (trim($line)) {
                 $logContent[] = $this->formatLogLine($line);
             }
             $file->next();
         }
-        
-        return array_reverse($logContent); // Mới nhất lên đầu
+
+        return array_reverse($logContent);
     }
 
     /**
-     * Format log line
+     * Format log line.
      */
     private function formatLogLine($line)
     {
-        // Phân tích dòng log Laravel
         preg_match('/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\].*?(\w+)\.(\w+): (.*)/', $line, $matches);
-        
+
         if (count($matches) >= 5) {
             return [
                 'timestamp' => $matches[1],
                 'env' => $matches[2],
                 'level' => $matches[3],
                 'message' => $matches[4],
-                'formatted' => "<strong>[{$matches[1]}]</strong> <span class=\"log-level-{$matches[3]}\">{$matches[3]}</span>: {$matches[4]}"
+                'formatted' => "<strong>[{$matches[1]}]</strong> <span class=\"log-level-{$matches[3]}\">{$matches[3]}</span>: {$matches[4]}",
             ];
         }
-        
+
         return [
             'timestamp' => now()->toDateTimeString(),
             'env' => 'local',
             'level' => 'info',
             'message' => $line,
-            'formatted' => "<strong>[".now()->toDateTimeString()."]</strong> info: {$line}"
+            'formatted' => '<strong>[' . now()->toDateTimeString() . ']</strong> info: ' . $line,
         ];
     }
 
     /**
-     * Xóa hệ thống logs
+     * Xóa hệ thống logs.
      */
     public function clearLogs()
     {
         $logFile = storage_path('logs/laravel.log');
-        
+
         if (file_exists($logFile)) {
             file_put_contents($logFile, '');
         }
-        
-        return redirect()->route('admin.system.logs')
+
+        return redirect()
+            ->route('admin.system.logs')
             ->with('success', 'Đã xóa tất cả logs!');
     }
 
     /**
-     * Download system logs
+     * Download system logs.
      */
     public function downloadLogs()
     {
         $logFile = storage_path('logs/laravel.log');
-        
-        if (!file_exists($logFile)) {
-            return redirect()->route('admin.system.logs')
+
+        if (! file_exists($logFile)) {
+            return redirect()
+                ->route('admin.system.logs')
                 ->with('error', 'Log file không tồn tại!');
         }
-        
+
         return response()->download($logFile, 'laravel-log-' . date('Y-m-d') . '.log');
     }
 
     /**
-     * System information
+     * System information.
      */
     public function systemInfo()
     {
@@ -301,53 +424,53 @@ class AdminController extends Controller
     }
 
     /**
-     * Format bytes to human readable
+     * Format bytes to human readable.
      */
     private function formatBytes($bytes, $precision = 2)
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
+
         $bytes = max($bytes, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
-        
+
         $bytes /= pow(1024, $pow);
-        
+
         return round($bytes, $precision) . ' ' . $units[$pow];
     }
 
     /**
-     * Quick actions - xử lý các hành động nhanh
+     * Quick actions - xử lý các hành động nhanh.
      */
     public function quickAction(Request $request)
     {
         $action = $request->get('action');
-        
+
         switch ($action) {
             case 'clear_cache':
                 \Artisan::call('cache:clear');
                 $message = 'Đã xóa cache hệ thống!';
                 break;
-                
+
             case 'clear_view':
                 \Artisan::call('view:clear');
                 $message = 'Đã xóa cached views!';
                 break;
-                
+
             case 'migrate':
                 \Artisan::call('migrate', ['--force' => true]);
                 $message = 'Đã chạy migrations!';
                 break;
-                
+
             default:
                 return back()->with('error', 'Hành động không hợp lệ!');
         }
-        
+
         return back()->with('success', $message);
     }
 
     /**
-     * Quản lý tin tức
+     * Quản lý tin tức.
      */
     public function newsIndex(Request $request)
     {
@@ -356,30 +479,29 @@ class AdminController extends Controller
         $category = $request->get('category');
 
         $posts = Post::with(['author', 'category'])
-            ->when($search, function ($query, $search) {
-                return $query->where('title', 'like', "%{$search}%");
+            ->when($search, function ($query, $searchTerm) {
+                return $query->where('title', 'like', "%{$searchTerm}%");
             })
-            ->when($status, function ($query, $status) {
-                return $query->where('status', $status);
+            ->when($status, function ($query, $statusValue) {
+                return $query->where('status', $statusValue);
             })
-            ->when($category, function ($query, $category) {
-                return $query->where('category_id', $category);
+            ->when($category, function ($query, $categoryId) {
+                return $query->where('category_id', $categoryId);
             })
             ->orderBy('created_at', 'desc')
             ->paginate(15)
             ->withQueryString();
 
         $categories = PostCategory::active()->get();
-        
-        // Thống kê
+
         $totalPosts = Post::count();
         $publishedPosts = Post::where('status', 'published')->count();
         $draftPosts = Post::where('status', 'draft')->count();
         $totalViews = Post::sum('view_count');
 
         return view('admin.news.index', compact(
-            'posts', 
-            'categories', 
+            'posts',
+            'categories',
             'totalPosts',
             'publishedPosts',
             'draftPosts',

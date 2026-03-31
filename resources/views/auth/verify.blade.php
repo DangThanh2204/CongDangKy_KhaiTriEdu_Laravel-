@@ -10,9 +10,19 @@
                 <div class="card shadow-lg border-0 rounded-3">
                     <div class="card-body p-5">
                         <div class="text-center mb-4">
-                            <div class="verify-icon mb-3">
-                                <i class="fas fa-shield-alt fa-3x text-primary"></i>
-                            </div>
+                            @php
+                                $siteLogo = \App\Models\Setting::get('site_logo');
+                                $siteName = \App\Models\Setting::get('site_name', 'Khai Trí Education');
+                            @endphp
+                            
+                            @if($siteLogo)
+                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ $siteName }}" class="mb-3" style="max-height: 80px; object-fit: contain;">
+                            @else
+                                <div class="verify-icon mb-3">
+                                    <i class="fas fa-shield-alt fa-3x text-primary"></i>
+                                </div>
+                            @endif
+                            
                             <h2 class="fw-bold text-primary">Xác Thực OTP</h2>
                             <p class="text-muted">Vui lòng nhập mã OTP đã được gửi đến email của bạn</p>
                             <p class="text-info small">

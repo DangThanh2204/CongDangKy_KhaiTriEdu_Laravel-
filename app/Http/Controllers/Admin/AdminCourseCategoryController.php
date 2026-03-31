@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Course;
 use App\Models\CourseCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,13 +14,11 @@ class AdminCourseCategoryController extends Controller
     {
         $query = CourseCategory::withCount('courses');
 
-        // Search
-        if ($request->has('search') && $request->search) {
+        if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        // Filter by status
-        if ($request->has('status') && $request->status) {
+        if ($request->filled('status')) {
             if ($request->status === 'active') {
                 $query->where('is_active', true);
             } elseif ($request->status === 'inactive') {
@@ -27,12 +26,13 @@ class AdminCourseCategoryController extends Controller
             }
         }
 
-        $categories = $query->ordered()->paginate(10);
+        $categories = $query->ordered()->paginate(10)->withQueryString();
 
         $stats = [
             'totalCategories' => CourseCategory::count(),
             'activeCategories' => CourseCategory::where('is_active', true)->count(),
             'inactiveCategories' => CourseCategory::where('is_active', false)->count(),
+            'totalCourses' => Course::count(),
         ];
 
         return view('admin.course-categories.index', compact('categories', 'stats'));
@@ -40,7 +40,11 @@ class AdminCourseCategoryController extends Controller
 
     public function create()
     {
-        $parentCategories = CourseCategory::whereNull('parent_id')->active()->get();
+        $parentCategories = CourseCategory::whereNull('parent_id')
+            ->active()
+            ->ordered()
+            ->get();
+
         return view('admin.course-categories.create', compact('parentCategories'));
     }
 
@@ -57,19 +61,22 @@ class AdminCourseCategoryController extends Controller
         ]);
 
         $validated['slug'] = Str::slug($validated['name']);
-        $validated['is_active'] = $request->has('is_active');
+        $validated['is_active'] = $request->boolean('is_active');
 
         CourseCategory::create($validated);
 
         return redirect()->route('admin.course-categories.index')
-            ->with('success', 'Danh mục khóa học đã được tạo thành công!');
+            ->with('success', 'Nhóm ngành đã được tạo thành công!');
     }
 
     public function edit(CourseCategory $courseCategory)
     {
+        $courseCategory->loadCount('courses');
+
         $parentCategories = CourseCategory::whereNull('parent_id')
             ->where('id', '!=', $courseCategory->id)
             ->active()
+            ->ordered()
             ->get();
 
         return view('admin.course-categories.edit', compact('courseCategory', 'parentCategories'));
@@ -91,36 +98,36 @@ class AdminCourseCategoryController extends Controller
             $validated['slug'] = Str::slug($validated['name']);
         }
 
-        $validated['is_active'] = $request->has('is_active');
+        $validated['is_active'] = $request->boolean('is_active');
 
         $courseCategory->update($validated);
 
         return redirect()->route('admin.course-categories.index')
-            ->with('success', 'Danh mục khóa học đã được cập nhật thành công!');
+            ->with('success', 'Nhóm ngành đã được cập nhật thành công!');
     }
 
     public function destroy(CourseCategory $courseCategory)
     {
-        // Check if category has courses
         if ($courseCategory->courses()->exists()) {
-            return back()->with('error', 'Không thể xóa danh mục đang chứa khóa học!');
+            return back()->with('error', 'Không thể xóa nhóm ngành đang chứa khóa học!');
         }
 
-        // Check if category has children
         if ($courseCategory->children()->exists()) {
-            return back()->with('error', 'Không thể xóa danh mục đang chứa danh mục con!');
+            return back()->with('error', 'Không thể xóa nhóm ngành đang chứa nhóm ngành con!');
         }
 
         $courseCategory->delete();
 
-        return back()->with('success', 'Danh mục khóa học đã được xóa thành công!');
+        return back()->with('success', 'Nhóm ngành đã được xóa thành công!');
     }
 
     public function toggleStatus(CourseCategory $courseCategory)
     {
-        $courseCategory->update(['is_active' => !$courseCategory->is_active]);
+        $courseCategory->update(['is_active' => ! $courseCategory->is_active]);
 
-        $message = $courseCategory->is_active ? 'Danh mục đã được kích hoạt!' : 'Danh mục đã bị vô hiệu hóa!';
+        $message = $courseCategory->is_active
+            ? 'Nhóm ngành đã được kích hoạt!'
+            : 'Nhóm ngành đã bị vô hiệu hóa!';
 
         return back()->with('success', $message);
     }

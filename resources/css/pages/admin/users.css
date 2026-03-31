@@ -1,0 +1,112 @@
+.page-admin-users .admin-users-table th,
+.page-admin-users .admin-users-table td {
+    vertical-align: middle;
+}
+.page-admin-users .admin-user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+.page-admin-users .admin-user-avatar-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+.page-admin-users .admin-user-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 180px;
+    padding: 0.7rem 0.9rem;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: #ffffff;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
+}
+.page-admin-users .admin-user-level-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+.page-admin-users .admin-user-level strong,
+.page-admin-users .admin-user-level small {
+    display: block;
+}
+.page-admin-users .admin-user-level small {
+    color: #64748b;
+}
+.page-admin-users .level-dong {
+    border-color: rgba(184, 115, 51, 0.28);
+    background: linear-gradient(135deg, rgba(184, 115, 51, 0.14), rgba(255, 248, 240, 0.92));
+}
+.page-admin-users .level-dong .admin-user-level-icon {
+    background: linear-gradient(135deg, #b87333, #92400e);
+}
+.page-admin-users .level-bac {
+    border-color: rgba(148, 163, 184, 0.32);
+    background: linear-gradient(135deg, rgba(203, 213, 225, 0.18), rgba(248, 250, 252, 0.94));
+}
+.page-admin-users .level-bac .admin-user-level-icon {
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+}
+.page-admin-users .level-vang {
+    border-color: rgba(234, 179, 8, 0.32);
+    background: linear-gradient(135deg, rgba(254, 240, 138, 0.25), rgba(255, 251, 235, 0.95));
+}
+.page-admin-users .level-vang .admin-user-level-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.page-admin-users .level-kim_cuong {
+    border-color: rgba(56, 189, 248, 0.34);
+    background: linear-gradient(135deg, rgba(125, 211, 252, 0.2), rgba(240, 249, 255, 0.94));
+}
+.page-admin-users .level-kim_cuong .admin-user-level-icon {
+    background: linear-gradient(135deg, #38bdf8, #0284c7);
+}
+.page-admin-users .table-light th {
+    white-space: nowrap;
+}
+.page-admin-users .btn-group-sm > .btn {
+    min-width: 34px;
+}
+body.dark-mode .page-admin-users .admin-user-level {
+    background: rgba(15, 23, 42, 0.78);
+    border-color: rgba(148, 163, 184, 0.2);
+    box-shadow: none;
+}
+body.dark-mode .page-admin-users .admin-user-level small {
+    color: rgba(226, 232, 240, 0.72);
+}
+body.dark-mode .page-admin-users .level-dong {
+    background: linear-gradient(135deg, rgba(184, 115, 51, 0.22), rgba(15, 23, 42, 0.92));
+}
+body.dark-mode .page-admin-users .level-bac {
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.2), rgba(15, 23, 42, 0.92));
+}
+body.dark-mode .page-admin-users .level-vang {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(15, 23, 42, 0.92));
+}
+body.dark-mode .page-admin-users .level-kim_cuong {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(15, 23, 42, 0.92));
+}
+@media (max-width: 991.98px) {
+    .page-admin-users .admin-user-level {
+        min-width: 0;
+        width: 100%;
+    }
+}
+@media (max-width: 767.98px) {
+    .page-admin-users .admin-users-table {
+        min-width: 980px;
+    }
+}

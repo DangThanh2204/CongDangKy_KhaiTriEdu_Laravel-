@@ -1,166 +1,526 @@
-@extends('layouts.admin') 
+﻿@extends('layouts.admin')
 
-@section('title', 'Dashboard')
-@section('page-title', 'Dashboard')
+@section('title', 'Tổng quan admin')
+@section('page-title', 'Tổng quan hệ thống')
+@section('page-class', 'page-admin-dashboard')
+
+@push('styles')
+    @vite('resources/css/pages/admin/dashboard.css')
+@endpush
 
 @section('content')
-<!-- Stats Grid -->
-<div class="stats-grid mb-4">
-    <div class="stat-card users">
-        <div class="stat-icon">
-            <i class="fas fa-users"></i>
-        </div>
-        <div class="stat-number">{{ $stats['total_users'] }}</div>
-        <div class="stat-label">Tổng Users</div>
-        <div class="stat-change positive">
-            <i class="fas fa-arrow-up me-1"></i>{{ $stats['today_registrations'] }} hôm nay
-        </div>
-    </div>
-    
-    <div class="stat-card courses">
-        <div class="stat-icon">
-            <i class="fas fa-user-shield"></i>
-        </div>
-        <div class="stat-number">{{ $stats['total_admins'] }}</div>
-        <div class="stat-label">Administrators</div>
-    </div>
-    
-    <div class="stat-card revenue">
-        <div class="stat-icon">
-            <i class="fas fa-user-tie"></i>
-        </div>
-        <div class="stat-number">{{ $stats['total_staff'] }}</div>
-        <div class="stat-label">Staff Members</div>
-    </div>
-    
-    <div class="stat-card orders">
-        <div class="stat-icon">
-            <i class="fas fa-user-graduate"></i>
-        </div>
-        <div class="stat-number">{{ $stats['total_students'] }}</div>
-        <div class="stat-label">Students</div>
-    </div>
-</div>
+    @php
+        $roleLabels = [
+            'admin' => 'Admin',
+            'staff' => 'Nhân sự',
+            'instructor' => 'Giảng viên',
+            'student' => 'Học viên',
+        ];
+        $totalRoleUsers = max((int) $usersByRole->sum(), 1);
+    @endphp
 
-<div class="row">
-    <!-- Recent Users -->
-    <div class="col-md-8 mb-4">
-        <div class="chart-card">
-            <div class="chart-header">
-                <h5 class="chart-title">User mới đăng ký</h5>
-                <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+    <div class="dashboard-shell">
+        <section class="chart-card dashboard-hero mb-4">
+            <div class="dashboard-hero-copy">
+                <span class="dashboard-kicker">Dashboard admin</span>
+                <h2>Quan sát nhanh tình hình học viên và khóa học</h2>
+                <p class="mb-0">Biểu đồ bên dưới giúp admin nhìn nhanh số lượng đăng ký học và số khóa học mở mới theo ngày hoặc theo tháng, ngay trên một màn hình gọn.</p>
+                <div class="dashboard-hero-pills">
+                    <span class="dashboard-pill"><i class="fas fa-user-plus"></i>{{ number_format($stats['today_enrollments']) }} đăng ký hôm nay</span>
+                    <span class="dashboard-pill"><i class="fas fa-book-open"></i>{{ number_format($stats['today_course_openings']) }} khóa học mở hôm nay</span>
+                    <span class="dashboard-pill"><i class="fas fa-clock"></i>{{ number_format($stats['pending_enrollments']) }} đăng ký chờ duyệt</span>
+                </div>
             </div>
-            <div class="activity-list">
-                @forelse($recentUsers as $user)
-                <div class="activity-item">
-                    <div class="activity-icon {{ $user->is_verified ? 'success' : 'warning' }}">
-                        <i class="fas fa-user"></i>
+            <div class="dashboard-hero-summary">
+                <article class="dashboard-summary-card">
+                    <span class="summary-label">Trong tháng này</span>
+                    <strong>{{ number_format($stats['monthly_enrollments']) }}</strong>
+                    <small>lượt đăng ký học mới</small>
+                </article>
+                <article class="dashboard-summary-card">
+                    <span class="summary-label">Khóa học mở trong tháng</span>
+                    <strong>{{ number_format($stats['monthly_course_openings']) }}</strong>
+                    <small>bản ghi khóa học tạo mới</small>
+                </article>
+            </div>
+        </section>
+
+        <div class="stats-grid mb-4">
+            <article class="stat-card users">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number">{{ number_format($stats['total_users']) }}</div>
+                <div class="stat-label">Tổng tài khoản</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up me-1"></i>{{ number_format($stats['today_registrations']) }} tài khoản mới hôm nay
+                </div>
+            </article>
+
+            <article class="stat-card courses">
+                <div class="stat-icon">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="stat-number">{{ number_format($stats['total_enrollments']) }}</div>
+                <div class="stat-label">Tổng lượt đăng ký học</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-check-circle me-1"></i>{{ number_format($stats['approved_enrollments']) }} đã duyệt
+                </div>
+            </article>
+
+            <article class="stat-card revenue">
+                <div class="stat-icon">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <div class="stat-number">{{ number_format($stats['published_courses']) }}</div>
+                <div class="stat-label">Khóa học đang hiển thị</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-layer-group me-1"></i>{{ number_format($stats['total_courses']) }} khóa học trong hệ thống
+                </div>
+            </article>
+
+            <article class="stat-card orders">
+                <div class="stat-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="stat-number">{{ number_format($stats['pending_enrollments']) }}</div>
+                <div class="stat-label">Đăng ký chờ duyệt</div>
+                <div class="stat-change {{ $stats['pending_enrollments'] > 0 ? 'negative' : 'positive' }}">
+                    <i class="fas {{ $stats['pending_enrollments'] > 0 ? 'fa-hourglass-half' : 'fa-circle-check' }} me-1"></i>{{ number_format($stats['completed_enrollments']) }} đã hoàn thành
+                </div>
+            </article>
+        </div>
+
+        <div class="charts-section dashboard-main-grid mb-4">
+            <section class="chart-card dashboard-trend-card" data-admin-trend-root>
+                <div class="dashboard-card-header dashboard-trend-header">
+                    <div>
+                        <h5 class="chart-title">Xu hướng đăng ký và mở khóa học</h5>
+                        <p class="dashboard-card-copy mb-0">Dữ liệu được lấy theo thời điểm tạo bản ghi đăng ký và khóa học trên hệ thống.</p>
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-title">{{ $user->fullname }}</div>
-                        <div class="activity-desc">
-                            <span class="badge bg-secondary">{{ $user->role }}</span>
-                            @if(!$user->is_verified)
-                                <span class="badge bg-warning">Chưa xác thực</span>
-                            @endif
+                    <div class="dashboard-range-switch" role="group" aria-label="Chọn kiểu xem biểu đồ">
+                        <button type="button" class="dashboard-range-button is-active" data-trend-range="daily">Theo ngày</button>
+                        <button type="button" class="dashboard-range-button" data-trend-range="monthly">Theo tháng</button>
+                    </div>
+                </div>
+
+                <div class="dashboard-trend-summary">
+                    <article class="dashboard-trend-metric">
+                        <span>Tổng đăng ký trong kỳ</span>
+                        <strong data-trend-summary="enrollments-total">0</strong>
+                        <small data-trend-summary="range-label">14 ngày gần nhất</small>
+                    </article>
+                    <article class="dashboard-trend-metric">
+                        <span>Tổng khóa học mở trong kỳ</span>
+                        <strong data-trend-summary="courses-total">0</strong>
+                        <small data-trend-summary="average-label">Trung bình 0 / mốc</small>
+                    </article>
+                    <article class="dashboard-trend-metric">
+                        <span>Mốc cao nhất</span>
+                        <strong data-trend-summary="peak-value">0</strong>
+                        <small data-trend-summary="peak-label">đăng ký hoặc khóa học trong một mốc</small>
+                    </article>
+                </div>
+
+                <div class="dashboard-chart-frame">
+                    <canvas id="adminTrendChart" class="dashboard-trend-canvas" height="320" aria-label="Biểu đồ xu hướng đăng ký và mở khóa học" role="img"></canvas>
+                </div>
+
+                <div class="dashboard-trend-legend">
+                    <span class="legend-item"><span class="legend-dot legend-dot-enrollment"></span>Học viên đăng ký</span>
+                    <span class="legend-item"><span class="legend-dot legend-dot-course"></span>Khóa học mở mới</span>
+                </div>
+            </section>
+
+            <div class="dashboard-side-stack">
+                <section class="chart-card dashboard-info-card">
+                    <div class="dashboard-card-header">
+                        <div>
+                            <h5 class="chart-title">Trạng thái nhanh</h5>
+                            <p class="dashboard-card-copy mb-0">Các chỉ số cần nhìn nhanh trong ca làm việc hôm nay.</p>
                         </div>
-                        <div class="activity-time">
-                            {{ $user->created_at->diffForHumans() }}
+                    </div>
+                    <div class="dashboard-status-list">
+                        <div class="dashboard-status-item">
+                            <span>Tài khoản đã xác thực</span>
+                            <strong>{{ number_format($stats['verified_users']) }}</strong>
+                        </div>
+                        <div class="dashboard-status-item">
+                            <span>Tài khoản chưa xác thực</span>
+                            <strong>{{ number_format($stats['unverified_users']) }}</strong>
+                        </div>
+                        <div class="dashboard-status-item">
+                            <span>Đăng ký user trong tuần</span>
+                            <strong>{{ number_format($stats['weekly_registrations']) }}</strong>
+                        </div>
+                        <div class="dashboard-status-item">
+                            <span>Học viên hệ thống</span>
+                            <strong>{{ number_format($stats['total_students']) }}</strong>
                         </div>
                     </div>
-                </div>
-                @empty
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-users fa-2x mb-2"></i>
-                    <p>Không có user nào</p>
-                </div>
-                @endforelse
-            </div>
-        </div>
-    </div>
-    
-    <!-- System Status -->
-    <div class="col-md-4 mb-4">
-        <div class="chart-card">
-            <div class="chart-header">
-                <h5 class="chart-title">Trạng thái hệ thống</h5>
-            </div>
-            <div class="status-list">
-                <div class="status-item d-flex justify-content-between align-items-center py-2 border-bottom">
-                    <span>Users đã xác thực:</span>
-                    <span class="badge bg-success">{{ $stats['verified_users'] }}</span>
-                </div>
-                <div class="status-item d-flex justify-content-between align-items-center py-2 border-bottom">
-                    <span>Chờ xác thực:</span>
-                    <span class="badge bg-warning">{{ $stats['unverified_users'] }}</span>
-                </div>
-                <div class="status-item d-flex justify-content-between align-items-center py-2 border-bottom">
-                    <span>Đăng ký tuần này:</span>
-                    <span class="badge bg-info">{{ $stats['weekly_registrations'] }}</span>
-                </div>
-                <div class="status-item d-flex justify-content-between align-items-center py-2">
-                    <span>Tỷ lệ xác thực:</span>
-                    <span class="badge bg-primary">
-                        {{ $stats['total_users'] > 0 ? round(($stats['verified_users'] / $stats['total_users']) * 100, 1) : 0 }}%
-                    </span>
-                </div>
+                </section>
+
+                <section class="chart-card dashboard-info-card">
+                    <div class="dashboard-card-header">
+                        <div>
+                            <h5 class="chart-title">Thao tác nhanh</h5>
+                            <p class="dashboard-card-copy mb-0">Đi thẳng đến các khu vực admin hay dùng nhất.</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-action-grid">
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-users me-2"></i>Quản lý tài khoản
+                        </a>
+                        <a href="{{ route('admin.courses.index') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-book-open me-2"></i>Quản lý khóa học
+                        </a>
+                        <a href="{{ route('admin.enrollments.pending') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-user-clock me-2"></i>Duyệt đăng ký
+                        </a>
+                        <a href="{{ route('admin.settings.index') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-cog me-2"></i>Cài đặt hệ thống
+                        </a>
+                    </div>
+                </section>
+
+                <section class="chart-card dashboard-info-card">
+                    <div class="dashboard-card-header">
+                        <div>
+                            <h5 class="chart-title">Cảnh báo bảo mật</h5>
+                            <p class="dashboard-card-copy mb-0">Theo dõi nhanh các cảnh báo trong 24 giờ gần nhất.</p>
+                        </div>
+                        <a href="{{ route('admin.system-logs.index', ['category' => 'security', 'action' => 'security_alert']) }}" class="btn btn-sm btn-outline-danger">
+                            Xem log
+                            <span id="security-alert-badge" class="badge bg-danger ms-2">{{ $securityAlertsCount }}</span>
+                        </a>
+                    </div>
+
+                    @if($latestSecurityAlert)
+                        <div class="dashboard-alert-box">
+                            <strong>{{ $latestSecurityAlert->details['type'] ?? $latestSecurityAlert->details['message'] ?? $latestSecurityAlert->action }}</strong>
+                            <small>Ghi nhận {{ $latestSecurityAlert->created_at->diffForHumans() }}</small>
+                            <span>IP: {{ $latestSecurityAlert->ip ?? 'Chưa rõ' }}</span>
+                            <span>Người dùng: {{ $latestSecurityAlert->user?->fullname ?? 'Hệ thống' }}</span>
+                        </div>
+                    @else
+                        <div class="dashboard-empty-state">
+                            <i class="fas fa-shield-halved"></i>
+                            <p class="mb-0">Chưa có cảnh báo mới trong 24 giờ gần nhất.</p>
+                        </div>
+                    @endif
+                </section>
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="chart-card mt-3">
-            <div class="chart-header">
-                <h5 class="chart-title">Hành động nhanh</h5>
-            </div>
-            <div class="quick-actions-grid">
-                <a href="{{ route('admin.users.index') }}" class="btn btn-outline-primary btn-sm w-100 mb-2">
-                    <i class="fas fa-users me-2"></i>Quản lý Users
-                </a>
-                <a href="{{ route('admin.users.create') }}" class="btn btn-outline-success btn-sm w-100 mb-2">
-                    <i class="fas fa-user-plus me-2"></i>Thêm User
-                </a>
-                <a href="{{ route('home') }}" class="btn btn-outline-info btn-sm w-100 mb-2">
-                    <i class="fas fa-home me-2"></i>Về trang chủ
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
+        <div class="row g-4">
+            <div class="col-xl-7">
+                <section class="chart-card h-100">
+                    <div class="dashboard-card-header">
+                        <div>
+                            <h5 class="chart-title">Tài khoản mới gần đây</h5>
+                            <p class="dashboard-card-copy mb-0">Danh sách 6 tài khoản vừa được tạo gần nhất trên hệ thống.</p>
+                        </div>
+                        <a href="{{ route('admin.users.index') }}" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                    </div>
 
-<!-- System Activity -->
-<div class="row">
-    <div class="col-12">
-        <div class="chart-card">
-            <div class="chart-header">
-                <h5 class="chart-title">Phân bố Users theo Role</h5>
+                    <div class="activity-list">
+                        @forelse($recentUsers as $user)
+                            <div class="activity-item">
+                                <div class="activity-icon {{ $user->is_verified ? 'success' : 'warning' }}">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">{{ $user->fullname ?: $user->name ?: $user->email }}</div>
+                                    <div class="activity-desc d-flex flex-wrap align-items-center gap-2">
+                                        <span class="badge text-bg-light">{{ $roleLabels[$user->role] ?? ucfirst($user->role) }}</span>
+                                        <span>{{ $user->email }}</span>
+                                        @unless($user->is_verified)
+                                            <span class="badge bg-warning text-dark">Chưa xác thực</span>
+                                        @endunless
+                                    </div>
+                                    <div class="activity-time">{{ $user->created_at->diffForHumans() }}</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="dashboard-empty-state py-4">
+                                <i class="fas fa-users"></i>
+                                <p class="mb-0">Chưa có tài khoản mới để hiển thị.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </section>
             </div>
-            <div class="row text-center">
-                <div class="col-md-3">
-                    <div class="p-3">
-                        <h3 class="text-primary">{{ $stats['total_admins'] }}</h3>
-                        <p class="text-muted mb-0">Administrators</p>
+
+            <div class="col-xl-5">
+                <section class="chart-card h-100">
+                    <div class="dashboard-card-header">
+                        <div>
+                            <h5 class="chart-title">Phân bổ tài khoản</h5>
+                            <p class="dashboard-card-copy mb-0">Tỷ trọng từng vai trò và số lượng user đăng ký trong năm nay.</p>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3">
-                        <h3 class="text-success">{{ $stats['total_staff'] }}</h3>
-                        <p class="text-muted mb-0">Staff Members</p>
+
+                    <div class="dashboard-role-list">
+                        @forelse($usersByRole as $role => $count)
+                            @php $percentage = round(($count / $totalRoleUsers) * 100, 1); @endphp
+                            <div class="dashboard-role-item">
+                                <div class="dashboard-role-copy">
+                                    <strong>{{ $roleLabels[$role] ?? ucfirst($role) }}</strong>
+                                    <small>{{ number_format($count) }} tài khoản</small>
+                                </div>
+                                <div class="dashboard-role-meta">{{ $percentage }}%</div>
+                                <div class="progress dashboard-role-progress" role="progressbar" aria-valuenow="{{ $percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                    <div class="progress-bar" style="width: {{ $percentage }}%"></div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="dashboard-empty-state py-4">
+                                <i class="fas fa-chart-pie"></i>
+                                <p class="mb-0">Chưa có dữ liệu phân bổ tài khoản.</p>
+                            </div>
+                        @endforelse
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3">
-                        <h3 class="text-info">{{ $stats['total_instructors'] }}</h3>
-                        <p class="text-muted mb-0">Instructors</p>
+
+                    <div class="dashboard-month-grid mt-4">
+                        @foreach(range(1, 12) as $month)
+                            <article class="dashboard-month-card">
+                                <strong>{{ number_format($monthlyRegistrations[$month] ?? 0) }}</strong>
+                                <span>Th{{ str_pad((string) $month, 2, '0', STR_PAD_LEFT) }}</span>
+                            </article>
+                        @endforeach
                     </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="p-3">
-                        <h3 class="text-warning">{{ $stats['total_students'] }}</h3>
-                        <p class="text-muted mb-0">Students</p>
-                    </div>
-                </div>
+                </section>
             </div>
         </div>
     </div>
-</div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartRoot = document.querySelector('[data-admin-trend-root]');
+            const chartCanvas = document.getElementById('adminTrendChart');
+            const securityAlertBadge = document.getElementById('security-alert-badge');
+            const trendData = @json($dashboardTrend, JSON_UNESCAPED_UNICODE);
+
+            if (!chartRoot || !chartCanvas) {
+                return;
+            }
+
+            const summaryTargets = {
+                enrollmentsTotal: chartRoot.querySelector('[data-trend-summary="enrollments-total"]'),
+                coursesTotal: chartRoot.querySelector('[data-trend-summary="courses-total"]'),
+                rangeLabel: chartRoot.querySelector('[data-trend-summary="range-label"]'),
+                averageLabel: chartRoot.querySelector('[data-trend-summary="average-label"]'),
+                peakValue: chartRoot.querySelector('[data-trend-summary="peak-value"]'),
+                peakLabel: chartRoot.querySelector('[data-trend-summary="peak-label"]'),
+            };
+            const rangeButtons = chartRoot.querySelectorAll('[data-trend-range]');
+            const context = chartCanvas.getContext('2d');
+            let activeRange = 'daily';
+            let resizeTimer = null;
+
+            function getThemeValue(name, fallback) {
+                const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+                return value || fallback;
+            }
+
+            function formatNumber(value) {
+                return Number(value || 0).toLocaleString('vi-VN');
+            }
+
+            function hexToRgba(hex, alpha) {
+                const normalized = hex.replace('#', '');
+                if (normalized.length !== 6) {
+                    return `rgba(37, 99, 235, ${alpha})`;
+                }
+
+                const red = parseInt(normalized.substring(0, 2), 16);
+                const green = parseInt(normalized.substring(2, 4), 16);
+                const blue = parseInt(normalized.substring(4, 6), 16);
+                return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+            }
+
+            function updateSummary(dataset) {
+                const maxPoint = Math.max(...dataset.enrollments, ...dataset.courses, 0);
+                const averageCourses = dataset.courses.length ? (dataset.meta.courses_total / dataset.courses.length) : 0;
+
+                summaryTargets.enrollmentsTotal.textContent = formatNumber(dataset.meta.enrollments_total);
+                summaryTargets.coursesTotal.textContent = formatNumber(dataset.meta.courses_total);
+                summaryTargets.rangeLabel.textContent = dataset.meta.range_label;
+                summaryTargets.averageLabel.textContent = `Trung bình ${averageCourses.toFixed(1).replace('.', ',')} / mốc`;
+                summaryTargets.peakValue.textContent = formatNumber(maxPoint);
+                summaryTargets.peakLabel.textContent = 'đăng ký hoặc khóa học trong một mốc';
+            }
+
+            function buildPoints(series, labels, plot, maxValue) {
+                if (!labels.length) {
+                    return [];
+                }
+
+                const stepX = labels.length > 1 ? plot.width / (labels.length - 1) : 0;
+
+                return series.map((value, index) => ({
+                    x: plot.left + (labels.length > 1 ? stepX * index : plot.width / 2),
+                    y: plot.top + plot.height - ((value / maxValue) * plot.height),
+                    value,
+                    label: labels[index],
+                }));
+            }
+
+            function drawSeries(points, color, baseline, shouldFill) {
+                if (!points.length) {
+                    return;
+                }
+
+                if (shouldFill) {
+                    context.beginPath();
+                    context.moveTo(points[0].x, baseline);
+                    points.forEach((point) => context.lineTo(point.x, point.y));
+                    context.lineTo(points[points.length - 1].x, baseline);
+                    context.closePath();
+                    context.fillStyle = hexToRgba(color, 0.10);
+                    context.fill();
+                }
+
+                context.beginPath();
+                points.forEach((point, index) => {
+                    if (index === 0) {
+                        context.moveTo(point.x, point.y);
+                    } else {
+                        context.lineTo(point.x, point.y);
+                    }
+                });
+                context.strokeStyle = color;
+                context.lineWidth = 3;
+                context.lineCap = 'round';
+                context.lineJoin = 'round';
+                context.stroke();
+
+                points.forEach((point) => {
+                    context.beginPath();
+                    context.arc(point.x, point.y, 4, 0, Math.PI * 2);
+                    context.fillStyle = '#ffffff';
+                    context.fill();
+                    context.lineWidth = 2.5;
+                    context.strokeStyle = color;
+                    context.stroke();
+                });
+            }
+
+            function renderChart() {
+                const dataset = trendData[activeRange] || trendData.daily;
+                const labels = dataset.labels || [];
+                const allValues = [...dataset.enrollments, ...dataset.courses];
+                const highestValue = Math.max(...allValues, 1);
+                const gridSteps = 4;
+                const niceMax = Math.max(gridSteps, Math.ceil(highestValue / gridSteps) * gridSteps);
+                const width = chartCanvas.clientWidth || chartCanvas.parentElement.clientWidth || 760;
+                const height = 320;
+                const dpr = window.devicePixelRatio || 1;
+                const plot = {
+                    left: 46,
+                    right: 20,
+                    top: 20,
+                    bottom: 42,
+                };
+
+                chartCanvas.width = Math.floor(width * dpr);
+                chartCanvas.height = Math.floor(height * dpr);
+                chartCanvas.style.height = `${height}px`;
+                context.setTransform(dpr, 0, 0, dpr, 0, 0);
+                context.clearRect(0, 0, width, height);
+
+                plot.width = width - plot.left - plot.right;
+                plot.height = height - plot.top - plot.bottom;
+
+                const enrollmentColor = getThemeValue('--trend-enrollment', '#2563eb');
+                const courseColor = getThemeValue('--trend-course', '#f97316');
+                const gridColor = getThemeValue('--trend-grid', 'rgba(148, 163, 184, 0.24)');
+                const axisColor = getThemeValue('--trend-axis', '#64748b');
+
+                context.font = '12px "Segoe UI", sans-serif';
+                context.textBaseline = 'middle';
+                context.fillStyle = axisColor;
+                context.strokeStyle = gridColor;
+                context.lineWidth = 1;
+
+                for (let step = 0; step <= gridSteps; step += 1) {
+                    const y = plot.top + plot.height - ((plot.height / gridSteps) * step);
+                    const value = Math.round((niceMax / gridSteps) * step);
+
+                    context.beginPath();
+                    context.moveTo(plot.left, y);
+                    context.lineTo(width - plot.right, y);
+                    context.stroke();
+                    context.fillText(String(value), 8, y);
+                }
+
+                const labelInterval = labels.length > 10 ? 2 : 1;
+                labels.forEach((label, index) => {
+                    if (index % labelInterval !== 0 && index !== labels.length - 1) {
+                        return;
+                    }
+
+                    const x = labels.length > 1
+                        ? plot.left + ((plot.width / (labels.length - 1)) * index)
+                        : plot.left + (plot.width / 2);
+
+                    context.textAlign = 'center';
+                    context.fillText(label, x, height - 14);
+                });
+
+                const enrollmentPoints = buildPoints(dataset.enrollments, labels, plot, niceMax);
+                const coursePoints = buildPoints(dataset.courses, labels, plot, niceMax);
+
+                drawSeries(enrollmentPoints, enrollmentColor, plot.top + plot.height, true);
+                drawSeries(coursePoints, courseColor, plot.top + plot.height, false);
+                updateSummary(dataset);
+            }
+
+            rangeButtons.forEach((button) => {
+                button.addEventListener('click', function () {
+                    activeRange = button.dataset.trendRange || 'daily';
+                    rangeButtons.forEach((item) => item.classList.toggle('is-active', item === button));
+                    renderChart();
+                });
+            });
+
+            window.addEventListener('resize', function () {
+                window.clearTimeout(resizeTimer);
+                resizeTimer = window.setTimeout(renderChart, 120);
+            });
+
+            const themeObserver = new MutationObserver(renderChart);
+            themeObserver.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class', 'data-bs-theme'],
+            });
+
+            async function fetchAlertsCount() {
+                try {
+                    const response = await fetch('{{ route('admin.alerts.count') }}', {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const payload = await response.json();
+                    if (securityAlertBadge) {
+                        securityAlertBadge.textContent = payload.count || 0;
+                    }
+                } catch (error) {
+                    // ignore polling errors
+                }
+            }
+
+            renderChart();
+            fetchAlertsCount();
+            window.setInterval(fetchAlertsCount, 60000);
+        });
+    </script>
+@endpush

@@ -1,6 +1,8 @@
 <?php
+
 namespace App\Models;
 
+use App\Support\StudentLevel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -17,6 +19,12 @@ class User extends Authenticatable
         'otp',
         'is_verified',
         'role',
+        'google_id',
+        'facebook_id',
+        'provider',
+        'provider_id',
+        'rating',
+        'total_rating',
     ];
 
     protected $hidden = [
@@ -28,9 +36,10 @@ class User extends Authenticatable
     protected $casts = [
         'is_verified' => 'boolean',
         'email_verified_at' => 'datetime',
+        'rating' => 'decimal:1',
+        'total_rating' => 'integer',
     ];
 
-    // Phương thức kiểm tra role
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
@@ -51,7 +60,6 @@ class User extends Authenticatable
         return $this->role === 'student';
     }
 
-    // Scope để lọc theo role
     public function scopeAdmins($query)
     {
         return $query->where('role', 'admin');
@@ -75,5 +83,71 @@ class User extends Authenticatable
     public function scopeVerified($query)
     {
         return $query->where('is_verified', true);
+    }
+
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function enrollments()
+    {
+        return $this->hasMany(CourseEnrollment::class);
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(CourseCertificate::class);
+    }
+
+    public function materialProgress()
+    {
+        return $this->hasMany(CourseMaterialProgress::class);
+    }
+
+    public function getBalanceAttribute()
+    {
+        return $this->wallet?->balance ?? 0;
+    }
+
+    public function getOrCreateWallet(): Wallet
+    {
+        return $this->wallet()->firstOrCreate([
+            'firefly_identity' => 'user:' . $this->id,
+        ]);
+    }
+
+    /**
+     * Reviews submitted by this user (as student).
+     */
+    public function reviews()
+    {
+        return $this->hasMany(CourseReview::class);
+    }
+
+    /**
+     * Reviews received by this user as an instructor.
+     */
+    public function instructorReviews()
+    {
+        return $this->hasMany(CourseReview::class, 'instructor_id');
+    }
+
+    public function updateRating()
+    {
+        $reviews = $this->instructorReviews();
+        $this->rating = $reviews->avg('instructor_rating') ?? 0;
+        $this->total_rating = $reviews->count();
+        $this->save();
+    }
+
+    public function buildStudentLevelSummary(): array
+    {
+        return StudentLevel::makeForUser($this);
     }
 }

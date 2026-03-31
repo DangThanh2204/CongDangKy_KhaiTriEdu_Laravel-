@@ -1,0 +1,17 @@
+.page-course-show .chat-widget {
+    z-index: 1035;
+}
+
+.page-course-show .course-show-banner {
+    height: 380px;
+    object-fit: cover;
+}
+
+.page-course-show .course-show-sidebar {
+    top: 100px;
+}
+
+.page-course-show .course-show-similar-thumb {
+    height: 160px;
+    object-fit: cover;
+}

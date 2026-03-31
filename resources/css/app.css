@@ -1,4 +1,4 @@
-/* Fonts */
+﻿/* Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* Font Awesome CDN */
@@ -12,23 +12,115 @@
     --primary-color: #2c5aa0;
     --secondary-color: #f8f9fa;
     --accent-color: #ff6b35;
+    --background-color: #ffffff;
+    --text-color: #333333;
+    --card-bg: #ffffff;
+    --card-border: rgba(224, 224, 224, 0.8);
+    --navbar-bg: rgba(255, 255, 255, 0.98);
+    --navbar-text: #333;
+    --link-color: #2c5aa0;
     --gradient-primary: linear-gradient(135deg, #2c5aa0 0%, #1e3a8a 100%);
     --gradient-accent: linear-gradient(135deg, #ff6b35 0%, #e55a2b 100%);
 }
 
+html.dark, body.dark {
+    --background-color: #000000;
+    --text-color: #e6eef6;
+    --card-bg: #0b0b0b;
+    --card-border: rgba(255, 255, 255, 0.06);
+    --navbar-bg: #000000cc;
+    --navbar-text: #e6eef6;
+    --link-color: #5bb6ff;
+    --gradient-primary: linear-gradient(135deg, #1e3a8a 0%, #07102a 100%);
+    --gradient-accent: linear-gradient(135deg, #ff6b35 0%, #d24607 100%);
+}
+
+/* course cards - general appearance */
+.course-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.course-card:hover {
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transform: translateY(-5px);
+}
+.course-card .card-body {
+    color: var(--text-color);
+}
+
+
+/* feature cards - enhanced appearance */
+.feature-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.feature-card:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+    transform: translateY(-3px);
+}
+
+
+
 body {
     font-family: 'Inter', sans-serif;
     padding-top: 80px;
+    scroll-padding-top: 100px;
+    background: var(--background-color);
+    color: var(--text-color);
 }
+
+/* Card and common background */
+.card,
+.course-card,
+.feature-card {
+    background: var(--card-bg);
+    border-color: var(--card-border);
+}
+
+/* Navbar adaptations */
+.navbar {
+    background: var(--navbar-bg) !important;
+}
+
+.navbar .nav-link {
+    color: var(--navbar-text) !important;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+    background: var(--gradient-primary);
+    color: white !important;
+}
+
+a,
+.btn-link {
+    color: var(--link-color);
+}
+
+a:hover,
+.btn-link:hover {
+    color: var(--primary-color);
+}
+
+
 
 /* Enhanced Navbar Styles */
 .navbar {
-    background: rgba(255, 255, 255, 0.98) !important;
+    background: var(--navbar-bg) !important;
     backdrop-filter: blur(20px);
     transition: all 0.3s ease;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     padding: 1rem 0;
     height: 80px;
+    overflow: visible; /* allow dropdowns to show */
 }
 
 .navbar-brand {
@@ -39,6 +131,11 @@ body {
     align-items: center;
 }
 
+.navbar .navbar-toggler-icon {
+    filter: invert(0);
+}
+
+
 .brand-text {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
@@ -46,14 +143,31 @@ body {
     background-clip: text;
 }
 
+.navbar-nav {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    overflow-y: visible; /* allow dropdowns to escape */
+}
+
+/* ensure dropdown parents are positioned for absolute children */
+.nav-item.dropdown {
+    position: relative;
+}
 .navbar-nav .nav-link {
     font-weight: 500;
-    color: #333 !important;
+    color: var(--navbar-text) !important;
     margin: 0 0.5rem;
     transition: all 0.3s ease;
     border-radius: 25px;
     padding: 8px 16px !important;
 }
+
+/* dropdown menu adjustments */
+.navbar-nav .dropdown-menu {
+    position: absolute;
+    z-index: 9999; /* ensure it appears above all content */
+}
+
 
 .navbar-nav .nav-link:hover,
 .navbar-nav .nav-link.active {
@@ -66,7 +180,7 @@ body {
     box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
 }
 
-/* Style riêng cho nút đăng ký để có chút khác biệt nhẹ */
+/* Style riÃªng cho nÃºt Ä‘Äƒng kÃ½ Ä‘á»ƒ cÃ³ chÃºt khÃ¡c biá»‡t nháº¹ */
 .navbar-nav .nav-link[href*="register"] {
     background: var(--gradient-accent);
     color: white !important;
@@ -142,7 +256,7 @@ body {
     border: none;
     border-radius: 15px;
     transition: all 0.3s ease;
-    background: white;
+    background: var(--card-bg);
 }
 
 .feature-card:hover {
@@ -172,7 +286,7 @@ body {
     border-radius: 15px;
     overflow: hidden;
     transition: all 0.3s ease;
-    background: white;
+    background: var(--card-bg);
     position: relative;
 }
 
@@ -190,6 +304,29 @@ body {
     color: white;
     font-size: 3rem;
     position: relative;
+}
+
+/* Layout: make course-card a column flex container so actions sit at the bottom */
+.course-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.course-card .card-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+}
+
+.course-image {
+    flex: 0 0 auto;
+}
+
+/* Ensure action containers are pushed to the bottom */
+.course-card .card-body > .mt-auto,
+.course-card .card-footer,
+.course-card .actions {
+    margin-top: auto;
 }
 
 .course-badge {
@@ -224,7 +361,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: white;
+    background: var(--card-bg);
     border-radius: 10px;
     padding: 15px;
 }
@@ -301,7 +438,7 @@ textarea.form-control {
 .contact-card {
     border: none;
     border-radius: 20px;
-    background: white;
+    background: var(--card-bg);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
@@ -359,7 +496,7 @@ textarea.form-control {
     100% { transform: rotate(360deg); }
 }
 
-/* Social Media Icons - ĐÃ SỬA - KHÔNG ẢNH HƯỞNG BỞI BIẾN CSS */
+/* Social Media Icons - ÄÃƒ Sá»¬A - KHÃ”NG áº¢NH HÆ¯á»žNG Bá»žI BIáº¾N CSS */
 .social-links {
     display: flex;
     gap: 12px;
@@ -397,7 +534,7 @@ textarea.form-control {
     opacity: 1;
 }
 
-/* SỬA: Đặt màu cố định cho từng nền tảng */
+/* Sá»¬A: Äáº·t mÃ u cá»‘ Ä‘á»‹nh cho tá»«ng ná»n táº£ng */
 .social-links a.facebook {
     background: #1877F2 !important; /* Facebook blue */
     color: white !important;
@@ -416,6 +553,15 @@ textarea.form-control {
 .social-links a.zalo {
     background: #0068FF !important; /* Zalo blue */
     color: white !important;
+}
+
+.social-links a.google {
+    background: linear-gradient(45deg, #4285F4 0%, #34A853 100%) !important; /* Google gradient */
+    color: white !important;
+}
+
+.social-links a.google:hover {
+    background: linear-gradient(45deg, #3a7cda 0%, #2f8b48 100%) !important;
 }
 
 .social-links a:hover {
@@ -486,7 +632,7 @@ footer .social-links a {
 
 /* Notification Styles */
 .notification {
-    background: white;
+    background: var(--card-bg);
     border-radius: 15px;
     padding: 20px;
     margin-bottom: 1rem;
@@ -559,7 +705,7 @@ footer {
     right: 0;
     width: 350px;
     height: 500px;
-    background: white;
+    background: var(--card-bg);
     border-radius: 20px;
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
     opacity: 0;
@@ -603,7 +749,7 @@ footer {
     flex: 1;
     padding: 20px;
     overflow-y: auto;
-    background: #f8f9fa;
+    background: var(--card-bg);
 }
 
 .chat-message {
@@ -631,7 +777,7 @@ footer {
 }
 
 .message-content {
-    background: white;
+    background: var(--card-bg);
     padding: 12px 15px;
     border-radius: 18px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -675,6 +821,657 @@ footer {
     transform: scale(1.05);
 }
 
+/* Dark-mode overrides that rely on body.dark */
+body.dark {
+    color-scheme: dark;
+    background: var(--background-color);
+    color: var(--text-color);
+}
+
+/* Also support Bootstrap's data attribute theme toggles (data-bs-theme="dark") */
+[data-bs-theme="dark"] {
+    color-scheme: dark;
+}
+
+[data-bs-theme="dark"] .feature-card,
+[data-bs-theme="dark"] .course-card,
+[data-bs-theme="dark"] .contact-card,
+[data-bs-theme="dark"] .card {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+}
+
+[data-bs-theme="dark"] .chat-box,
+[data-bs-theme="dark"] .message-content,
+[data-bs-theme="dark"] .chat-body {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] textarea.form-control {
+    background: rgba(255,255,255,0.03) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+    box-shadow: none !important;
+}
+
+[data-bs-theme="dark"] .form-control::placeholder {
+    color: rgba(222,226,230,0.5) !important;
+}
+
+[data-bs-theme="dark"] .navbar {
+    background: var(--navbar-bg) !important;
+    color: var(--navbar-text) !important;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}
+
+[data-bs-theme="dark"] .btn,
+[data-bs-theme="dark"] .btn-submit,
+[data-bs-theme="dark"] .chat-button {
+    color: #fff !important;
+}
+
+[data-bs-theme="dark"] .bg-white,
+[data-bs-theme="dark"] .bg-light,
+[data-bs-theme="dark"] .bg-transparent {
+    background-color: var(--background-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-bs-theme="dark"] table.table,
+[data-bs-theme="dark"] .table thead th,
+[data-bs-theme="dark"] .table tbody td {
+    color: var(--text-color) !important;
+    border-color: var(--card-border) !important;
+    background-color: var(--card-bg) !important;
+}
+
+[data-bs-theme="dark"] .table-striped>tbody>tr:nth-of-type(odd)>* {
+    background-color: rgba(255,255,255,0.02) !important;
+}
+
+[data-bs-theme="dark"] .table-hover>tbody>tr:hover>* {
+    background-color: rgba(255,255,255,0.03) !important;
+}
+
+/* Specific admin overrides for data-bs-theme dark */
+[data-bs-theme="dark"] .card-header.bg-light {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+}
+
+[data-bs-theme="dark"] .preview-category {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+}
+
+[data-bs-theme="dark"] .color-picker-group .input-group-text {
+    background: rgba(255,255,255,0.02) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+}
+
+[data-bs-theme="dark"] .info-item:not(:last-child) {
+    border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+[data-bs-theme="dark"] .preview-section {
+    border-top: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+body.dark .feature-card,
+body.dark .course-card,
+body.dark .contact-card,
+body.dark .card {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+}
+
+body.dark .chat-box,
+body.dark .message-content,
+body.dark .chat-body {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+body.dark .form-control,
+body.dark .form-select,
+body.dark textarea.form-control {
+    background: rgba(255,255,255,0.03) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+    box-shadow: none !important;
+}
+
+body.dark .form-control::placeholder {
+    color: rgba(222,226,230,0.5) !important;
+}
+
+body.dark .navbar {
+    background: var(--navbar-bg) !important;
+    color: var(--navbar-text) !important;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}
+
+body.dark .navbar .navbar-brand {
+    color: var(--navbar-text) !important;
+}
+
+body.dark .navbar .navbar-toggler-icon {
+    filter: invert(1) !important;
+}
+
+body.dark .btn,
+body.dark .btn-submit,
+body.dark .chat-button {
+    color: #fff !important;
+}
+
+body.dark footer {
+    background: #070812 !important;
+    color: var(--text-color) !important;
+}
+
+body.dark .notification {
+    background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)) !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important;
+    color: var(--text-color) !important;
+    border-left-color: rgba(255,255,255,0.06) !important;
+}
+
+body.dark .social-links a {
+    border-color: rgba(255,255,255,0.04) !important;
+}
+
+body.dark .partner-logo {
+    background: rgba(255,255,255,0.02) !important;
+    filter: none !important;
+    opacity: 0.95 !important;
+}
+
+body.dark .avatar,
+body.dark .avatar-sm {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+body.dark .course-image {
+    background: linear-gradient(135deg, #233a66 0%, #0b1733 100%) !important;
+}
+
+body.dark .chat-box {
+    box-shadow: 0 30px 80px rgba(0,0,0,0.65) !important;
+}
+
+body.dark .btn-link {
+    color: var(--link-color) !important;
+}
+
+/* Admin layout specific dark adjustments */
+body.dark .admin-topbar {
+    background: var(--navbar-bg) !important;
+    color: var(--navbar-text) !important;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}
+
+body.dark .admin-topbar .page-title {
+    color: var(--text-color) !important;
+}
+
+body.dark .admin-sidebar {
+    background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.5)) !important;
+    color: var(--text-color) !important;
+    border-right: 1px solid rgba(255,255,255,0.04);
+}
+
+body.dark .admin-sidebar .brand-text {
+    color: var(--navbar-text) !important;
+}
+
+body.dark .admin-sidebar .sidebar-nav {
+    color: var(--text-color) !important;
+}
+
+body.dark .admin-sidebar .nav-link {
+    color: rgba(222,226,230,0.85) !important;
+    background: transparent !important;
+}
+
+body.dark .admin-sidebar .nav-link:hover,
+body.dark .admin-sidebar .nav-link.active {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+body.dark .sidebar-footer .btn,
+body.dark .sidebar-footer .sidebar-btn {
+    background: rgba(255,255,255,0.03) !important;
+    color: var(--text-color) !important;
+    border-color: rgba(255,255,255,0.04) !important;
+}
+
+body.dark .topbar-right .user-info {
+    color: var(--text-color) !important;
+}
+
+/* Theme toggle button styling in dark */
+body.dark #themeToggle {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    color: var(--text-color);
+}
+
+/* Ensure admin content cards are dark-ready */
+body.dark .admin-content .card,
+body.dark .admin-content .contact-card {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+}
+
+/* Specific overrides for admin inline/embedded styles */
+body.dark .card-header.bg-light {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+}
+
+body.dark .preview-category {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+}
+
+body.dark .color-picker-group .input-group-text {
+    background: rgba(255,255,255,0.02) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+}
+
+body.dark .info-item:not(:last-child) {
+    border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+body.dark .preview-section {
+    border-top: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+/* Ensure some components that previously used hardcoded white are dark-ready */
+body.dark .feature-card:hover,
+body.dark .course-card:hover {
+    box-shadow: 0 18px 44px rgba(0,0,0,0.6) !important;
+}
+
+/* Smooth transitions when toggling theme */
+body, .card, .navbar, .feature-card, .course-card, .form-control, .form-select, .btn {
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Comprehensive global dark-mode fallbacks for Blade templates */
+/* Make common utility classes respond to theme */
+body.dark .bg-white,
+body.dark .bg-light,
+body.dark .bg-transparent {
+    background-color: var(--background-color) !important;
+    color: var(--text-color) !important;
+}
+
+body.dark .text-dark {
+    color: var(--text-color) !important;
+}
+
+/* Navbar global */
+body.dark .navbar,
+body.dark .navbar.fixed-top,
+body.dark .navbar.navbar-light {
+    background: var(--navbar-bg) !important;
+    color: var(--navbar-text) !important;
+}
+
+body.dark .navbar .nav-link,
+body.dark .navbar .navbar-brand {
+    color: var(--navbar-text) !important;
+}
+
+/* Dropdowns, menus, toasts, modals */
+body.dark .dropdown-menu,
+body.dark .offcanvas,
+body.dark .modal-content,
+body.dark .toast,
+body.dark .popover {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--card-border) !important;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6) !important;
+}
+
+/* Buttons and outlines */
+body.dark .btn-outline-light {
+    color: var(--text-color) !important;
+    border-color: rgba(255,255,255,0.12) !important;
+}
+
+body.dark .btn-outline-primary {
+    color: var(--link-color) !important;
+}
+
+/* Tables */
+body.dark table.table,
+body.dark .table thead th,
+body.dark .table tbody td {
+    color: var(--text-color) !important;
+    border-color: var(--card-border) !important;
+    background-color: var(--card-bg) !important;
+}
+
+/* Striped and hover fallbacks for Bootstrap table variants */
+body.dark .table-striped>tbody>tr:nth-of-type(odd)>* {
+    background-color: rgba(255,255,255,0.02) !important;
+}
+
+body.dark .table-hover>tbody>tr:hover>* {
+    background-color: rgba(255,255,255,0.03) !important;
+}
+
+/* Lists and groups */
+body.dark .list-group-item,
+body.dark .card .list-group-item {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--card-border) !important;
+}
+
+/* Breadcrumbs, pagination */
+body.dark .breadcrumb,
+body.dark .pagination .page-link {
+    background: transparent !important;
+    color: var(--text-color) !important;
+    border-color: rgba(255,255,255,0.04) !important;
+}
+
+/* Form help / small text */
+body.dark small,
+body.dark .small {
+    color: rgba(222,226,230,0.75) !important;
+}
+
+/* Make images with white background less jarring by adding subtle overlay option class */
+body.dark .img-dark-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.25);
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+/* Ensure fixed elements like header/footer adapt */
+body.dark header, body.dark footer, body.dark .fixed-top, body.dark .fixed-bottom {
+    background: var(--navbar-bg) !important;
+    color: var(--text-color) !important;
+}
+
+/* Ensure badges and pills readable */
+body.dark .badge,
+body.dark .badge.bg-light,
+body.dark .badge.bg-white {
+    background: rgba(255,255,255,0.06) !important;
+    color: var(--text-color) !important;
+    border: 1px solid rgba(255,255,255,0.03) !important;
+}
+
+/* Override common admin elements that use inline or hardcoded white backgrounds */
+body.dark .about-content,
+html.dark .about-content,
+.dark .about-content,
+body.dark .contact-info-card,
+html.dark .contact-info-card,
+.dark .contact-info-card,
+body.dark .contact-card,
+html.dark .contact-card,
+.dark .contact-card,
+body.dark .card,
+html.dark .card,
+.dark .card,
+body.dark .card-body,
+html.dark .card-body,
+.dark .card-body {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--card-border) !important;
+}
+
+/* Catch inline style backgrounds that use the light whites used in templates */
+body.dark [style*="#f8f9fa"],
+html.dark [style*="#f8f9fa"],
+.dark [style*="#f8f9fa"],
+body.dark [style*="#fff"],
+html.dark [style*="#fff"],
+.dark [style*="#fff"],
+body.dark [style*="#ffffff"],
+html.dark [style*="#ffffff"],
+.dark [style*="#ffffff"],
+body.dark [style*="background: #f8f9fa"],
+html.dark [style*="background: #f8f9fa"],
+.dark [style*="background: #f8f9fa"],
+body.dark [style*="background: #fff"],
+html.dark [style*="background: #fff"],
+.dark [style*="background: #fff"],
+body.dark [style*="background: #ffffff"],
+html.dark [style*="background: #ffffff"],
+.dark [style*="background: #ffffff"] {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--card-border) !important;
+}
+
+/* Ensure bg-light sections and elements switch in dark mode (front-end pages like About/Contact) */
+body.dark .bg-light,
+html.dark .bg-light,
+.dark .bg-light,
+body.dark section.bg-light,
+html.dark section.bg-light,
+.dark section.bg-light {
+    background-color: var(--background-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-bs-theme="dark"] .bg-light,
+html[data-bs-theme="dark"] .bg-light,
+[data-bs-theme="dark"] section.bg-light,
+html[data-bs-theme="dark"] section.bg-light {
+    background-color: var(--background-color) !important;
+    color: var(--text-color) !important;
+}
+
+/* Explicit contact card fallbacks */
+body.dark .contact-info-card,
+html.dark .contact-info-card,
+.dark .contact-info-card,
+[data-bs-theme="dark"] .contact-info-card,
+html[data-bs-theme="dark"] .contact-info-card {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5) !important;
+}
+
+body.dark .contact-card,
+html.dark .contact-card,
+.dark .contact-card,
+[data-bs-theme="dark"] .contact-card,
+html[data-bs-theme="dark"] .contact-card {
+    background: var(--card-bg) !important;
+    border-color: var(--card-border) !important;
+    color: var(--text-color) !important;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5) !important;
+}
+
+/* Ensure card-body also follows dark variables */
+body.dark .card-body,
+html.dark .card-body,
+.dark .card-body,
+[data-bs-theme="dark"] .card-body,
+html[data-bs-theme="dark"] .card-body {
+    background: transparent !important;
+    color: var(--text-color) !important;
+}
+
+/* data-bs-theme variant */
+[data-bs-theme="dark"] .about-content,
+html[data-bs-theme="dark"] .about-content,
+[data-bs-theme="dark"] .contact-info-card,
+html[data-bs-theme="dark"] .contact-info-card,
+[data-bs-theme="dark"] .contact-card,
+html[data-bs-theme="dark"] .contact-card,
+[data-bs-theme="dark"] .card,
+html[data-bs-theme="dark"] .card,
+[data-bs-theme="dark"] .card-body,
+html[data-bs-theme="dark"] .card-body {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--card-border) !important;
+}
+
+[data-bs-theme="dark"] [style*="#f8f9fa"],
+html[data-bs-theme="dark"] [style*="#f8f9fa"],
+[data-bs-theme="dark"] [style*="#fff"],
+html[data-bs-theme="dark"] [style*="#fff"],
+[data-bs-theme="dark"] [style*="#ffffff"],
+html[data-bs-theme="dark"] [style*="#ffffff"],
+[data-bs-theme="dark"] [style*="background: #f8f9fa"],
+html[data-bs-theme="dark"] [style*="background: #f8f9fa"],
+[data-bs-theme="dark"] [style*="background: #fff"],
+html[data-bs-theme="dark"] [style*="background: #fff"],
+[data-bs-theme="dark"] [style*="background: #ffffff"],
+html[data-bs-theme="dark"] [style*="background: #ffffff"] {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--card-border) !important;
+}
+
+/* Tooltips */
+body.dark .tooltip-inner {
+    background: rgba(255,255,255,0.06) !important;
+    color: var(--text-color) !important;
+}
+
+/* Links in dark theme */
+body.dark a {
+    color: var(--link-color) !important;
+}
+
+/* Timeline dark-mode overrides (front-end About page) */
+body.dark .timeline-content,
+html.dark .timeline-content,
+.dark .timeline-content,
+[data-bs-theme="dark"] .timeline-content,
+html[data-bs-theme="dark"] .timeline-content {
+    background: rgba(255,255,255,0.02) !important;
+    color: var(--text-color) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6) !important;
+}
+
+/* Contact page dark-mode fixes */
+body.dark .contact-info-box,
+html.dark .contact-info-box,
+.dark .contact-info-box,
+[data-bs-theme="dark"] .contact-info-box,
+html[data-bs-theme="dark"] .contact-info-box {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6) !important;
+}
+
+body.dark .contact-icon,
+html.dark .contact-icon,
+.dark .contact-icon,
+[data-bs-theme="dark"] .contact-icon,
+html[data-bs-theme="dark"] .contact-icon {
+    background: rgba(255,255,255,0.03) !important;
+    box-shadow: none !important;
+}
+
+body.dark .accordion-button,
+html.dark .accordion-button,
+.dark .accordion-button,
+[data-bs-theme="dark"] .accordion-button,
+html[data-bs-theme="dark"] .accordion-button {
+    background: rgba(255,255,255,0.02) !important;
+    color: var(--text-color) !important;
+    border: none !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6) !important;
+}
+
+body.dark .accordion-body,
+html.dark .accordion-body,
+.dark .accordion-body,
+[data-bs-theme="dark"] .accordion-body,
+html[data-bs-theme="dark"] .accordion-body {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-radius: 8px !important;
+}
+
+/* Also ensure any .contact-card variants follow dark vars */
+body.dark .contact-info-card,
+html.dark .contact-info-card,
+.dark .contact-info-card,
+[data-bs-theme="dark"] .contact-info-card,
+html[data-bs-theme="dark"] .contact-info-card {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--card-border) !important;
+}
+
+body.dark .timeline-content:hover,
+html.dark .timeline-content:hover,
+.dark .timeline-content:hover,
+[data-bs-theme="dark"] .timeline-content:hover,
+html[data-bs-theme="dark"] .timeline-content:hover {
+    background: rgba(255,255,255,0.03) !important;
+}
+
+body.dark .timeline-marker,
+html.dark .timeline-marker,
+.dark .timeline-marker,
+[data-bs-theme="dark"] .timeline-marker,
+html[data-bs-theme="dark"] .timeline-marker {
+    background: var(--card-bg) !important;
+    border: 4px solid var(--card-border) !important;
+    color: var(--text-color) !important;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6) !important;
+}
+
+/* Ensure timeline vertical line is visible on dark */
+body.dark .timeline::before,
+html.dark .timeline::before,
+.dark .timeline::before,
+[data-bs-theme="dark"] .timeline::before,
+html[data-bs-theme="dark"] .timeline::before {
+    background: linear-gradient(180deg, rgba(44,90,160,0.6) 0%, rgba(255,107,53,0.6) 100%) !important;
+}
+
+/* High priority override to catch inline bg classes used in blade templates */
+body.dark [class*="bg-"] {
+    /* do not force all, but ensure bg-white/bg-light are covered above */
+}
+
+/* Fallback background on html to avoid white flash during transitions */
+html.dark, body.dark {
+    background-color: var(--background-color) !important;
+}
+
 /* Floating Action Button */
 .fab-container {
     position: fixed;
@@ -706,6 +1503,16 @@ footer {
     box-shadow: 0 12px 30px rgba(255, 107, 53, 0.4);
 }
 
+/* Dropdown submenu for course categories */
+.dropdown-submenu {
+    position: relative;
+}
+.dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -0.5rem;
+}
+
 /* Back to Top Button */
 .back-to-top {
     position: fixed;
@@ -730,6 +1537,135 @@ footer {
 .back-to-top.show {
     opacity: 1;
     visibility: visible;
+}
+
+/* About Section Styles */
+.about-content {
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.about-content:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.about-content h4 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.about-content ul li {
+    color: #555;
+    line-height: 1.8;
+}
+
+/* Contact Info Card Styles */
+.contact-info-card {
+    padding: 30px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 5px solid var(--primary-color);
+}
+
+.contact-info-card h4 {
+    color: var(--primary-color);
+}
+
+.contact-info-card h6 {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.contact-info-card p {
+    margin-bottom: 5px;
+}
+
+/* Social Links Styles */
+.social-links {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    color: white;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.social-link.facebook {
+    background: linear-gradient(135deg, #3b5998 0%, #1e3a8a 100%);
+}
+
+.social-link.twitter {
+    background: linear-gradient(135deg, #1da1f2 0%, #0066cc 100%);
+}
+
+.social-link.instagram {
+    background: linear-gradient(135deg, #e4405f 0%, #c13584 100%);
+}
+
+.social-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Contact Card Enhanced */
+.contact-card {
+    border: none;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.contact-card:hover {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.contact-card .card-body {
+    padding: 30px;
+}
+
+.contact-card .form-control,
+.contact-card .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+}
+
+.contact-card .form-control:focus,
+.contact-card .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.1);
+}
+
+/* FAQ Section */
+.card {
+    border: none;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card h5 {
+    color: var(--primary-color);
 }
 
 /* Enhanced Animations */
@@ -761,6 +1697,11 @@ footer {
 
 .feature-card, .course-card {
     animation: fadeInUp 0.6s ease-out;
+}
+
+/* Smooth alert dismissal */
+.alert {
+    transition: opacity 0.8s ease, transform 0.8s ease;
 }
 
 /* Badge styles */
@@ -837,5 +1778,188 @@ footer {
         width: 40px;
         height: 40px;
         font-size: 1rem;
+    }
+}
+/* Offline class picker helper */
+.offline-class-actions {
+    min-width: 180px;
+}
+@media (max-width: 991.98px) {
+    .offline-class-actions {
+        min-width: auto;
+    }
+}
+
+.site-brand-logo {
+    max-height: 35px;
+    object-fit: contain;
+    margin-right: 8px;
+}
+
+
+.theme-toggle-floating {
+    position: fixed;
+    top: 102px;
+    right: 18px;
+    width: 54px;
+    height: 54px;
+    border: 1px solid rgba(44, 90, 160, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--primary-color);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 14px 34px rgba(19, 39, 76, 0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 1035;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.theme-toggle-floating:hover {
+    transform: translateX(-3px) scale(1.05);
+    box-shadow: 0 18px 38px rgba(19, 39, 76, 0.2);
+}
+
+.theme-toggle-floating:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(44, 90, 160, 0.16), 0 18px 38px rgba(19, 39, 76, 0.2);
+}
+
+.theme-toggle-floating i {
+    font-size: 1.15rem;
+    pointer-events: none;
+}
+
+body.dark #themeToggle.theme-toggle-floating,
+html.dark #themeToggle.theme-toggle-floating,
+[data-bs-theme="dark"] #themeToggle.theme-toggle-floating {
+    background: rgba(12, 16, 24, 0.92);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #ffd76a;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+}
+
+@media (max-width: 991.98px) {
+    .theme-toggle-floating {
+        top: 92px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+    }
+
+    .theme-toggle-floating:hover {
+        transform: translateX(-2px) scale(1.04);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .theme-toggle-floating {
+        right: 16px;
+        top: 88px;
+    }
+}
+/* Portal-first navbar refinements */
+.navbar-main-nav {
+    gap: 0.35rem;
+}
+.navbar-main-nav > .nav-item {
+    display: flex;
+    align-items: center;
+}
+.navbar-main-nav .nav-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.navbar-main-nav .navbar-primary-link {
+    background: rgba(37, 99, 235, 0.08);
+    color: #1d4ed8 !important;
+    font-weight: 700;
+}
+.navbar-main-nav .navbar-primary-link:hover,
+.navbar-main-nav .navbar-primary-link.active {
+    color: #ffffff !important;
+}
+.navbar-main-nav .navbar-ghost-link {
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(255, 255, 255, 0.58);
+}
+.navbar-main-nav .navbar-ghost-link:hover,
+.navbar-main-nav .navbar-ghost-link.active {
+    border-color: transparent;
+}
+.navbar-main-nav .navbar-cta-link {
+    background: linear-gradient(135deg, #0f766e 0%, #2563eb 100%);
+    color: #ffffff !important;
+    font-weight: 700;
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
+}
+.navbar-main-nav .navbar-cta-link:hover,
+.navbar-main-nav .navbar-cta-link.active {
+    background: linear-gradient(135deg, #1d4ed8 0%, #0f172a 100%);
+    color: #ffffff !important;
+}
+.navbar-dropdown-menu {
+    min-width: 16rem;
+    padding: 0.6rem;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 18px;
+    box-shadow: 0 22px 45px rgba(15, 23, 42, 0.12);
+}
+.navbar-dropdown-menu .dropdown-item {
+    border-radius: 12px;
+    padding: 0.72rem 0.85rem;
+    font-weight: 500;
+}
+.navbar-dropdown-menu .dropdown-item.active,
+.navbar-dropdown-menu .dropdown-item:active {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+}
+html.dark .navbar-main-nav .navbar-primary-link,
+body.dark .navbar-main-nav .navbar-primary-link {
+    background: rgba(96, 165, 250, 0.14);
+    color: #bfdbfe !important;
+}
+html.dark .navbar-main-nav .navbar-ghost-link,
+body.dark .navbar-main-nav .navbar-ghost-link {
+    background: rgba(15, 23, 42, 0.46);
+    border-color: rgba(148, 163, 184, 0.24);
+}
+html.dark .navbar-dropdown-menu,
+body.dark .navbar-dropdown-menu {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(148, 163, 184, 0.16);
+}
+html.dark .navbar-dropdown-menu .dropdown-item,
+body.dark .navbar-dropdown-menu .dropdown-item {
+    color: #e2e8f0;
+}
+@media (max-width: 991.98px) {
+    .navbar-main-nav {
+        gap: 0.15rem;
+    }
+    .navbar-main-nav .nav-link {
+        width: 100%;
+        justify-content: flex-start;
+        margin: 0;
+    }
+    .navbar-main-nav .navbar-ghost-link,
+    .navbar-main-nav .navbar-primary-link,
+    .navbar-main-nav .navbar-cta-link {
+        justify-content: center;
+    }
+    .navbar-dropdown-menu {
+        min-width: 0;
+        padding: 0.35rem 0 0.45rem 0.75rem;
+        border: 0;
+        box-shadow: none;
+        background: transparent;
+    }
+    .navbar-dropdown-menu .dropdown-item {
+        padding-left: 0;
+        padding-right: 0;
     }
 }

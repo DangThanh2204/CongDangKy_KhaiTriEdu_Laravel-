@@ -24,7 +24,6 @@ return new class extends Migration
             $table->integer('students_count')->default(0);
             $table->decimal('rating', 2, 1)->default(0);
             $table->integer('total_rating')->default(0);
-            $table->foreignId('instructor_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('category_id')->constrained('course_categories')->onDelete('cascade');
             $table->enum('status', ['draft', 'published'])->default('draft');
             $table->boolean('is_featured')->default(false);

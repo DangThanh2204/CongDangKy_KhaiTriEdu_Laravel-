@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class CourseEnrollment extends Model
 {
@@ -11,36 +11,71 @@ class CourseEnrollment extends Model
 
     protected $fillable = [
         'user_id',
-        'course_id',
+        'class_id',
         'status',
-        'notes',
+        'enrolled_at',
         'approved_at',
         'rejected_at',
-        'requires_approval',
-        'enrolled_at',
-        'completed_at'
+        'cancelled_at',
+        'completed_at',
+        'notes',
     ];
 
     protected $casts = [
+        'enrolled_at' => 'datetime',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
-        'enrolled_at' => 'datetime',
+        'cancelled_at' => 'datetime',
         'completed_at' => 'datetime',
-        'requires_approval' => 'boolean'
     ];
 
-    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function course()
+    public function student()
     {
-        return $this->belongsTo(Course::class);
+        return $this->user();
     }
 
-    // Scopes
+    public function class()
+    {
+        return $this->belongsTo(CourseClass::class, 'class_id');
+    }
+
+    public function courseClass()
+    {
+        return $this->class();
+    }
+
+    public function course()
+    {
+        return $this->hasOneThrough(
+            Course::class,
+            CourseClass::class,
+            'id',
+            'id',
+            'class_id',
+            'course_id'
+        );
+    }
+
+    public function materialProgress()
+    {
+        return $this->hasMany(CourseMaterialProgress::class, 'enrollment_id');
+    }
+
+    public function quizAttempts()
+    {
+        return $this->hasMany(CourseMaterialQuizAttempt::class, 'enrollment_id');
+    }
+
+    public function certificate()
+    {
+        return $this->hasOne(CourseCertificate::class, 'enrollment_id');
+    }
+
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
@@ -56,76 +91,141 @@ class CourseEnrollment extends Model
         return $query->where('status', 'rejected');
     }
 
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', 'cancelled');
+    }
+
     public function scopeCompleted($query)
     {
-        return $query->where('status', 'completed');
+        return $query->where(function ($innerQuery) {
+            $innerQuery->where('status', 'completed')
+                ->orWhereNotNull('completed_at');
+        });
     }
 
-    // Methods
-    public function approve()
+    public function scopeForCourse($query, $course)
     {
-        $this->update([
+        $courseId = $course instanceof Course ? $course->id : $course;
+
+        return $query->whereHas('courseClass', function ($classQuery) use ($courseId) {
+            $classQuery->where('course_id', $courseId);
+        });
+    }
+
+    public function approve(): void
+    {
+        $shouldIncreaseCount = ! in_array($this->status, ['approved', 'completed'], true);
+
+        $this->forceFill([
             'status' => 'approved',
+            'enrolled_at' => $this->enrolled_at ?: now(),
             'approved_at' => now(),
             'rejected_at' => null,
-            'enrolled_at' => now()
-        ]);
+            'cancelled_at' => null,
+        ])->save();
 
-        // Cập nhật số lượng học viên
-        $this->course->increment('students_count');
+        if ($shouldIncreaseCount) {
+            $this->adjustCourseStudentsCount(1);
+        }
     }
 
-    public function reject($notes = null)
+    public function reject($notes = null): void
     {
-        $this->update([
+        $shouldDecreaseCount = in_array($this->status, ['approved', 'completed'], true);
+
+        $payload = [
             'status' => 'rejected',
             'rejected_at' => now(),
-            'approved_at' => null,
-            'notes' => $notes
-        ]);
+            'cancelled_at' => null,
+            'completed_at' => null,
+        ];
+
+        if ($notes !== null) {
+            $payload['notes'] = $notes;
+        }
+
+        $this->forceFill($payload)->save();
+
+        if ($shouldDecreaseCount) {
+            $this->adjustCourseStudentsCount(-1);
+        }
     }
 
-    public function complete()
+    public function cancel($notes = null): void
     {
-        $this->update([
-            'status' => 'completed',
-            'completed_at' => now()
-        ]);
+        $shouldDecreaseCount = in_array($this->status, ['approved', 'completed'], true);
+
+        $payload = [
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+        ];
+
+        if ($notes !== null) {
+            $payload['notes'] = $notes;
+        }
+
+        $this->forceFill($payload)->save();
+
+        if ($shouldDecreaseCount) {
+            $this->adjustCourseStudentsCount(-1);
+        }
     }
 
-    public function isPending()
+    public function complete(): void
+    {
+        $this->forceFill([
+            'status' => 'completed',
+            'enrolled_at' => $this->enrolled_at ?: now(),
+            'approved_at' => $this->approved_at ?: ($this->enrolled_at ?: now()),
+            'completed_at' => now(),
+        ])->save();
+    }
+
+    public function isPending(): bool
     {
         return $this->status === 'pending';
     }
 
-    public function isApproved()
+    public function isApproved(): bool
     {
         return $this->status === 'approved';
     }
 
-    public function isRejected()
+    public function isRejected(): bool
     {
         return $this->status === 'rejected';
     }
 
-    public function isCompleted()
+    public function isCancelled(): bool
     {
-        return $this->status === 'completed';
+        return $this->status === 'cancelled';
     }
 
-    public function requiresApproval()
+    public function isCompleted(): bool
     {
-        return $this->requires_approval;
+        return ! is_null($this->completed_at) || $this->status === 'completed';
     }
 
-    // Accessors
+    public function getDeliveryModeAttribute(): string
+    {
+        $this->loadMissing('courseClass.course');
+
+        return $this->courseClass?->course?->delivery_mode ?? 'online';
+    }
+
     public function getStatusTextAttribute()
     {
+        if ($this->isCompleted()) {
+            return 'Hoàn thành';
+        }
+
         $statuses = [
             'pending' => 'Chờ duyệt',
             'approved' => 'Đã duyệt',
             'rejected' => 'Từ chối',
-            'completed' => 'Hoàn thành'
+            'cancelled' => 'Đã hủy',
+            'completed' => 'Hoàn thành',
         ];
 
         return $statuses[$this->status] ?? $this->status;
@@ -133,13 +233,36 @@ class CourseEnrollment extends Model
 
     public function getStatusColorAttribute()
     {
+        if ($this->isCompleted()) {
+            return 'info';
+        }
+
         $colors = [
             'pending' => 'warning',
             'approved' => 'success',
             'rejected' => 'danger',
-            'completed' => 'info'
+            'cancelled' => 'secondary',
+            'completed' => 'info',
         ];
 
         return $colors[$this->status] ?? 'secondary';
+    }
+
+    private function adjustCourseStudentsCount(int $delta): void
+    {
+        $this->loadMissing('courseClass.course');
+
+        $course = $this->courseClass?->course;
+
+        if (! $course || $delta === 0) {
+            return;
+        }
+
+        if ($delta > 0) {
+            $course->increment('students_count', $delta);
+            return;
+        }
+
+        $course->decrement('students_count', abs($delta));
     }
 }

@@ -1,4 +1,26 @@
 // Enhanced custom.js với form validation và animations
+
+// Synchronously apply saved theme (or system preference) to avoid flash
+(function() {
+    try {
+        const saved = localStorage.getItem('theme');
+        if (saved) {
+            const isDark = saved === 'dark';
+            document.documentElement.classList.toggle('dark', isDark);
+            document.body.classList.toggle('dark', isDark);
+            document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+            document.body.classList.add('dark');
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+            document.body.setAttribute('data-bs-theme', 'dark');
+        }
+    } catch (e) {
+        // ignore
+    }
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
     // Smooth scroll for navigation links
     document.querySelectorAll('a.nav-link[href^="#"]').forEach(anchor => {
@@ -19,6 +41,55 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Dark mode toggle
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    function setTheme(mode) {
+        const isDark = mode === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        document.body.classList.toggle('dark', isDark);
+        // Also set Bootstrap data attribute so components using [data-bs-theme] react
+        try {
+            document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+        } catch (e) {}
+        localStorage.setItem('theme', mode);
+        if (themeIcon) {
+            themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        }
+    }
+
+    function initTheme() {
+        const saved = localStorage.getItem('theme');
+        if (saved) {
+            setTheme(saved);
+            return;
+        }
+
+        // Use system preference if available, otherwise default to light
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            setTheme('dark');
+        } else {
+            setTheme('light');
+        }
+    }
+
+    initTheme();
+
+    // Ensure toggle icon matches current theme immediately
+    try {
+        const currentIsDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+        if (themeIcon) themeIcon.className = currentIsDark ? 'fas fa-sun' : 'fas fa-moon';
+    } catch (e) {}
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            const newMode = document.body.classList.contains('dark') ? 'light' : 'dark';
+            setTheme(newMode);
+        });
+    }
 
     // Navbar background on scroll
     window.addEventListener('scroll', function() {
