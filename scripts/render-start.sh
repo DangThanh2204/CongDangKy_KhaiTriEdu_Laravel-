@@ -94,6 +94,9 @@ if [ "$DB_DRIVER" = "mysql" ] || [ "$DB_DRIVER" = "mariadb" ]; then
     fi
   fi
 
+  echo "Running Laravel migrations to align imported/public MySQL schema with current code..."
+  php artisan migrate --force
+
   if [ "${RENDER_SEED_DEMO:-false}" = "true" ]; then
     echo "Seeding/updating Render demo data..."
     php artisan db:seed --class=Database\\Seeders\\RenderDemoSeeder --force

@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\SystemLog;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class SystemLogService
 {
@@ -22,7 +24,8 @@ class SystemLogService
     {
         $user = Auth::user();
 
-        $ip = null; $ua = null;
+        $ip = null;
+        $ua = null;
         if ($request) {
             $ip = $request->ip();
             $ua = $request->userAgent();
@@ -31,9 +34,8 @@ class SystemLogService
             $ua = request()->userAgent();
         }
 
-        $detailsToStore = is_array($details) ? $details : (is_null($details) ? null : ['message' => (string)$details]);
-
-        return SystemLog::create([
+        $detailsToStore = is_array($details) ? $details : (is_null($details) ? null : ['message' => (string) $details]);
+        $payload = [
             'user_id' => $user?->id,
             'category' => $category,
             'action' => $action,
@@ -41,6 +43,21 @@ class SystemLogService
             'reference' => $reference,
             'ip' => $ip,
             'user_agent' => $ua,
-        ]);
+        ];
+
+        try {
+            if (! Schema::hasTable('system_logs')) {
+                return new SystemLog($payload);
+            }
+
+            return SystemLog::create($payload);
+        } catch (\Throwable $exception) {
+            Log::warning('System log write skipped: ' . $exception->getMessage(), [
+                'category' => $category,
+                'action' => $action,
+            ]);
+
+            return new SystemLog($payload);
+        }
     }
 }
