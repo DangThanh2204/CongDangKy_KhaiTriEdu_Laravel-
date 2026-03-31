@@ -15,9 +15,10 @@ if [ -z "${APP_KEY:-}" ]; then
 fi
 
 if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
-  export DB_DATABASE="${DB_DATABASE:-/var/www/html/storage/app/render.sqlite}"
+  export DB_DATABASE="${DB_DATABASE:-/tmp/render.sqlite}"
   mkdir -p "$(dirname "$DB_DATABASE")"
   touch "$DB_DATABASE"
+  chmod 666 "$DB_DATABASE" || true
 fi
 
 mkdir -p storage/app storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache

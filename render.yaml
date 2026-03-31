@@ -16,7 +16,7 @@ services:
       - key: DB_CONNECTION
         value: sqlite
       - key: DB_DATABASE
-        value: /var/www/html/storage/app/render.sqlite
+        value: /tmp/render.sqlite
       - key: SESSION_DRIVER
         value: file
       - key: CACHE_STORE
