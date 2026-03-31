@@ -1,17 +1,18 @@
 # Deploy Render Free
 
-Project này đã được chuẩn bị sẵn cho hướng demo trên Render free bằng `Docker + SQLite`.
+Project `khai-tri-edu` đã được chuẩn bị sẵn để demo trên Render free bằng `Docker + SQLite`.
 
 ## Cách dùng nhanh
 
 1. Đẩy source code của thư mục `khai-tri-edu` lên GitHub.
-2. Trên Render chọn `New +` -> `Blueprint` hoặc `Web Service`.
-3. Nếu dùng Blueprint, Render sẽ đọc file `render.yaml` trong repo.
-4. Sau deploy lần đầu, truy cập trang chủ để Render tự migrate và seed demo data.
+2. Trên Render chọn `New +` -> `Blueprint`.
+3. Chọn repo chứa project, Render sẽ đọc file `render.yaml`.
+4. Deploy lần đầu để Render tạo web service.
+5. Sau khi service lên, cấu hình các biến môi trường trong mục `Environment` nếu muốn bật đủ tính năng.
 
 ## Dữ liệu demo mặc định
 
-Seeder `Database\\Seeders\\RenderDemoSeeder` sẽ tạo:
+Seeder `Database\Seeders\RenderDemoSeeder` sẽ tạo:
 
 - 1 admin
 - 1 giảng viên
@@ -23,7 +24,7 @@ Seeder `Database\\Seeders\\RenderDemoSeeder` sẽ tạo:
 - ví và yêu cầu nạp trực tiếp mẫu
 - tin tức mẫu
 
-### Tài khoản demo
+## Tài khoản demo
 
 - Admin: `admin@khaitri.edu.vn` / `Demo@123`
 - Giảng viên: `giangvien@khaitri.edu.vn` / `Demo@123`
@@ -35,18 +36,88 @@ Seeder `Database\\Seeders\\RenderDemoSeeder` sẽ tạo:
 
 - Render free sẽ sleep khi không có truy cập.
 - SQLite trên Render free là dữ liệu tạm thời. Khi redeploy hoặc restart, dữ liệu có thể reset.
-- Start script sẽ tự chạy migrate baseline và seed demo data lại để link demo luôn có dữ liệu.
+- Start script sẽ tự chạy migrate baseline và seed demo data để link demo luôn có dữ liệu.
 
-## VNPay trên Render
+## Biến môi trường nên cấu hình để đủ chức năng
 
-Sau khi Render cấp domain public, có thể cấu hình:
+### Bắt buộc cho social login
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `FACEBOOK_CLIENT_ID`
+- `FACEBOOK_CLIENT_SECRET`
+
+### Tùy chọn cho redirect URI social login
+
+Nếu không nhập 2 biến này, hệ thống sẽ tự dùng `APP_URL` hoặc `RENDER_EXTERNAL_URL`:
+
+- `GOOGLE_REDIRECT_URI`
+- `FACEBOOK_REDIRECT_URI`
+
+Ví dụ nếu domain Render là `https://khai-tri-edu.onrender.com` thì callback là:
+
+- `https://khai-tri-edu.onrender.com/auth/google/callback`
+- `https://khai-tri-edu.onrender.com/auth/facebook/callback`
+
+### Bật trợ lý ảo Gemini
+
+- `GEMINI_API_KEY`
+
+Có thể giữ mặc định:
+
+- `GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta`
+- `GEMINI_ASSISTANT_MODEL=gemini-2.5-flash-lite`
+
+### Bật gửi mail thật
+
+- `MAIL_MAILER`
+- `MAIL_SCHEME`
+- `MAIL_HOST`
+- `MAIL_PORT`
+- `MAIL_USERNAME`
+- `MAIL_PASSWORD`
+- `MAIL_FROM_ADDRESS`
+- `MAIL_FROM_NAME`
+
+### Bật VNPay
 
 - `VNPAY_TMN_CODE`
 - `VNPAY_HASH_SECRET`
 
-Nếu chưa set `VNPAY_RETURN_URL` và `VNPAY_IPN_URL`, start script sẽ tự lấy `RENDER_EXTERNAL_URL` để gán:
+Nếu không nhập thì có thể để start script tự gán theo domain Render, hoặc nhập rõ:
 
-- `/payments/vnpay/return`
-- `/payments/vnpay/ipn`
+- `VNPAY_RETURN_URL=https://khai-tri-edu.onrender.com/payments/vnpay/return`
+- `VNPAY_IPN_URL=https://khai-tri-edu.onrender.com/payments/vnpay/ipn`
 
-Khi đăng ký merchant sandbox, dùng domain Render public của service.
+### Tính năng blockchain / FireFly
+
+Nếu bạn muốn demo phần này thì thêm:
+
+- `FIREFLY_URL`
+- `FIREFLY_API_KEY`
+- `FIREFLY_NAMESPACE`
+- `FIREFLY_TOKEN_POOL`
+- `FIREFLY_SIGNER`
+
+## Sau khi cập nhật Environment
+
+Sau mỗi lần sửa biến môi trường trên Render:
+
+1. `Save changes`
+2. `Manual Deploy` -> `Deploy latest commit`
+
+## Thiết lập Developer Console cho OAuth
+
+### Google
+
+Authorized redirect URI:
+
+- `https://khai-tri-edu.onrender.com/auth/google/callback`
+
+### Facebook
+
+Valid OAuth Redirect URI:
+
+- `https://khai-tri-edu.onrender.com/auth/facebook/callback`
+
+Khi domain Render thay đổi, nhớ cập nhật lại redirect URI tương ứng.

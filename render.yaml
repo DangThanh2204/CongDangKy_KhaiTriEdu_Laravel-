@@ -27,6 +27,40 @@ services:
         value: info
       - key: FILESYSTEM_DISK
         value: public
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: FACEBOOK_CLIENT_ID
+        sync: false
+      - key: FACEBOOK_CLIENT_SECRET
+        sync: false
+      - key: FACEBOOK_REDIRECT_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta
+      - key: GEMINI_ASSISTANT_MODEL
+        value: gemini-2.5-flash-lite
+      - key: MAIL_MAILER
+        sync: false
+      - key: MAIL_SCHEME
+        sync: false
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        sync: false
       - key: VNPAY_URL
         value: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
       - key: VNPAY_EXPIRE_MINUTES
@@ -41,3 +75,19 @@ services:
         sync: false
       - key: VNPAY_IPN_URL
         sync: false
+      - key: FIREFLY_URL
+        sync: false
+      - key: FIREFLY_API_KEY
+        sync: false
+      - key: FIREFLY_NAMESPACE
+        sync: false
+      - key: FIREFLY_TOKEN_POOL
+        sync: false
+      - key: FIREFLY_TOKEN_NAME
+        value: KhaiTriCredit
+      - key: FIREFLY_PLATFORM_IDENTITY
+        value: platform
+      - key: FIREFLY_SIGNER
+        sync: false
+      - key: FIREFLY_AUDIT_TOPIC
+        value: audit

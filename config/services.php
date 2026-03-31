@@ -1,5 +1,7 @@
 <?php
 
+$renderAwareAppUrl = rtrim((string) (env('APP_URL') ?: env('RENDER_EXTERNAL_URL') ?: ''), '/');
+
 return [
 
     /*
@@ -38,13 +40,17 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', $renderAwareAppUrl !== ''
+            ? $renderAwareAppUrl . '/auth/google/callback'
+            : '/auth/google/callback'),
     ],
 
     'facebook' => [
         'client_id' => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
-        'redirect' => env('FACEBOOK_REDIRECT_URI', '/auth/facebook/callback'),
+        'redirect' => env('FACEBOOK_REDIRECT_URI', $renderAwareAppUrl !== ''
+            ? $renderAwareAppUrl . '/auth/facebook/callback'
+            : '/auth/facebook/callback'),
     ],
 
     'firefly' => [
