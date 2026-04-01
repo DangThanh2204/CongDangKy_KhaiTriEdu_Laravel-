@@ -40,7 +40,7 @@ services:
       - key: RENDER_SQLITE_PATH
         value: /tmp/render.sqlite
       - key: RENDER_IMPORT_SQL_DUMP
-        value: false
+        value: true
       - key: RENDER_SQL_DUMP_PATH
         value: /var/www/html/khaitriedu.sql
       - key: RENDER_SCHEMA_DUMP_PATH

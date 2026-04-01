@@ -64,6 +64,52 @@ mysql_table_count() {
   mysql_exec -Nse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE();" "$DB_DATABASE"
 }
 
+mysql_table_exists() {
+  local table_name="$1"
+  local result
+  result="$(mysql_exec -Nse "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '${table_name}';" "$DB_DATABASE" 2>/dev/null || echo 0)"
+  [ "${result:-0}" != "0" ]
+}
+
+mysql_missing_core_tables() {
+  local missing=()
+  local table_name
+
+  for table_name in users settings courses classes course_enrollments payments wallet_transactions course_reviews system_logs; do
+    if ! mysql_table_exists "$table_name"; then
+      missing+=("$table_name")
+    fi
+  done
+
+  printf '%s' "${missing[*]}"
+}
+
+mysql_column_exists() {
+  local table_name="$1"
+  local column_name="$2"
+  local result
+  result="$(mysql_exec -Nse "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '${table_name}' AND column_name = '${column_name}';" "$DB_DATABASE" 2>/dev/null || echo 0)"
+  [ "${result:-0}" != "0" ]
+}
+
+mysql_missing_core_columns() {
+  local missing=()
+  local entry
+  local table_name
+  local column_name
+
+  for entry in     users:is_verified     courses:status     course_enrollments:status     course_enrollments:completed_at     payments:status     wallet_transactions:metadata     wallet_transactions:status     course_reviews:created_at     system_logs:category     system_logs:action     system_logs:created_at
+  do
+    table_name="${entry%%:*}"
+    column_name="${entry##*:}"
+    if mysql_table_exists "$table_name" && ! mysql_column_exists "$table_name" "$column_name"; then
+      missing+=("${table_name}.${column_name}")
+    fi
+  done
+
+  printf '%s' "${missing[*]}"
+}
+
 if [ "$DB_DRIVER" = "mysql" ] || [ "$DB_DRIVER" = "mariadb" ]; then
   : "${DB_HOST:?DB_HOST is required when using MySQL/MariaDB on Render}"
   : "${DB_DATABASE:?DB_DATABASE is required when using MySQL/MariaDB on Render}"
@@ -88,16 +134,25 @@ if [ "$DB_DRIVER" = "mysql" ] || [ "$DB_DRIVER" = "mariadb" ]; then
   fi
 
   table_count="$(mysql_table_count || echo 0)"
+  missing_core_tables="$(mysql_missing_core_tables || true)"
+  missing_core_columns="$(mysql_missing_core_columns || true)"
 
-  if [ "$table_count" = "0" ]; then
-    if [ "${RENDER_IMPORT_SQL_DUMP:-false}" = "true" ] && [ -f "${RENDER_SQL_DUMP_PATH:-/var/www/html/khaitriedu.sql}" ]; then
+  if [ "$table_count" = "0" ] || [ -n "$missing_core_tables" ] || [ -n "$missing_core_columns" ]; then
+    if [ "$table_count" != "0" ] && { [ -n "$missing_core_tables" ] || [ -n "$missing_core_columns" ]; }; then
+      [ -n "$missing_core_tables" ] && echo "Detected missing core tables in MySQL/MariaDB: $missing_core_tables"
+      [ -n "$missing_core_columns" ] && echo "Detected missing core columns in MySQL/MariaDB: $missing_core_columns"
+      echo "Rebuilding database from canonical SQL source before serving the app..."
+      php artisan db:wipe --force
+    fi
+
+    if [ "${RENDER_IMPORT_SQL_DUMP:-true}" = "true" ] && [ -f "${RENDER_SQL_DUMP_PATH:-/var/www/html/khaitriedu.sql}" ]; then
       echo "Importing SQL dump into public MySQL/MariaDB database..."
       mysql_exec "$DB_DATABASE" < "${RENDER_SQL_DUMP_PATH:-/var/www/html/khaitriedu.sql}"
     elif [ -f "${RENDER_SCHEMA_DUMP_PATH:-/var/www/html/database/schema/mysql-schema.sql}" ]; then
       echo "Importing MySQL schema dump into public MySQL/MariaDB database..."
       mysql_exec "$DB_DATABASE" < "${RENDER_SCHEMA_DUMP_PATH:-/var/www/html/database/schema/mysql-schema.sql}"
     else
-      echo "Database is empty but no SQL bootstrap source was found."
+      echo "Database bootstrap failed because no SQL source was found."
       exit 1
     fi
   fi

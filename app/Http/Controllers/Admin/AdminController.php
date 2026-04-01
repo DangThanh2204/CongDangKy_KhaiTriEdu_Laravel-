@@ -27,61 +27,105 @@ class AdminController extends Controller
         $currentMonthEnd = $today->copy()->endOfMonth();
 
         $stats = [
-            'total_users' => User::count(),
-            'total_courses' => Course::count(),
-            'published_courses' => Course::published()->count(),
-            'total_enrollments' => CourseEnrollment::count(),
-            'total_admins' => User::where('role', 'admin')->count(),
-            'total_staff' => User::where('role', 'staff')->count(),
-            'total_instructors' => User::where('role', 'instructor')->count(),
-            'total_students' => User::where('role', 'student')->count(),
-            'verified_users' => User::where('is_verified', true)->count(),
-            'unverified_users' => User::where('is_verified', false)->count(),
-            'today_registrations' => User::whereDate('created_at', $today)->count(),
-            'weekly_registrations' => User::whereBetween('created_at', [$today->copy()->startOfWeek(), $today->copy()->endOfWeek()])->count(),
-            'today_enrollments' => CourseEnrollment::whereDate('created_at', $today)->count(),
-            'monthly_enrollments' => CourseEnrollment::whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count(),
-            'today_course_openings' => Course::whereDate('created_at', $today)->count(),
-            'monthly_course_openings' => Course::whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count(),
-            'pending_enrollments' => CourseEnrollment::pending()->count(),
-            'approved_enrollments' => CourseEnrollment::approved()->count(),
-            'completed_enrollments' => CourseEnrollment::completed()->count(),
+            'total_users' => 0,
+            'total_courses' => 0,
+            'published_courses' => 0,
+            'total_enrollments' => 0,
+            'total_admins' => 0,
+            'total_staff' => 0,
+            'total_instructors' => 0,
+            'total_students' => 0,
+            'verified_users' => 0,
+            'unverified_users' => 0,
+            'today_registrations' => 0,
+            'weekly_registrations' => 0,
+            'today_enrollments' => 0,
+            'monthly_enrollments' => 0,
+            'today_course_openings' => 0,
+            'monthly_course_openings' => 0,
+            'pending_enrollments' => 0,
+            'approved_enrollments' => 0,
+            'completed_enrollments' => 0,
         ];
 
-        $usersByRole = User::select('role', DB::raw('count(*) as count'))
-            ->groupBy('role')
-            ->get()
-            ->pluck('count', 'role');
-
-        $recentRegistrations = User::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
-            ->where('created_at', '>=', $today->copy()->subDays(7))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        $recentUsers = User::query()
-            ->latest('created_at')
-            ->take(6)
-            ->get();
-
-        $monthlyRegistrations = User::select(
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('COUNT(*) as count')
-            )
-            ->whereYear('created_at', date('Y'))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get()
-            ->pluck('count', 'month');
-
-        $securitySnapshot = $this->securityAlertSnapshot();
-        $securityAlertsCount = $securitySnapshot['count'];
-        $latestSecurityAlert = $securitySnapshot['latest'];
+        $usersByRole = collect();
+        $recentRegistrations = collect();
+        $recentUsers = collect();
+        $monthlyRegistrations = collect();
 
         $dailyEnrollmentTrend = $this->buildDailyTrend(CourseEnrollment::class, 14);
         $dailyCourseTrend = $this->buildDailyTrend(Course::class, 14);
         $monthlyEnrollmentTrend = $this->buildMonthlyTrend(CourseEnrollment::class, 12);
         $monthlyCourseTrend = $this->buildMonthlyTrend(Course::class, 12);
+        $securitySnapshot = $this->securityAlertSnapshot();
+
+        try {
+            $userTable = (new User())->getTable();
+            $courseTable = (new Course())->getTable();
+            $enrollmentTable = (new CourseEnrollment())->getTable();
+            $hasVerifiedColumn = Schema::hasTable($userTable) && Schema::hasColumn($userTable, 'is_verified');
+
+            if (Schema::hasTable($userTable)) {
+                $stats['total_users'] = User::count();
+                $stats['total_admins'] = User::where('role', 'admin')->count();
+                $stats['total_staff'] = User::where('role', 'staff')->count();
+                $stats['total_instructors'] = User::where('role', 'instructor')->count();
+                $stats['total_students'] = User::where('role', 'student')->count();
+                $stats['today_registrations'] = User::whereDate('created_at', $today)->count();
+                $stats['weekly_registrations'] = User::whereBetween('created_at', [$today->copy()->startOfWeek(), $today->copy()->endOfWeek()])->count();
+                $stats['verified_users'] = $hasVerifiedColumn ? User::where('is_verified', true)->count() : 0;
+                $stats['unverified_users'] = $hasVerifiedColumn ? User::where('is_verified', false)->count() : 0;
+
+                $usersByRole = User::select('role', DB::raw('count(*) as count'))
+                    ->groupBy('role')
+                    ->get()
+                    ->pluck('count', 'role');
+
+                $recentRegistrations = User::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
+                    ->where('created_at', '>=', $today->copy()->subDays(7))
+                    ->groupBy('date')
+                    ->orderBy('date')
+                    ->get();
+
+                $recentUsers = User::query()
+                    ->latest('created_at')
+                    ->take(6)
+                    ->get();
+
+                $monthlyRegistrations = User::select(
+                        DB::raw('MONTH(created_at) as month'),
+                        DB::raw('COUNT(*) as count')
+                    )
+                    ->whereYear('created_at', date('Y'))
+                    ->groupBy('month')
+                    ->orderBy('month')
+                    ->get()
+                    ->pluck('count', 'month');
+            }
+
+            if (Schema::hasTable($courseTable)) {
+                $stats['total_courses'] = Course::count();
+                $stats['published_courses'] = Schema::hasColumn($courseTable, 'status')
+                    ? Course::published()->count()
+                    : Course::count();
+                $stats['today_course_openings'] = Course::whereDate('created_at', $today)->count();
+                $stats['monthly_course_openings'] = Course::whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count();
+            }
+
+            if (Schema::hasTable($enrollmentTable)) {
+                $stats['total_enrollments'] = CourseEnrollment::count();
+                $stats['today_enrollments'] = CourseEnrollment::whereDate('created_at', $today)->count();
+                $stats['monthly_enrollments'] = CourseEnrollment::whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count();
+                $stats['pending_enrollments'] = CourseEnrollment::pending()->count();
+                $stats['approved_enrollments'] = CourseEnrollment::approved()->count();
+                $stats['completed_enrollments'] = CourseEnrollment::completed()->count();
+            }
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+
+        $securityAlertsCount = $securitySnapshot['count'];
+        $latestSecurityAlert = $securitySnapshot['latest'];
 
         $dashboardTrend = [
             'daily' => [
@@ -117,6 +161,7 @@ class AdminController extends Controller
             'latestSecurityAlert'
         ));
     }
+
 
     /**
      * Lấy dữ liệu cho biểu đồ (API).
@@ -287,59 +332,75 @@ class AdminController extends Controller
     {
         $endDate = now()->startOfDay();
         $startDate = $endDate->copy()->subDays($days - 1);
-
-        $rows = $modelClass::query()
-            ->selectRaw('DATE(created_at) as aggregate_date, COUNT(*) as aggregate_count')
-            ->whereBetween('created_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
-            ->groupBy('aggregate_date')
-            ->orderBy('aggregate_date')
-            ->pluck('aggregate_count', 'aggregate_date');
-
         $labels = [];
         $data = [];
 
         for ($cursor = $startDate->copy(); $cursor->lte($endDate); $cursor->addDay()) {
-            $key = $cursor->toDateString();
             $labels[] = $cursor->format('d/m');
-            $data[] = (int) ($rows[$key] ?? 0);
+            $data[] = 0;
+        }
+
+        try {
+            $rows = $modelClass::query()
+                ->selectRaw('DATE(created_at) as aggregate_date, COUNT(*) as aggregate_count')
+                ->whereBetween('created_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
+                ->groupBy('aggregate_date')
+                ->orderBy('aggregate_date')
+                ->pluck('aggregate_count', 'aggregate_date');
+
+            foreach ($labels as $index => $label) {
+                $cursor = $startDate->copy()->addDays($index);
+                $data[$index] = (int) ($rows[$cursor->toDateString()] ?? 0);
+            }
+        } catch (\Throwable $exception) {
+            report($exception);
         }
 
         return [
             'labels' => $labels,
             'data' => $data,
             'total' => array_sum($data),
-            'range_label' => $days . ' ngày gần nhất',
+            'range_label' => $days . ' ng?y g?n nh?t',
         ];
     }
+
 
     private function buildMonthlyTrend(string $modelClass, int $months = 12): array
     {
         $endMonth = now()->startOfMonth();
         $startMonth = $endMonth->copy()->subMonths($months - 1);
-
-        $rows = $modelClass::query()
-            ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as aggregate_month, COUNT(*) as aggregate_count")
-            ->whereBetween('created_at', [$startMonth->copy()->startOfMonth(), $endMonth->copy()->endOfMonth()])
-            ->groupBy('aggregate_month')
-            ->orderBy('aggregate_month')
-            ->pluck('aggregate_count', 'aggregate_month');
-
         $labels = [];
         $data = [];
 
         for ($cursor = $startMonth->copy(); $cursor->lte($endMonth); $cursor->addMonth()) {
-            $key = $cursor->format('Y-m');
             $labels[] = $cursor->format('m/y');
-            $data[] = (int) ($rows[$key] ?? 0);
+            $data[] = 0;
+        }
+
+        try {
+            $rows = $modelClass::query()
+                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as aggregate_month, COUNT(*) as aggregate_count")
+                ->whereBetween('created_at', [$startMonth->copy()->startOfMonth(), $endMonth->copy()->endOfMonth()])
+                ->groupBy('aggregate_month')
+                ->orderBy('aggregate_month')
+                ->pluck('aggregate_count', 'aggregate_month');
+
+            foreach ($labels as $index => $label) {
+                $cursor = $startMonth->copy()->addMonths($index);
+                $data[$index] = (int) ($rows[$cursor->format('Y-m')] ?? 0);
+            }
+        } catch (\Throwable $exception) {
+            report($exception);
         }
 
         return [
             'labels' => $labels,
             'data' => $data,
             'total' => array_sum($data),
-            'range_label' => $months . ' tháng gần nhất',
+            'range_label' => $months . ' th?ng g?n nh?t',
         ];
     }
+
 
     /**
      * Đọc file log.
