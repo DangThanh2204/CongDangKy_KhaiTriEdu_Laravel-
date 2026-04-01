@@ -49,46 +49,33 @@
             color: #666;
             font-size: 14px;
         }
-        .btn {
-            display: inline-block;
-            background: #2c5aa0;
-            color: white;
-            padding: 12px 30px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>Khai Trí Edu</h1>
-            <p>Hệ Thống Giáo Dục & Đào Tạo</p>
+            <p>Hệ thống Giáo dục & Đào tạo</p>
         </div>
-        
+
         <div class="content">
-            <h2>{{ $purpose ?? 'Kích Hoạt Tài Khoản' }}</h2>
+            <h2>{{ $purpose ?? 'Kích hoạt tài khoản' }}</h2>
             <p>Xin chào <strong>{{ $user->fullname }}</strong>,</p>
-            
-            <p>Cảm ơn bạn đã đăng ký tài khoản tại <strong>Khai Trí Edu</strong>. 
-               Để hoàn tất đăng ký, vui lòng sử dụng mã OTP dưới đây:</p>
-            
+
+            <p>Cảm ơn bạn đã sử dụng <strong>Khai Trí Edu</strong>. Vui lòng dùng mã OTP dưới đây để tiếp tục:</p>
+
             <div class="otp-code">
                 {{ $otp }}
             </div>
-            
-            <p>Mã OTP có hiệu lực trong <strong>10 phút</strong>. 
-               Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email.</p>
-            
-            <p>Trân trọng,<br>
-               <strong>Đội ngũ Khai Trí Edu</strong></p>
+
+            <p>Mã OTP có hiệu lực trong <strong>10 phút</strong>. Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
+
+            <p>Trân trọng,<br><strong>Đội ngũ Khai Trí Edu</strong></p>
         </div>
-        
+
         <div class="footer">
-            <p>© 2024 Hệ Thống Giáo Dục Khai Trí. All rights reserved.</p>
-            <p>Địa chỉ: 123 Đường ABC, Quận 1, TP.HCM</p>
-            <p>Email: info@khaitri.edu.vn | Điện thoại: (028) 1234 5678</p>
+            <p>© {{ now()->year }} Khai Trí Edu. All rights reserved.</p>
+            <p>Email: {{ config('mail.from.address', 'info@khaitri.edu.vn') }}</p>
         </div>
     </div>
 </body>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Xác Thực OTP')
+@section('title', 'Xác thực OTP')
 
 @section('content')
 <section class="py-5 auth-section">
@@ -14,7 +14,7 @@
                                 $siteLogo = \App\Models\Setting::get('site_logo');
                                 $siteName = \App\Models\Setting::get('site_name', 'Khai Trí Education');
                             @endphp
-                            
+
                             @if($siteLogo)
                                 <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ $siteName }}" class="mb-3" style="max-height: 80px; object-fit: contain;">
                             @else
@@ -22,12 +22,11 @@
                                     <i class="fas fa-shield-alt fa-3x text-primary"></i>
                                 </div>
                             @endif
-                            
-                            <h2 class="fw-bold text-primary">Xác Thực OTP</h2>
-                            <p class="text-muted">Vui lòng nhập mã OTP đã được gửi đến email của bạn</p>
-                            <p class="text-info small">
-                                <i class="fas fa-envelope me-1"></i>
-                                {{ $email }}
+
+                            <h2 class="fw-bold text-primary">Xác thực OTP</h2>
+                            <p class="text-muted mb-1">Vui lòng nhập mã OTP đã được gửi đến email của bạn</p>
+                            <p class="text-info small mb-0">
+                                <i class="fas fa-envelope me-1"></i>{{ $email }}
                             </p>
                         </div>
 
@@ -42,44 +41,39 @@
                         @endif
 
                         @if(session('success'))
-                            <div class="alert alert-success">
-                                {{ session('success') }}
-                            </div>
+                            <div class="alert alert-success">{{ session('success') }}</div>
                         @endif
 
                         @if(session('error'))
-                            <div class="alert alert-danger">
-                                {{ session('error') }}
-                            </div>
+                            <div class="alert alert-danger">{{ session('error') }}</div>
                         @endif
 
                         <form method="POST" action="{{ route('verify') }}">
-                            @csrf <!-- THÊM CSRF TOKEN -->
-
+                            @csrf
                             <input type="hidden" name="email" value="{{ $email }}">
 
                             <div class="mb-4">
                                 <label for="otp" class="form-label">Mã OTP <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fas fa-key"></i></span>
-                                    <input type="text" class="form-control @error('otp') is-invalid @enderror" 
-                                           id="otp" name="otp" placeholder="Nhập 6 số OTP" 
+                                    <input type="text" class="form-control @error('otp') is-invalid @enderror"
+                                           id="otp" name="otp" placeholder="Nhập 6 số OTP"
                                            maxlength="6" pattern="[0-9]{6}" required
                                            value="{{ old('otp') }}">
                                 </div>
                                 @error('otp')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
-                                <small class="text-muted">Mã OTP gồm 6 chữ số, có hiệu lực trong 10 phút</small>
+                                <small class="text-muted">Mã OTP có hiệu lực trong 10 phút. Nếu quá hạn, tài khoản chưa xác thực sẽ được dọn khỏi hệ thống.</small>
                             </div>
 
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-check-circle me-2"></i>Xác Thực
+                                    <i class="fas fa-check-circle me-2"></i>Xác thực
                                 </button>
-                                
+
                                 <button type="button" class="btn btn-outline-secondary" id="resendOtp">
-                                    <i class="fas fa-redo me-2"></i>Gửi Lại OTP
+                                    <i class="fas fa-redo me-2"></i>Gửi lại OTP
                                 </button>
                             </div>
                         </form>
@@ -118,68 +112,70 @@ document.addEventListener('DOMContentLoaded', function() {
     let countdown = 60;
     let timer;
 
-    // Auto focus OTP input
-    otpInput.focus();
+    if (otpInput) {
+        otpInput.focus();
 
-    // Only allow numbers
-    otpInput.addEventListener('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, '');
-    });
+        otpInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
 
-    // Auto submit when 6 digits entered
-    otpInput.addEventListener('input', function() {
-        if (this.value.length === 6) {
-            this.form.submit();
-        }
-    });
+        otpInput.addEventListener('input', function() {
+            if (this.value.length === 6) {
+                this.form.submit();
+            }
+        });
+    }
 
-    // Resend OTP functionality
     function startCountdown() {
         resendBtn.disabled = true;
         resendBtn.innerHTML = `<i class="fas fa-clock me-2"></i>Gửi lại sau ${countdown}s`;
-        
+
         timer = setInterval(() => {
             countdown--;
             resendBtn.innerHTML = `<i class="fas fa-clock me-2"></i>Gửi lại sau ${countdown}s`;
-            
+
             if (countdown <= 0) {
                 clearInterval(timer);
                 resendBtn.disabled = false;
-                resendBtn.innerHTML = `<i class="fas fa-redo me-2"></i>Gửi Lại OTP`;
+                resendBtn.innerHTML = `<i class="fas fa-redo me-2"></i>Gửi lại OTP`;
                 countdown = 60;
             }
         }, 1000);
     }
 
     resendBtn.addEventListener('click', function() {
-        // Gửi yêu cầu resend OTP
-        fetch('{{ route("resend.otp") }}', {
+        fetch('{{ route('resend.otp') }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ 
-                email: '{{ $email }}'
-            })
+            credentials: 'same-origin',
+            body: JSON.stringify({ email: '{{ $email }}' })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Mã OTP mới đã được gửi đến email của bạn!');
-                startCountdown();
-            } else {
-                alert('Có lỗi xảy ra: ' + (data.message || 'Vui lòng thử lại!'));
+        .then(async response => {
+            const data = await response.json().catch(() => ({
+                success: false,
+                message: 'Không thể gửi lại OTP. Vui lòng thử lại.'
+            }));
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Không thể gửi lại OTP.');
             }
+
+            return data;
+        })
+        .then(data => {
+            alert(data.message);
+            startCountdown();
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Có lỗi xảy ra, vui lòng thử lại!');
+            alert(error.message || 'Có lỗi xảy ra, vui lòng thử lại!');
         });
     });
 
-    // Start countdown on page load
     startCountdown();
 });
 </script>

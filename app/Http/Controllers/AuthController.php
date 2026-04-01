@@ -7,9 +7,11 @@ use App\Services\BlockchainAuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -17,15 +19,18 @@ class AuthController extends Controller
     {
     }
 
-    // Hiển thị form đăng ký
     public function showRegister()
     {
+        $this->purgeExpiredUnverifiedUsers();
+
         return view('auth.register');
     }
 
-    // Xử lý đăng ký + gửi OTP
     public function register(Request $req)
     {
+        $this->purgeExpiredUnverifiedUsers();
+        $this->purgeReusableUnverifiedUser($req->input('email'), $req->input('username'));
+
         $req->validate([
             'username' => 'required|min:4|unique:users',
             'fullname' => 'required|string|max:100',
@@ -34,16 +39,13 @@ class AuthController extends Controller
             'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ]);
 
-        // Lưu avatar
         $avatarPath = null;
         if ($req->hasFile('avatar')) {
             $avatarPath = $req->file('avatar')->store('avatars', 'public');
         }
 
-        // Tạo OTP
-        $otp = rand(100000, 999999);
+        $otp = random_int(100000, 999999);
 
-        // Tạo user với role mặc định là student
         $user = User::create([
             'username' => $req->username,
             'fullname' => $req->fullname,
@@ -52,47 +54,65 @@ class AuthController extends Controller
             'avatar' => $avatarPath,
             'otp' => $otp,
             'is_verified' => false,
-            'role' => 'student', // Mặc định là học viên
+            'role' => 'student',
         ]);
 
-        // Gửi mail OTP với template HTML
         try {
-            Mail::send('emails.otp', ['otp' => $otp, 'user' => $user, 'purpose' => 'Kích Hoạt Tài Khoản'], function($message) use ($user) {
-                $message->to($user->email)
-                        ->subject('Mã OTP kích hoạt tài khoản - Khai Trí Edu');
-            });
-        } catch (\Exception $e) {
-            // Log lỗi nhưng vẫn cho đăng ký thành công
-            \Log::error('Gửi OTP thất bại: ' . $e->getMessage());
+            $this->sendOtpMail(
+                $user,
+                $otp,
+                'Kích hoạt tài khoản',
+                'Mã OTP kích hoạt tài khoản - Khai Trí Edu'
+            );
+        } catch (Throwable $exception) {
+            $this->cleanupUnverifiedUser($user);
+
+            return back()
+                ->withErrors(['email' => $this->friendlyOtpMailErrorMessage($exception)])
+                ->withInput($req->except(['password', 'password_confirmation']));
         }
 
         return redirect()->route('verify', ['email' => $user->email])
-                        ->with('success', 'Đăng ký thành công! Vui lòng kiểm tra email để nhận mã OTP kích hoạt tài khoản.');
+            ->with('success', 'Đăng ký thành công! Vui lòng kiểm tra email để nhận mã OTP kích hoạt tài khoản.');
     }
 
-    // Hiển thị form verify OTP
     public function showVerify(Request $req)
     {
-        $email = $req->query('email');
-        
-        if (!$email) {
+        $this->purgeExpiredUnverifiedUsers();
+
+        $email = (string) $req->query('email');
+
+        if ($email === '') {
             return redirect()->route('register')
-                            ->with('error', 'Vui lòng đăng ký tài khoản trước.');
+                ->with('error', 'Vui lòng đăng ký tài khoản trước.');
         }
 
-        // Kiểm tra email có tồn tại không
         $user = User::where('email', $email)->first();
-        if (!$user) {
+
+        if (! $user) {
             return redirect()->route('register')
-                            ->with('error', 'Email không tồn tại. Vui lòng đăng ký lại.');
+                ->with('error', 'Tài khoản chưa xác thực đã hết hạn hoặc không tồn tại. Vui lòng đăng ký lại.');
+        }
+
+        if ($user->is_verified) {
+            return redirect()->route('login')
+                ->with('success', 'Tài khoản này đã được xác thực. Bạn có thể đăng nhập ngay.');
+        }
+
+        if ($this->isOtpExpired($user)) {
+            $this->cleanupUnverifiedUser($user);
+
+            return redirect()->route('register')
+                ->with('error', 'Mã OTP đã hết hạn. Vui lòng đăng ký lại để nhận mã mới.');
         }
 
         return view('auth.verify', compact('email'));
     }
 
-    // Xử lý verify OTP
     public function verify(Request $req)
     {
+        $this->purgeExpiredUnverifiedUsers();
+
         $req->validate([
             'email' => 'required|email|exists:users,email',
             'otp' => 'required|digits:6',
@@ -100,44 +120,54 @@ class AuthController extends Controller
 
         $user = User::where('email', $req->email)->first();
 
-        if (!$user) {
-            return back()->withErrors(['email' => 'Email không tồn tại!'])
-                        ->withInput();
+        if (! $user) {
+            return redirect()->route('register')
+                ->with('error', 'Tài khoản chưa xác thực đã hết hạn hoặc không tồn tại. Vui lòng đăng ký lại.');
         }
 
-        // Kiểm tra OTP
-        if ($user->otp == $req->otp) {
+        if ($user->is_verified) {
+            return redirect()->route('login')
+                ->with('success', 'Tài khoản này đã được xác thực. Bạn có thể đăng nhập ngay.');
+        }
+
+        if ($this->isOtpExpired($user)) {
+            $this->cleanupUnverifiedUser($user);
+
+            return redirect()->route('register')
+                ->with('error', 'Mã OTP đã hết hạn. Vui lòng đăng ký lại để nhận mã mới.');
+        }
+
+        if ((string) $user->otp === (string) $req->otp) {
             $user->update([
                 'is_verified' => true,
                 'otp' => null,
                 'email_verified_at' => now(),
             ]);
 
-            // Tự động đăng nhập sau khi verify
-            Auth::login($user);
+            Auth::login($user, false);
             $req->session()->regenerate();
             $this->markBrowserSessionGuardBypass($req);
 
-            // Redirect theo role
             return $this->redirectToRole($user);
         }
 
         return back()->withErrors(['otp' => 'Mã OTP không đúng! Vui lòng kiểm tra lại.'])
-                    ->withInput();
+            ->withInput();
     }
 
-    // Redirect theo role sau khi đăng nhập/verify
     private function redirectToRole($user)
     {
         $message = 'Xác thực thành công! Chào mừng bạn đến với Khai Trí Edu.';
 
         if ($user->isAdmin()) {
             return redirect()->route('admin.dashboard')->with('success', $message);
-        } elseif ($user->isStaff()) {
-            return redirect()->route('staff.dashboard')->with('success', $message);
-        } else {
-            return redirect()->route('home')->with('success', $message);
         }
+
+        if ($user->isStaff()) {
+            return redirect()->route('staff.dashboard')->with('success', $message);
+        }
+
+        return redirect()->route('home')->with('success', $message);
     }
 
     private function recentLoginFailureCount(string $ip): int
@@ -151,133 +181,149 @@ class AuthController extends Controller
                 ->where('ip', $ip)
                 ->where('created_at', '>=', now()->subMinutes(15))
                 ->count();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             report($exception);
 
             return 0;
         }
     }
 
-    // Resend OTP
     public function resendOtp(Request $req)
     {
+        $this->purgeExpiredUnverifiedUsers();
+
         $req->validate([
-            'email' => 'required|email|exists:users,email'
+            'email' => 'required|email',
         ]);
 
         $user = User::where('email', $req->email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
-                'message' => 'Email không tồn tại!'
+                'message' => 'Tài khoản chưa xác thực đã hết hạn hoặc không tồn tại. Vui lòng đăng ký lại.',
             ], 404);
         }
 
-        // Tạo OTP mới
-        $newOtp = rand(100000, 999999);
-        
-        $user->update([
-            'otp' => $newOtp
-        ]);
+        if ($user->is_verified) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản này đã được xác thực. Bạn có thể đăng nhập ngay.',
+            ], 422);
+        }
 
-        // Gửi email OTP mới
+        if ($this->isOtpExpired($user)) {
+            $this->cleanupUnverifiedUser($user);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Mã OTP đã hết hạn. Vui lòng đăng ký lại để nhận mã mới.',
+            ], 410);
+        }
+
+        $oldOtp = $user->otp;
+        $newOtp = random_int(100000, 999999);
+        $user->update(['otp' => $newOtp]);
+
         try {
-            Mail::send('emails.otp', ['otp' => $newOtp, 'user' => $user, 'purpose' => 'Kích Hoạt Tài Khoản'], function($message) use ($user) {
-                $message->to($user->email)
-                        ->subject('Mã OTP mới - Khai Trí Edu');
-            });
+            $this->sendOtpMail(
+                $user,
+                $newOtp,
+                'Kích hoạt tài khoản',
+                'Mã OTP mới - Khai Trí Edu'
+            );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Mã OTP mới đã được gửi đến email của bạn!'
+                'message' => 'Mã OTP mới đã được gửi đến email của bạn.',
             ]);
-        } catch (\Exception $e) {
-            \Log::error('Resend OTP failed: ' . $e->getMessage());
-            
+        } catch (Throwable $exception) {
+            $user->update(['otp' => $oldOtp]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Không thể gửi OTP. Vui lòng thử lại!'
+                'message' => $this->friendlyOtpMailErrorMessage($exception),
             ], 500);
         }
     }
 
-    // Hiển thị form login
     public function showLogin()
     {
+        $this->purgeExpiredUnverifiedUsers();
+
         return view('auth.login');
     }
 
-    /**
-     * Forgot password: form to enter username + email
-     */
     public function showForgotPasswordForm()
     {
+        $this->purgeExpiredUnverifiedUsers();
+
         return view('auth.forgot-password');
     }
 
-    /**
-     * Handle send OTP for password reset
-     */
     public function sendPasswordOtp(Request $req)
     {
+        $this->purgeExpiredUnverifiedUsers();
+
         $req->validate([
             'username' => 'required',
             'email' => 'required|email',
         ]);
 
         $user = User::where('username', $req->username)
-                    ->where('email', $req->email)
-                    ->first();
-        if (!$user) {
-            return back()->withErrors(['username' => 'Tên đăng nhập và email không khớp hoặc không tồn tại.'])
-                        ->withInput();
+            ->where('email', $req->email)
+            ->first();
+
+        if (! $user) {
+            return back()->withErrors([
+                'username' => 'Tên đăng nhập và email không khớp hoặc không tồn tại.',
+            ])->withInput();
         }
 
-        // generate OTP and save
-        $otp = rand(100000, 999999);
+        $oldOtp = $user->otp;
+        $otp = random_int(100000, 999999);
         $user->update(['otp' => $otp]);
 
         \App\Services\SystemLogService::record('security', 'password_reset_requested', ['user_id' => $user->id]);
 
         try {
-            Mail::send('emails.otp', ['otp' => $otp, 'user' => $user, 'purpose' => 'Đặt lại mật khẩu'], function($message) use ($user) {
-                $message->to($user->email)
-                        ->subject('Mã OTP đặt lại mật khẩu - Khai Trí Edu');
-            });
-        } catch (\Exception $e) {
-            \Log::error('Gửi OTP forgot password thất bại: ' . $e->getMessage());
+            $this->sendOtpMail(
+                $user,
+                $otp,
+                'Đặt lại mật khẩu',
+                'Mã OTP đặt lại mật khẩu - Khai Trí Edu'
+            );
+        } catch (Throwable $exception) {
+            $user->update(['otp' => $oldOtp]);
+
+            return back()->withErrors([
+                'email' => $this->friendlyOtpMailErrorMessage($exception),
+            ])->withInput();
         }
 
         return redirect()->route('password.reset.form', ['username' => $user->username, 'email' => $user->email])
-                         ->with('success', 'Mã OTP đã được gửi đến email của bạn.');
+            ->with('success', 'Mã OTP đã được gửi đến email của bạn.');
     }
 
-    /**
-     * Show page where user enters otp and new password
-     */
     public function showResetPasswordForm(Request $req)
     {
         $username = $req->query('username');
         $email = $req->query('email');
 
-        if (!$username || !$email) {
+        if (! $username || ! $email) {
             return redirect()->route('password.forgot')
-                             ->with('error', 'Vui lòng cung cấp thông tin để đặt lại mật khẩu.');
+                ->with('error', 'Vui lòng cung cấp thông tin để đặt lại mật khẩu.');
         }
 
         $user = User::where('username', $username)->where('email', $email)->first();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('password.forgot')
-                             ->with('error', 'Thông tin không hợp lệ.');
+                ->with('error', 'Thông tin không hợp lệ.');
         }
 
-        return view('auth.reset-password', compact('username','email'));
+        return view('auth.reset-password', compact('username', 'email'));
     }
 
-    /**
-     * Process actual password reset
-     */
     public function resetPassword(Request $req)
     {
         $req->validate([
@@ -288,13 +334,14 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('username', $req->username)
-                    ->where('email', $req->email)
-                    ->first();
-        if (!$user) {
+            ->where('email', $req->email)
+            ->first();
+
+        if (! $user) {
             return back()->withErrors(['username' => 'Thông tin người dùng không hợp lệ!'])->withInput();
         }
 
-        if ($user->otp != $req->otp) {
+        if ((string) $user->otp !== (string) $req->otp) {
             return back()->withErrors(['otp' => 'Mã OTP không đúng!'])->withInput();
         }
 
@@ -308,53 +355,56 @@ class AuthController extends Controller
         return redirect()->route('login')->with('success', 'Mật khẩu của bạn đã được đặt lại. Vui lòng đăng nhập lại.');
     }
 
-    // Xử lý login
     public function login(Request $req)
     {
-        $credentials = $req->validate([
+        $this->purgeExpiredUnverifiedUsers();
+
+        $req->validate([
             'username' => 'required',
             'password' => 'required',
         ]);
 
-        // Tìm user theo username
         $user = User::where('username', $req->username)->first();
 
-        if (!$user) {
+        if (! $user) {
             \App\Services\SystemLogService::record('security', 'login_failure', ['username' => $req->username, 'reason' => 'not_found']);
 
-            // detect multiple failures from same IP
             $recent = $this->recentLoginFailureCount($req->ip());
             if ($recent >= 5) {
                 \App\Services\SystemLogService::record('security', 'security_alert', ['type' => 'many_failed_logins', 'ip' => $req->ip(), 'count' => $recent]);
             }
 
             return back()->withErrors(['username' => 'Tên đăng nhập không tồn tại!'])
-                        ->withInput();
+                ->withInput();
         }
 
-        // Kiểm tra tài khoản đã kích hoạt chưa
-        if (!$user->is_verified) {
+        if (! $user->is_verified) {
+            if ($this->isOtpExpired($user)) {
+                $this->cleanupUnverifiedUser($user);
+
+                return back()->withErrors(['username' => 'Tài khoản chưa xác thực đã hết hạn. Vui lòng đăng ký lại để nhận mã OTP mới.'])
+                    ->withInput();
+            }
+
             return back()->withErrors(['username' => 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để xác thực.'])
-                        ->with('resend_otp', $user->email)
-                        ->withInput();
+                ->with('resend_otp', $user->email)
+                ->withInput();
         }
 
-        // Thử đăng nhập
         try {
             $passwordMatches = Hash::check($req->password, $user->password);
-        } catch (\Exception $e) {
-            // Nếu password trong DB không phải hash bcrypt, kiểm tra một vài dạng phổ biến
+        } catch (Throwable $exception) {
             $passwordMatches = false;
+
             if ($user->password === $req->password) {
-                $passwordMatches = true; // plaintext
+                $passwordMatches = true;
             } elseif (md5($req->password) === $user->password) {
-                $passwordMatches = true; // MD5
+                $passwordMatches = true;
             } elseif (sha1($req->password) === $user->password) {
-                $passwordMatches = true; // SHA1
+                $passwordMatches = true;
             }
 
             if ($passwordMatches) {
-                // Migrate lên bcrypt
                 $user->password = Hash::make($req->password);
                 $user->save();
             }
@@ -383,33 +433,30 @@ class AuthController extends Controller
                     'role' => $user->role,
                     'ip' => $req->ip(),
                 ]);
-            } catch (\Throwable $exception) {
+            } catch (Throwable $exception) {
                 report($exception);
             }
 
-            // Redirect theo role
             return $this->redirectToRole($user);
         }
 
         \App\Services\SystemLogService::record('security', 'login_failure', ['user_id' => $user->id, 'reason' => 'wrong_password']);
 
-        // detect multiple failures from same IP
         $recent = $this->recentLoginFailureCount($req->ip());
         if ($recent >= 5) {
             \App\Services\SystemLogService::record('security', 'security_alert', ['type' => 'many_failed_logins', 'ip' => $req->ip(), 'count' => $recent, 'user_id' => $user->id]);
         }
 
         return back()->withErrors(['password' => 'Mật khẩu không đúng!'])
-                    ->withInput();
+            ->withInput();
     }
 
-    // Logout
     public function logout(Request $req)
     {
         $this->invalidateAuthenticatedSession($req);
 
         return redirect('/')
-                ->with('success', 'Đăng xuất thành công!');
+            ->with('success', 'Đăng xuất thành công!');
     }
 
     public function logoutOnBrowserClose(Request $req)
@@ -419,10 +466,8 @@ class AuthController extends Controller
         return response()->noContent();
     }
 
-    // Tạo tài khoản admin/staff (cho admin)
     public function createUser(Request $req)
     {
-        // Middleware admin sẽ được thêm sau
         $req->validate([
             'username' => 'required|min:4|unique:users',
             'fullname' => 'required|string|max:100',
@@ -437,14 +482,14 @@ class AuthController extends Controller
             $avatarPath = $req->file('avatar')->store('avatars', 'public');
         }
 
-        $user = User::create([
+        User::create([
             'username' => $req->username,
             'fullname' => $req->fullname,
             'email' => $req->email,
             'password' => Hash::make($req->password),
             'avatar' => $avatarPath,
             'role' => $req->role,
-            'is_verified' => true, // Tài khoản admin/staff được tạo tự động verified
+            'is_verified' => true,
             'otp' => null,
         ]);
 
@@ -463,4 +508,150 @@ class AuthController extends Controller
         $req->session()->put('browser_session_guard_skip_once', true);
     }
 
+    private function otpLifetimeMinutes(): int
+    {
+        return 10;
+    }
+
+    private function purgeExpiredUnverifiedUsers(): void
+    {
+        $cutoff = now()->subMinutes($this->otpLifetimeMinutes());
+
+        User::query()
+            ->where('is_verified', false)
+            ->where(function ($query) use ($cutoff) {
+                $query->where(function ($subQuery) use ($cutoff) {
+                    $subQuery->whereNull('updated_at')
+                        ->where('created_at', '<=', $cutoff);
+                })->orWhere('updated_at', '<=', $cutoff);
+            })
+            ->orderBy('id')
+            ->get()
+            ->each(function (User $user): void {
+                $this->cleanupUnverifiedUser($user);
+            });
+    }
+
+    private function purgeReusableUnverifiedUser(?string $email, ?string $username): void
+    {
+        $email = trim((string) $email);
+        $username = trim((string) $username);
+
+        if ($email === '' && $username === '') {
+            return;
+        }
+
+        User::query()
+            ->where('is_verified', false)
+            ->where(function ($query) use ($email, $username) {
+                if ($email !== '') {
+                    $query->orWhere('email', $email);
+                }
+
+                if ($username !== '') {
+                    $query->orWhere('username', $username);
+                }
+            })
+            ->get()
+            ->each(function (User $user): void {
+                $this->cleanupUnverifiedUser($user);
+            });
+    }
+
+    private function cleanupUnverifiedUser(User $user): void
+    {
+        if ($user->is_verified) {
+            return;
+        }
+
+        try {
+            if (! empty($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
+        $user->delete();
+    }
+
+    private function isOtpExpired(User $user): bool
+    {
+        $reference = $user->updated_at ?? $user->created_at;
+
+        if (! $reference) {
+            return true;
+        }
+
+        return $reference->copy()->addMinutes($this->otpLifetimeMinutes())->isPast();
+    }
+
+    private function sendOtpMail(User $user, int $otp, string $purpose, string $subject): void
+    {
+        $issues = $this->mailConfigurationIssues();
+
+        if ($issues !== []) {
+            throw new \RuntimeException(implode(' ', $issues));
+        }
+
+        try {
+            Mail::send('emails.otp', [
+                'otp' => $otp,
+                'user' => $user,
+                'purpose' => $purpose,
+            ], function ($message) use ($user, $subject) {
+                $message->to($user->email)
+                    ->subject($subject);
+            });
+        } catch (Throwable $exception) {
+            Log::error('OTP mail failed', [
+                'email' => $user->email,
+                'purpose' => $purpose,
+                'message' => $exception->getMessage(),
+            ]);
+
+            throw new \RuntimeException('Không thể gửi email OTP. Vui lòng kiểm tra cấu hình SMTP hoặc App Password Gmail trên Render.', 0, $exception);
+        }
+    }
+
+    private function mailConfigurationIssues(): array
+    {
+        $issues = [];
+        $mailer = (string) config('mail.default');
+
+        if ($mailer !== 'smtp') {
+            $issues[] = 'MAIL_MAILER phải là smtp để gửi OTP thật.';
+        }
+
+        foreach ([
+            'mail.mailers.smtp.host' => 'MAIL_HOST',
+            'mail.mailers.smtp.port' => 'MAIL_PORT',
+            'mail.mailers.smtp.username' => 'MAIL_USERNAME',
+            'mail.mailers.smtp.password' => 'MAIL_PASSWORD',
+            'mail.from.address' => 'MAIL_FROM_ADDRESS',
+        ] as $configKey => $label) {
+            $value = config($configKey);
+
+            if ($value === null || trim((string) $value) === '') {
+                $issues[] = "Thiếu {$label}.";
+            }
+        }
+
+        return $issues;
+    }
+
+    private function friendlyOtpMailErrorMessage(Throwable $exception): string
+    {
+        $message = $exception->getMessage();
+
+        if (str_contains($message, 'MAIL_MAILER') || str_contains($message, 'MAIL_')) {
+            return 'Hệ thống email chưa cấu hình đầy đủ trên Render. Vui lòng kiểm tra lại MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD và MAIL_FROM_ADDRESS.';
+        }
+
+        if (app()->environment('local') || config('app.debug')) {
+            return 'Không thể gửi email OTP: ' . $message;
+        }
+
+        return 'Không thể gửi email OTP lúc này. Vui lòng kiểm tra lại cấu hình SMTP/App Password Gmail trên Render rồi thử lại.';
+    }
 }
