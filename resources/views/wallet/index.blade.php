@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Ví của tôi')
 
@@ -25,14 +25,20 @@
                         <div class="col-12">
                             <label class="form-label">Phương thức nạp tiền</label>
                             <div class="d-flex flex-wrap gap-3">
-                                @php $selectedMethod = old('method', session('payment_method', 'direct')); @endphp
+                                @php $selectedMethod = old('method', session('payment_method', $supportsVnpayTopup ? 'vnpay' : 'direct')); @endphp
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="method" id="method_direct" value="direct" {{ $selectedMethod === 'direct' ? 'checked' : '' }}>
                                     <label class="form-check-label" for="method_direct">Nạp trực tiếp</label>
                                 </div>
+                                @if($supportsVnpayTopup)
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="method" id="method_vnpay" value="vnpay" {{ $selectedMethod === 'vnpay' ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="method_vnpay">VNPay</label>
+                                    </div>
+                                @endif
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="method" id="method_qr" value="qr" {{ $selectedMethod === 'qr' ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="method_qr">Nạp bằng QR</label>
+                                    <label class="form-check-label" for="method_qr">QR nội bộ</label>
                                 </div>
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="method" id="method_bank" value="bank" {{ $selectedMethod === 'bank' ? 'checked' : '' }}>
@@ -50,7 +56,15 @@
                             @enderror
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100">Tạo yêu cầu nạp tiền</button>
+                            <button type="submit" class="btn btn-primary w-100" id="wallet-submit-button">Tạo yêu cầu nạp tiền</button>
+                        </div>
+
+                        <div class="col-12" id="vnpay-instructions" style="display: none;">
+                            <div class="alert alert-primary mt-3 mb-0">
+                                <h5 class="mb-2">Thanh toán qua VNPay</h5>
+                                <p class="mb-2">Sau khi tạo yêu cầu, hệ thống sẽ chuyển bạn sang cổng VNPay để quét QR bằng app ngân hàng hoặc chọn phương thức thanh toán phù hợp.</p>
+                                <p class="mb-0">QR của VNPay không hiển thị trực tiếp tại trang ví này. Mã QR sẽ xuất hiện ở trang cổng thanh toán của VNPay.</p>
+                            </div>
                         </div>
 
                         <div class="col-12" id="bank-instructions" style="display: none;">
@@ -160,21 +174,22 @@
                         </div>
                     @endif
 
-                    @if(isset($qrToken) && $qrToken && $paymentMethod !== 'direct')
+                    @if(isset($qrToken) && $qrToken && in_array($paymentMethod, ['qr', 'bank'], true))
                         <div class="card mt-4 border-0 shadow-sm">
                             <div class="card-body text-center">
                                 @if($paymentMethod === 'bank')
                                     <h5 class="card-title">Xác nhận chuyển khoản ngân hàng</h5>
                                     <p class="text-muted">Mã xác nhận của bạn: <strong>{{ $qrToken }}</strong></p>
                                 @else
-                                    <h5 class="card-title">Quét mã QR để chuyển khoản</h5>
+                                    <h5 class="card-title">Mã QR xác nhận giao dịch</h5>
                                     <p class="text-muted">Số tiền: <strong>{{ number_format($qrAmount ?? 0, 0) }}₫</strong></p>
                                 @endif
 
                                 @if($paymentMethod !== 'bank')
                                     <div class="mb-3">
-                                        <img src="https://chart.googleapis.com/chart?chs=250x250&cht=qr&chl={{ urlencode(json_encode(['token' => $qrToken, 'amount' => $qrAmount])) }}&choe=UTF-8" alt="QR Code" class="img-fluid" />
+                                        <img src="https://quickchart.io/qr?size=250&text={{ urlencode(json_encode(['token' => $qrToken, 'amount' => $qrAmount])) }}" alt="QR Code" class="img-fluid" />
                                     </div>
+                                    <p class="text-muted small">Đây là mã QR nội bộ để nhận diện giao dịch, không phải mã QR của VNPay.</p>
                                 @endif
 
                                 <p class="text-muted">Sau khi chuyển xong, nhấn xác nhận để cập nhật số dư.</p>
@@ -268,8 +283,10 @@
     document.addEventListener('DOMContentLoaded', function () {
         const methodInputs = document.querySelectorAll('input[name="method"]');
         const bankInstructions = document.getElementById('bank-instructions');
+        const vnpayInstructions = document.getElementById('vnpay-instructions');
         const bankReference = document.getElementById('bank-reference');
         const amountInput = document.getElementById('amount');
+        const submitButton = document.getElementById('wallet-submit-button');
         const qrToken = @json($qrToken ?? '');
 
         amountInput.addEventListener('blur', function () {
@@ -284,22 +301,30 @@
             }
         });
 
-        function refreshBankUI() {
+        function refreshMethodUI() {
             const selected = document.querySelector('input[name="method"]:checked')?.value;
 
-            if (selected === 'bank') {
-                bankInstructions.style.display = 'block';
+            if (bankInstructions) {
+                bankInstructions.style.display = selected === 'bank' ? 'block' : 'none';
+            }
 
-                if (bankReference) {
-                    bankReference.textContent = qrToken || '-';
-                }
-            } else {
-                bankInstructions.style.display = 'none';
+            if (vnpayInstructions) {
+                vnpayInstructions.style.display = selected === 'vnpay' ? 'block' : 'none';
+            }
+
+            if (bankReference) {
+                bankReference.textContent = qrToken || '-';
+            }
+
+            if (submitButton) {
+                submitButton.textContent = selected === 'vnpay'
+                    ? 'Tiếp tục tới VNPay'
+                    : 'Tạo yêu cầu nạp tiền';
             }
         }
 
-        methodInputs.forEach((input) => input.addEventListener('change', refreshBankUI));
-        refreshBankUI();
+        methodInputs.forEach((input) => input.addEventListener('change', refreshMethodUI));
+        refreshMethodUI();
     });
 </script>
 @endpush

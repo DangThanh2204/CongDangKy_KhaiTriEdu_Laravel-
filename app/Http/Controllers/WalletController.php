@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\WalletTransaction;
 use App\Services\BlockchainAuditService;
 use App\Services\FireflyService;
+use App\Services\SystemLogService;
+use App\Services\VnpayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -14,6 +16,7 @@ class WalletController extends Controller
     public function __construct(
         protected FireflyService $firefly,
         protected BlockchainAuditService $blockchainAudit,
+        protected VnpayService $vnpay,
     ) {
     }
 
@@ -28,6 +31,7 @@ class WalletController extends Controller
         $qrToken = session('qr_token');
         $qrAmount = session('qr_amount');
         $paymentMethod = session('payment_method');
+        $supportsVnpayTopup = $this->vnpay->isConfigured();
 
         $directRequest = null;
 
@@ -53,7 +57,8 @@ class WalletController extends Controller
             'qrToken',
             'qrAmount',
             'paymentMethod',
-            'directRequest'
+            'directRequest',
+            'supportsVnpayTopup'
         ));
     }
 
@@ -63,7 +68,7 @@ class WalletController extends Controller
 
         $request->validate([
             'amount' => 'required|numeric|min:1000|max:10000000',
-            'method' => 'required|in:direct,qr,bank',
+            'method' => 'required|in:direct,qr,bank,vnpay',
         ]);
 
         $user = Auth::user();
@@ -71,9 +76,11 @@ class WalletController extends Controller
         $amount = (float) $request->input('amount');
         $method = $request->input('method');
 
-        $reference = $method === WalletTransaction::DIRECT_METHOD
-            ? Str::upper('DEP' . uniqid())
-            : Str::uuid()->toString();
+        $reference = match ($method) {
+            WalletTransaction::DIRECT_METHOD => Str::upper('DEP' . uniqid()),
+            'vnpay' => 'WVN' . Str::upper(Str::random(18)),
+            default => Str::uuid()->toString(),
+        };
 
         $expiresAt = $method === WalletTransaction::DIRECT_METHOD
             ? now()->addHours(WalletTransaction::DIRECT_TOPUP_EXPIRY_HOURS)
@@ -91,7 +98,7 @@ class WalletController extends Controller
             ],
         ]);
 
-        \App\Services\SystemLogService::record('transaction', 'topup_requested', [
+        SystemLogService::record('transaction', 'topup_requested', [
             'amount' => $amount,
             'method' => $method,
             'tx_id' => $transaction->id,
@@ -114,6 +121,12 @@ class WalletController extends Controller
         ]);
         $this->appendMetadata($transaction, ['blockchain_audit' => $auditResponse]);
 
+        if ($method === 'vnpay') {
+            return redirect()
+                ->route('wallet.vnpay.redirect', $transaction)
+                ->with('success', 'Yêu cầu nạp tiền qua VNPay đã được tạo. Hệ thống sẽ chuyển bạn sang cổng thanh toán.');
+        }
+
         session()->flash('qr_token', $reference);
         session()->flash('qr_amount', $amount);
         session()->flash('payment_method', $method);
@@ -129,6 +142,49 @@ class WalletController extends Controller
             'success',
             'Giao dịch đã được tạo. Vui lòng thực hiện chuyển khoản và xác nhận khi hoàn tất.'
         );
+    }
+
+    public function redirectToVnpay(Request $request, WalletTransaction $walletTransaction)
+    {
+        abort_unless((int) $walletTransaction->wallet?->user_id === (int) Auth::id(), 403);
+
+        WalletTransaction::expireOverdueDirectTopups();
+        $walletTransaction->refresh();
+
+        if (! $walletTransaction->isDeposit() || data_get($walletTransaction->metadata, 'method') !== 'vnpay') {
+            return redirect()->route('wallet.index')->with('error', 'Giao dịch nạp ví này không sử dụng VNPay.');
+        }
+
+        if ((float) $walletTransaction->amount <= 0) {
+            return redirect()->route('wallet.index')->with('error', 'Số tiền nạp ví phải lớn hơn 0 để gửi sang VNPay.');
+        }
+
+        if (! $walletTransaction->isPending()) {
+            return redirect()->route('wallet.index')->with(
+                $walletTransaction->status === 'completed' ? 'success' : 'error',
+                $walletTransaction->status === 'completed'
+                    ? 'Giao dịch nạp ví này đã được thanh toán thành công.'
+                    : 'Giao dịch nạp ví này không còn ở trạng thái chờ xử lý.'
+            );
+        }
+
+        $issues = $this->vnpay->configurationIssues();
+        if ($issues !== []) {
+            return redirect()->route('wallet.index')->with('error', 'VNPay chưa được cấu hình đầy đủ: ' . implode(' ', $issues));
+        }
+
+        try {
+            $paymentUrl = $this->vnpay->buildWalletTopupUrl($walletTransaction, $request);
+        } catch (\Throwable $exception) {
+            SystemLogService::record('transaction', 'wallet_vnpay_redirect_exception', [
+                'wallet_transaction_id' => $walletTransaction->id,
+                'message' => $exception->getMessage(),
+            ], $walletTransaction->reference, $request);
+
+            return redirect()->route('wallet.index')->with('error', 'Không thể khởi tạo giao dịch VNPay cho ví: ' . $exception->getMessage());
+        }
+
+        return redirect()->away($paymentUrl);
     }
 
     public function confirmQr(Request $request)
@@ -168,6 +224,10 @@ class WalletController extends Controller
         $method = data_get($transaction->metadata, 'method');
         if ($method === WalletTransaction::DIRECT_METHOD) {
             return back()->with('error', 'Giao dịch nạp trực tiếp phải được xác nhận bởi quản trị viên hoặc nhân viên. Vui lòng mang mã thanh toán tới điểm thu để được xử lý.');
+        }
+
+        if ($method === 'vnpay') {
+            return back()->with('error', 'Giao dịch VNPay sẽ được hệ thống xác nhận tự động sau khi thanh toán thành công.');
         }
 
         if (! $transaction->complete()) {
@@ -246,7 +306,7 @@ class WalletController extends Controller
         return redirect()->route('wallet.index')->with('success', 'Đã đồng bộ số dư với FireFly.');
     }
 
-    protected function appendMetadata($transaction, array $payload): void
+    protected function appendMetadata(WalletTransaction $transaction, array $payload): void
     {
         $transaction->metadata = array_merge($transaction->metadata ?? [], $payload);
         $transaction->save();
