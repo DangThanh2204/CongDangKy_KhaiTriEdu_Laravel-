@@ -11,6 +11,8 @@ services:
         value: production
       - key: APP_DEBUG
         value: false
+      - key: APP_URL
+        value: https://khai-tri-edu.onrender.com
       - key: DB_CONNECTION
         sync: false
       - key: DB_HOST
@@ -54,13 +56,13 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: GOOGLE_REDIRECT_URI
-        sync: false
+        value: https://khai-tri-edu.onrender.com/auth/google/callback
       - key: FACEBOOK_CLIENT_ID
         sync: false
       - key: FACEBOOK_CLIENT_SECRET
         sync: false
       - key: FACEBOOK_REDIRECT_URI
-        sync: false
+        value: https://khai-tri-edu.onrender.com/auth/facebook/callback
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_BASE_URL
@@ -68,13 +70,13 @@ services:
       - key: GEMINI_ASSISTANT_MODEL
         value: gemini-2.5-flash-lite
       - key: MAIL_MAILER
-        sync: false
+        value: smtp
       - key: MAIL_SCHEME
-        sync: false
+        value: tls
       - key: MAIL_HOST
         sync: false
       - key: MAIL_PORT
-        sync: false
+        value: 587
       - key: MAIL_USERNAME
         sync: false
       - key: MAIL_PASSWORD
@@ -82,7 +84,7 @@ services:
       - key: MAIL_FROM_ADDRESS
         sync: false
       - key: MAIL_FROM_NAME
-        sync: false
+        value: Khai Tri Edu
       - key: VNPAY_URL
         value: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
       - key: VNPAY_EXPIRE_MINUTES
@@ -94,9 +96,9 @@ services:
       - key: VNPAY_HASH_SECRET
         sync: false
       - key: VNPAY_RETURN_URL
-        sync: false
+        value: https://khai-tri-edu.onrender.com/payments/vnpay/return
       - key: VNPAY_IPN_URL
-        sync: false
+        value: https://khai-tri-edu.onrender.com/payments/vnpay/ipn
       - key: FIREFLY_URL
         sync: false
       - key: FIREFLY_API_KEY
