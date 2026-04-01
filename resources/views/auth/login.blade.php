@@ -119,6 +119,10 @@
                             <div class="flex-grow-1 border-top"></div>
                         </div>
 
+                        <div class="small text-muted text-center mb-3">
+                            Nếu Google hoặc Facebook báo chặn quyền truy cập, hãy kiểm tra lại Redirect URI trên trang Developers theo đúng domain hiện tại.
+                        </div>
+
                         <div class="social-links justify-content-center mb-4">
                             <a href="{{ route('auth.google') }}" class="google" title="Đăng nhập bằng Google">
                                 <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
