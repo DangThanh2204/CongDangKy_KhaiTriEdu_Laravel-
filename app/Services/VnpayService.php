@@ -20,27 +20,27 @@ class VnpayService
         $issues = [];
 
         if (! filled($this->gatewayUrl())) {
-            $issues[] = 'Thiếu VNPAY_URL.';
+            $issues[] = 'ThiÃ¡ÂºÂ¿u VNPAY_URL.';
         }
 
         if (! filled(config('services.vnpay.tmn_code'))) {
-            $issues[] = 'Thiếu VNPAY_TMN_CODE.';
+            $issues[] = 'ThiÃ¡ÂºÂ¿u VNPAY_TMN_CODE.';
         }
 
         if (! filled(config('services.vnpay.hash_secret'))) {
-            $issues[] = 'Thiếu VNPAY_HASH_SECRET.';
+            $issues[] = 'ThiÃ¡ÂºÂ¿u VNPAY_HASH_SECRET.';
         }
 
         if (! filled($this->returnUrl())) {
-            $issues[] = 'Thiếu VNPAY_RETURN_URL.';
+            $issues[] = 'ThiÃ¡ÂºÂ¿u VNPAY_RETURN_URL.';
         }
 
         if (! filled($this->ipnUrl())) {
-            $issues[] = 'Thiếu VNPAY_IPN_URL.';
+            $issues[] = 'ThiÃ¡ÂºÂ¿u VNPAY_IPN_URL.';
         }
 
-        if (app()->environment('production') && $this->isSandbox()) {
-            $issues[] = 'Môi trường production hiện vẫn đang dùng URL sandbox của VNPay.';
+        if (app()->environment('production') && $this->isSandbox() && ! $this->allowsSandboxOnProduction()) {
+            $issues[] = 'MÃ´i trÆ°á»ng production hiá»‡n váº«n Ä‘ang dÃ¹ng URL sandbox cá»§a VNPay.';
         }
 
         return array_values(array_unique($issues));
@@ -64,10 +64,15 @@ class VnpayService
         return str_contains(strtolower($this->gatewayUrl()), 'sandbox.vnpayment.vn');
     }
 
+    public function allowsSandboxOnProduction(): bool
+    {
+        return (bool) config('services.vnpay.allow_sandbox_on_production', false);
+    }
+
     public function buildPaymentUrl(Payment $payment, Request $request): string
     {
         return $this->buildGatewayUrl(
-            reference: $this->sanitizeReference((string) $payment->reference, 'Mã phiếu thanh toán không hợp lệ để gửi sang VNPay.'),
+            reference: $this->sanitizeReference((string) $payment->reference, 'MÃƒÂ£ phiÃ¡ÂºÂ¿u thanh toÃƒÂ¡n khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡ Ã„â€˜Ã¡Â»Æ’ gÃ¡Â»Â­i sang VNPay.'),
             amountValue: (float) $payment->amount,
             orderInfo: $this->buildPaymentOrderInfo($payment),
             request: $request,
@@ -77,7 +82,7 @@ class VnpayService
     public function buildWalletTopupUrl(WalletTransaction $walletTransaction, Request $request): string
     {
         return $this->buildGatewayUrl(
-            reference: $this->sanitizeReference((string) $walletTransaction->reference, 'Mã giao dịch nạp ví không hợp lệ để gửi sang VNPay.'),
+            reference: $this->sanitizeReference((string) $walletTransaction->reference, 'MÃƒÂ£ giao dÃ¡Â»â€¹ch nÃ¡ÂºÂ¡p vÃƒÂ­ khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡ Ã„â€˜Ã¡Â»Æ’ gÃ¡Â»Â­i sang VNPay.'),
             amountValue: (float) $walletTransaction->amount,
             orderInfo: $this->buildWalletTopupOrderInfo($walletTransaction),
             request: $request,
@@ -121,30 +126,30 @@ class VnpayService
         $transactionStatus = (string) ($payload['vnp_TransactionStatus'] ?? '');
 
         $responseMessages = [
-            '00' => 'Giao dịch thành công.',
-            '07' => 'Giao dịch bị nghi ngờ gian lận hoặc bất thường.',
-            '09' => 'Tài khoản hoặc thẻ chưa đăng ký Internet Banking.',
-            '10' => 'Thông tin xác thực tài khoản hoặc thẻ không đúng quá 3 lần.',
-            '11' => 'Giao dịch đã hết hạn chờ thanh toán.',
-            '12' => 'Tài khoản hoặc thẻ đã bị khóa.',
-            '13' => 'Mật khẩu xác thực hoặc OTP không đúng.',
-            '24' => 'Khách hàng đã hủy giao dịch.',
-            '51' => 'Tài khoản không đủ số dư để thanh toán.',
-            '65' => 'Tài khoản đã vượt hạn mức giao dịch trong ngày.',
-            '75' => 'Ngân hàng thanh toán đang bảo trì.',
-            '79' => 'Khách hàng nhập sai mật khẩu thanh toán quá số lần quy định.',
-            '99' => 'Giao dịch gặp lỗi chưa xác định từ VNPay.',
+            '00' => 'Giao dÃ¡Â»â€¹ch thÃƒÂ nh cÃƒÂ´ng.',
+            '07' => 'Giao dÃ¡Â»â€¹ch bÃ¡Â»â€¹ nghi ngÃ¡Â»Â gian lÃ¡ÂºÂ­n hoÃ¡ÂºÂ·c bÃ¡ÂºÂ¥t thÃ†Â°Ã¡Â»Âng.',
+            '09' => 'TÃƒÂ i khoÃ¡ÂºÂ£n hoÃ¡ÂºÂ·c thÃ¡ÂºÂ» chÃ†Â°a Ã„â€˜Ã„Æ’ng kÃƒÂ½ Internet Banking.',
+            '10' => 'ThÃƒÂ´ng tin xÃƒÂ¡c thÃ¡Â»Â±c tÃƒÂ i khoÃ¡ÂºÂ£n hoÃ¡ÂºÂ·c thÃ¡ÂºÂ» khÃƒÂ´ng Ã„â€˜ÃƒÂºng quÃƒÂ¡ 3 lÃ¡ÂºÂ§n.',
+            '11' => 'Giao dÃ¡Â»â€¹ch Ã„â€˜ÃƒÂ£ hÃ¡ÂºÂ¿t hÃ¡ÂºÂ¡n chÃ¡Â»Â thanh toÃƒÂ¡n.',
+            '12' => 'TÃƒÂ i khoÃ¡ÂºÂ£n hoÃ¡ÂºÂ·c thÃ¡ÂºÂ» Ã„â€˜ÃƒÂ£ bÃ¡Â»â€¹ khÃƒÂ³a.',
+            '13' => 'MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u xÃƒÂ¡c thÃ¡Â»Â±c hoÃ¡ÂºÂ·c OTP khÃƒÂ´ng Ã„â€˜ÃƒÂºng.',
+            '24' => 'KhÃƒÂ¡ch hÃƒÂ ng Ã„â€˜ÃƒÂ£ hÃ¡Â»Â§y giao dÃ¡Â»â€¹ch.',
+            '51' => 'TÃƒÂ i khoÃ¡ÂºÂ£n khÃƒÂ´ng Ã„â€˜Ã¡Â»Â§ sÃ¡Â»â€˜ dÃ†Â° Ã„â€˜Ã¡Â»Æ’ thanh toÃƒÂ¡n.',
+            '65' => 'TÃƒÂ i khoÃ¡ÂºÂ£n Ã„â€˜ÃƒÂ£ vÃ†Â°Ã¡Â»Â£t hÃ¡ÂºÂ¡n mÃ¡Â»Â©c giao dÃ¡Â»â€¹ch trong ngÃƒÂ y.',
+            '75' => 'NgÃƒÂ¢n hÃƒÂ ng thanh toÃƒÂ¡n Ã„â€˜ang bÃ¡ÂºÂ£o trÃƒÂ¬.',
+            '79' => 'KhÃƒÂ¡ch hÃƒÂ ng nhÃ¡ÂºÂ­p sai mÃ¡ÂºÂ­t khÃ¡ÂºÂ©u thanh toÃƒÂ¡n quÃƒÂ¡ sÃ¡Â»â€˜ lÃ¡ÂºÂ§n quy Ã„â€˜Ã¡Â»â€¹nh.',
+            '99' => 'Giao dÃ¡Â»â€¹ch gÃ¡ÂºÂ·p lÃ¡Â»â€”i chÃ†Â°a xÃƒÂ¡c Ã„â€˜Ã¡Â»â€¹nh tÃ¡Â»Â« VNPay.',
         ];
 
         $transactionMessages = [
-            '00' => 'Trạng thái giao dịch: thành công.',
-            '01' => 'Trạng thái giao dịch: chưa hoàn tất.',
-            '02' => 'Trạng thái giao dịch: bị lỗi.',
-            '04' => 'Trạng thái giao dịch: giao dịch đảo.',
-            '05' => 'Trạng thái giao dịch: VNPay đang xử lý hoàn tiền.',
-            '06' => 'Trạng thái giao dịch: VNPay đã gửi yêu cầu hoàn tiền sang ngân hàng.',
-            '07' => 'Trạng thái giao dịch: nghi ngờ gian lận.',
-            '09' => 'Trạng thái giao dịch: hoàn trả bị từ chối.',
+            '00' => 'TrÃ¡ÂºÂ¡ng thÃƒÂ¡i giao dÃ¡Â»â€¹ch: thÃƒÂ nh cÃƒÂ´ng.',
+            '01' => 'TrÃ¡ÂºÂ¡ng thÃƒÂ¡i giao dÃ¡Â»â€¹ch: chÃ†Â°a hoÃƒÂ n tÃ¡ÂºÂ¥t.',
+            '02' => 'TrÃ¡ÂºÂ¡ng thÃƒÂ¡i giao dÃ¡Â»â€¹ch: bÃ¡Â»â€¹ lÃ¡Â»â€”i.',
+            '04' => 'TrÃ¡ÂºÂ¡ng thÃƒÂ¡i giao dÃ¡Â»â€¹ch: giao dÃ¡Â»â€¹ch Ã„â€˜Ã¡ÂºÂ£o.',
+            '05' => 'TrÃ¡ÂºÂ¡ng thÃƒÂ¡i giao dÃ¡Â»â€¹ch: VNPay Ã„â€˜ang xÃ¡Â»Â­ lÃƒÂ½ hoÃƒÂ n tiÃ¡Â»Ân.',
+            '06' => 'TrÃ¡ÂºÂ¡ng thÃƒÂ¡i giao dÃ¡Â»â€¹ch: VNPay Ã„â€˜ÃƒÂ£ gÃ¡Â»Â­i yÃƒÂªu cÃ¡ÂºÂ§u hoÃƒÂ n tiÃ¡Â»Ân sang ngÃƒÂ¢n hÃƒÂ ng.',
+            '07' => 'TrÃ¡ÂºÂ¡ng thÃƒÂ¡i giao dÃ¡Â»â€¹ch: nghi ngÃ¡Â»Â gian lÃ¡ÂºÂ­n.',
+            '09' => 'TrÃ¡ÂºÂ¡ng thÃƒÂ¡i giao dÃ¡Â»â€¹ch: hoÃƒÂ n trÃ¡ÂºÂ£ bÃ¡Â»â€¹ tÃ¡Â»Â« chÃ¡Â»â€˜i.',
         ];
 
         $segments = [];
@@ -158,7 +163,7 @@ class VnpayService
         }
 
         if ($segments === []) {
-            return 'VNPay đã phản hồi nhưng chưa có mô tả lỗi cụ thể.';
+            return 'VNPay Ã„â€˜ÃƒÂ£ phÃ¡ÂºÂ£n hÃ¡Â»â€œi nhÃ†Â°ng chÃ†Â°a cÃƒÂ³ mÃƒÂ´ tÃ¡ÂºÂ£ lÃ¡Â»â€”i cÃ¡Â»Â¥ thÃ¡Â»Æ’.';
         }
 
         return implode(' ', $segments);
@@ -237,7 +242,7 @@ class VnpayService
 
         $amount = $this->normalizeAmountValue($amountValue);
         if ($amount <= 0) {
-            throw new RuntimeException('Số tiền thanh toán VNPay phải lớn hơn 0.');
+            throw new RuntimeException('SÃ¡Â»â€˜ tiÃ¡Â»Ân thanh toÃƒÂ¡n VNPay phÃ¡ÂºÂ£i lÃ¡Â»â€ºn hÃ†Â¡n 0.');
         }
 
         $params = [

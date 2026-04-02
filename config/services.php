@@ -80,5 +80,6 @@ return [
         'expire_minutes' => env('VNPAY_EXPIRE_MINUTES', 15),
         'locale' => env('VNPAY_LOCALE', 'vn'),
         'bank_code' => env('VNPAY_BANK_CODE'),
+        'allow_sandbox_on_production' => filter_var(env('VNPAY_ALLOW_SANDBOX_IN_PRODUCTION', false), FILTER_VALIDATE_BOOL),
     ],
 ];
