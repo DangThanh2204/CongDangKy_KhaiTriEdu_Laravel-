@@ -91,11 +91,15 @@ class PaymentController extends Controller
                 ->with('error', 'Không thể khởi tạo giao dịch VNPay: ' . $exception->getMessage());
         }
 
+        $this->markBrowserSessionGuardBypass($request);
+
         return redirect()->away($paymentUrl);
     }
 
     public function vnpayReturn(Request $request)
     {
+        $this->markBrowserSessionGuardBypass($request);
+
         $verification = $this->vnpay->verifyResponse($request->query());
 
         if (! $verification['is_valid']) {
@@ -641,5 +645,9 @@ class PaymentController extends Controller
     {
         $walletTransaction->metadata = array_merge($walletTransaction->metadata ?? [], $payload);
         $walletTransaction->save();
+    }
+    private function markBrowserSessionGuardBypass(Request $request): void
+    {
+        $request->session()->put('browser_session_guard_skip_once', true);
     }
 }

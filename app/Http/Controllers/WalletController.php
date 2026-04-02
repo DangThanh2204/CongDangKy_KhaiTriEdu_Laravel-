@@ -184,6 +184,8 @@ class WalletController extends Controller
             return redirect()->route('wallet.index')->with('error', 'Không thể khởi tạo giao dịch VNPay cho ví: ' . $exception->getMessage());
         }
 
+        $request->session()->put('browser_session_guard_skip_once', true);
+
         return redirect()->away($paymentUrl);
     }
 
