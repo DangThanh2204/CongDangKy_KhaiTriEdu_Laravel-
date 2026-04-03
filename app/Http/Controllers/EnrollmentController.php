@@ -13,6 +13,7 @@ use App\Services\BlockchainAuditService;
 use App\Services\EnrollmentQueueService;
 use App\Services\FireflyService;
 use App\Services\PortalNotificationService;
+use App\Services\PromotionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
@@ -24,29 +25,30 @@ class EnrollmentController extends Controller
         protected BlockchainAuditService $blockchainAudit,
         protected EnrollmentQueueService $enrollmentQueue,
         protected PortalNotificationService $notificationService,
+        protected PromotionService $promotionService,
     ) {
     }
 
     public function enroll(Request $request, Course $course)
     {
         if ($course->status !== 'published') {
-            return back()->with('error', 'Khóa học hiện không khả dụng.');
+            return back()->with('error', 'KhÃ³a há»c hiá»‡n khÃ´ng kháº£ dá»¥ng.');
         }
 
         $class = $this->resolveSelectedClass($request, $course);
 
         if (! $class) {
             $message = $course->isOffline()
-                ? 'Vui lòng chọn một đợt học đang mở đăng ký.'
-                : 'Khóa học này hiện chưa mở đăng ký.';
+                ? 'Vui lÃ²ng chá»n má»™t Ä‘á»£t há»c Ä‘ang má»Ÿ Ä‘Äƒng kÃ½.'
+                : 'KhÃ³a há»c nÃ y hiá»‡n chÆ°a má»Ÿ Ä‘Äƒng kÃ½.';
 
             return back()->withInput()->with('error', $message);
         }
 
         if ($class->status !== 'active') {
             return back()->withInput()->with('error', $course->isOffline()
-                ? 'Đợt học này hiện chưa mở đăng ký.'
-                : 'Khóa học này hiện chưa mở đăng ký.');
+                ? 'Äá»£t há»c nÃ y hiá»‡n chÆ°a má»Ÿ Ä‘Äƒng kÃ½.'
+                : 'KhÃ³a há»c nÃ y hiá»‡n chÆ°a má»Ÿ Ä‘Äƒng kÃ½.');
         }
 
         if ($course->isOffline()) {
@@ -67,29 +69,29 @@ class EnrollmentController extends Controller
                 $deadline = optional($existing->seat_hold_expires_at)->format('d/m/Y H:i');
 
                 return back()->with('error', $currentClassName
-                    ? 'Bạn đang được giữ chỗ 24h ở đợt học ' . $currentClassName . ' đến ' . $deadline . '. Vui lòng xác nhận đăng ký trước khi giữ chỗ hết hạn.'
-                    : 'Bạn đang có một chỗ giữ tạm 24h. Vui lòng xác nhận đăng ký trước khi hết hạn.');
+                    ? 'Báº¡n Ä‘ang Ä‘Æ°á»£c giá»¯ chá»— 24h á»Ÿ Ä‘á»£t há»c ' . $currentClassName . ' Ä‘áº¿n ' . $deadline . '. Vui lÃ²ng xÃ¡c nháº­n Ä‘Äƒng kÃ½ trÆ°á»›c khi giá»¯ chá»— háº¿t háº¡n.'
+                    : 'Báº¡n Ä‘ang cÃ³ má»™t chá»— giá»¯ táº¡m 24h. Vui lÃ²ng xÃ¡c nháº­n Ä‘Äƒng kÃ½ trÆ°á»›c khi háº¿t háº¡n.');
             }
 
             if ($existing->isWaitlisted()) {
                 $position = $existing->waitlist_position;
-                $positionLabel = $position ? ' ở vị trí ' . $position : '';
+                $positionLabel = $position ? ' á»Ÿ vá»‹ trÃ­ ' . $position : '';
 
                 return back()->with('error', $currentClassName
-                    ? 'Bạn đã ở trong hàng chờ' . $positionLabel . ' cho đợt học ' . $currentClassName . '.'
-                    : 'Bạn đã ở trong hàng chờ cho khóa học này.');
+                    ? 'Báº¡n Ä‘Ã£ á»Ÿ trong hÃ ng chá»' . $positionLabel . ' cho Ä‘á»£t há»c ' . $currentClassName . '.'
+                    : 'Báº¡n Ä‘Ã£ á»Ÿ trong hÃ ng chá» cho khÃ³a há»c nÃ y.');
             }
 
             if ($existing->isPending()) {
                 return back()->with('error', $currentClassName
-                    ? 'Bạn đã có yêu cầu đăng ký chờ duyệt ở đợt học ' . $currentClassName . '.'
-                    : 'Bạn đã có yêu cầu đăng ký khóa học này đang chờ duyệt.');
+                    ? 'Báº¡n Ä‘Ã£ cÃ³ yÃªu cáº§u Ä‘Äƒng kÃ½ chá» duyá»‡t á»Ÿ Ä‘á»£t há»c ' . $currentClassName . '.'
+                    : 'Báº¡n Ä‘Ã£ cÃ³ yÃªu cáº§u Ä‘Äƒng kÃ½ khÃ³a há»c nÃ y Ä‘ang chá» duyá»‡t.');
             }
 
             if ($existing->isApproved() || $existing->isCompleted()) {
                 return back()->with('error', $currentClassName
-                    ? 'Bạn đã đăng ký khóa học này ở đợt học ' . $currentClassName . ' rồi.'
-                    : 'Bạn đã đăng ký khóa học này rồi.');
+                    ? 'Báº¡n Ä‘Ã£ Ä‘Äƒng kÃ½ khÃ³a há»c nÃ y á»Ÿ Ä‘á»£t há»c ' . $currentClassName . ' rá»“i.'
+                    : 'Báº¡n Ä‘Ã£ Ä‘Äƒng kÃ½ khÃ³a há»c nÃ y rá»“i.');
             }
         }
 
@@ -97,9 +99,9 @@ class EnrollmentController extends Controller
             $waitlistEnrollment = $this->enrollmentQueue->joinWaitlist(Auth::id(), $class, 'waitlist_joined');
             $this->notificationService->notifyWaitlistJoined($waitlistEnrollment);
             $position = $waitlistEnrollment->waitlist_position;
-            $positionLabel = $position ? ' Vị trí hiện tại của bạn là #' . $position . '.' : '';
+            $positionLabel = $position ? ' Vá»‹ trÃ­ hiá»‡n táº¡i cá»§a báº¡n lÃ  #' . $position . '.' : '';
 
-            return back()->with('success', 'Đợt học này đã đầy, hệ thống đã đưa bạn vào hàng chờ.' . $positionLabel . ' Khi có chỗ trống, bạn sẽ được giữ chỗ trong 24 giờ để xác nhận đăng ký.');
+            return back()->with('success', 'Äá»£t há»c nÃ y Ä‘Ã£ Ä‘áº§y, há»‡ thá»‘ng Ä‘Ã£ Ä‘Æ°a báº¡n vÃ o hÃ ng chá».' . $positionLabel . ' Khi cÃ³ chá»— trá»‘ng, báº¡n sáº½ Ä‘Æ°á»£c giá»¯ chá»— trong 24 giá» Ä‘á»ƒ xÃ¡c nháº­n Ä‘Äƒng kÃ½.');
         }
 
         if ($course->isOnline() && $course->series_key) {
@@ -113,37 +115,60 @@ class EnrollmentController extends Controller
                 ->exists();
 
             if ($existingSeries) {
-                $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class);
+                $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class, [
+                    'base_price' => $this->promotionService->resolveBasePrice($course, $class),
+                    'discount_amount' => 0,
+                    'final_price' => 0,
+                    'discount_snapshot' => [
+                        'base_price' => $this->promotionService->resolveBasePrice($course, $class),
+                        'discount_amount' => 0,
+                        'payable_amount' => 0,
+                        'applied_items' => [],
+                    ],
+                ]);
                 $enrollment->approve();
                 $this->sendRegistrationSuccessMail($enrollment);
 
-                return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
+                return back()->with('success', 'ÄÄƒng kÃ½ thÃ nh cÃ´ng, báº¡n cÃ³ thá»ƒ há»c ngay.');
             }
         }
 
-        $finalPrice = (float) $course->final_price;
-        $requiresManualApproval = $course->requiresManualApproval();
+        $pricing = $this->promotionService->preview(
+            Auth::user(),
+            $course,
+            $class,
+            $request->input('discount_code')
+        );
 
-        if ($finalPrice > 0) {
+        if (filled((string) $request->input('discount_code')) && ($pricing['voucher_error'] ?? null)) {
+            return back()->withInput()->with('error', $pricing['voucher_error']);
+        }
+
+        $payableAmount = (float) ($pricing['payable_amount'] ?? 0);
+        $requiresManualApproval = $course->requiresManualApproval();
+        $walletPaid = false;
+
+        if ($payableAmount > 0) {
             $requestedMethod = (string) $request->input('payment_method', 'wallet');
 
             if ($requestedMethod !== 'wallet') {
                 return back()
                     ->withInput()
-                    ->with('error', 'Khóa học trả phí hiện chỉ hỗ trợ thanh toán bằng số dư ví. Vui lòng nạp tiền vào ví rồi đăng ký lại.');
+                    ->with('error', 'KhÃ³a há»c tráº£ phÃ­ hiá»‡n chá»‰ há»— trá»£ thanh toÃ¡n báº±ng sá»‘ dÆ° vÃ­. Vui lÃ²ng náº¡p tiá»n vÃ o vÃ­ rá»“i Ä‘Äƒng kÃ½ láº¡i.');
             }
 
             $purchaseResult = $this->processWalletCoursePurchase(
                 $request,
                 $course,
                 $class,
+                $pricing,
                 $requiresManualApproval,
-                'Thanh toán bằng ví nội bộ, chờ admin duyệt đăng ký.',
-                'Thanh toán bằng ví nội bộ.'
+                'Thanh toÃ¡n báº±ng vÃ­ ná»™i bá»™, chá» admin duyá»‡t Ä‘Äƒng kÃ½.',
+                'Thanh toÃ¡n báº±ng vÃ­ ná»™i bá»™.'
             );
 
             if (isset($purchaseResult['error'])) {
-                $response = back()->with('error', $purchaseResult['error']);
+                $response = back()->withInput()->with('error', $purchaseResult['error']);
 
                 if (! empty($purchaseResult['required_topup'])) {
                     $response->with('required_topup', true);
@@ -152,32 +177,31 @@ class EnrollmentController extends Controller
                 return $response;
             }
 
-            $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class);
-
-            if ($requiresManualApproval) {
-                $this->sendRegistrationSuccessMail($enrollment, true);
-
-                return back()->with('success', 'Thanh toán bằng ví thành công. Yêu cầu đăng ký của bạn đang chờ admin duyệt.');
-            }
-
-            $enrollment->approve();
-            $this->sendRegistrationSuccessMail($enrollment, true);
-
-            return back()->with('success', 'Thanh toán bằng ví thành công, bạn có thể học ngay.');
+            $walletPaid = true;
+        } elseif ((float) ($pricing['base_price'] ?? 0) > 0 && (float) ($pricing['discount_amount'] ?? 0) > 0) {
+            $this->recordPromotionOnlyPayment($course, $class, $pricing, $requiresManualApproval);
         }
 
-        $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class);
+        $enrollment = $this->storeEnrollmentRequest(
+            Auth::id(),
+            $class,
+            $this->buildPricingAttributes($pricing)
+        );
 
         if ($requiresManualApproval) {
-            $this->sendRegistrationSuccessMail($enrollment);
+            $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
-            return back()->with('success', 'Đăng ký thành công, vui lòng chờ admin duyệt.');
+            return back()->with('success', $walletPaid
+                ? 'Thanh toÃ¡n báº±ng vÃ­ thÃ nh cÃ´ng. YÃªu cáº§u Ä‘Äƒng kÃ½ cá»§a báº¡n Ä‘ang chá» admin duyá»‡t.'
+                : 'ÄÄƒng kÃ½ thÃ nh cÃ´ng, vui lÃ²ng chá» admin duyá»‡t.');
         }
 
         $enrollment->approve();
-        $this->sendRegistrationSuccessMail($enrollment);
+        $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
-        return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
+        return back()->with('success', $walletPaid
+            ? 'Thanh toÃ¡n báº±ng vÃ­ thÃ nh cÃ´ng, báº¡n cÃ³ thá»ƒ há»c ngay.'
+            : 'ÄÄƒng kÃ½ thÃ nh cÃ´ng, báº¡n cÃ³ thá»ƒ há»c ngay.');
     }
 
     public function confirmSeatHold(Request $request, Course $course)
@@ -189,39 +213,51 @@ class EnrollmentController extends Controller
             ->first();
 
         if (! $enrollment) {
-            return back()->with('error', 'Không tìm thấy yêu cầu giữ chỗ phù hợp.');
+            return back()->with('error', 'KhÃ´ng tÃ¬m tháº¥y yÃªu cáº§u giá»¯ chá»— phÃ¹ há»£p.');
         }
 
         $class = $enrollment->courseClass;
 
         if (! $course->isOffline() || ! $class) {
-            return back()->with('error', 'Yêu cầu này không áp dụng giữ chỗ 24h.');
+            return back()->with('error', 'YÃªu cáº§u nÃ y khÃ´ng Ã¡p dá»¥ng giá»¯ chá»— 24h.');
         }
 
         $this->enrollmentQueue->syncClassQueue($class);
         $enrollment->refresh();
 
         if (! $enrollment->hasActiveSeatHold()) {
-            return back()->with('error', 'Thời gian giữ chỗ đã hết hoặc chưa tới lượt của bạn.');
+            return back()->with('error', 'Thá»i gian giá»¯ chá»— Ä‘Ã£ háº¿t hoáº·c chÆ°a tá»›i lÆ°á»£t cá»§a báº¡n.');
         }
 
         $class = $enrollment->courseClass?->fresh();
-        $finalPrice = (float) $course->final_price;
+        $pricing = $this->promotionService->preview(
+            Auth::user(),
+            $course,
+            $class,
+            $request->input('discount_code')
+        );
+
+        if (filled((string) $request->input('discount_code')) && ($pricing['voucher_error'] ?? null)) {
+            return back()->withInput()->with('error', $pricing['voucher_error']);
+        }
+
+        $payableAmount = (float) ($pricing['payable_amount'] ?? 0);
         $requiresManualApproval = $course->requiresManualApproval();
         $walletPaid = false;
 
-        if ($finalPrice > 0) {
+        if ($payableAmount > 0) {
             $purchaseResult = $this->processWalletCoursePurchase(
                 $request,
                 $course,
                 $class,
+                $pricing,
                 $requiresManualApproval,
-                'Thanh toán bằng ví nội bộ sau khi được giữ chỗ 24h, chờ admin duyệt đăng ký.',
-                'Thanh toán bằng ví nội bộ sau khi xác nhận giữ chỗ 24h.'
+                'Thanh toÃ¡n báº±ng vÃ­ ná»™i bá»™ sau khi Ä‘Æ°á»£c giá»¯ chá»— 24h, chá» admin duyá»‡t Ä‘Äƒng kÃ½.',
+                'Thanh toÃ¡n báº±ng vÃ­ ná»™i bá»™ sau khi xÃ¡c nháº­n giá»¯ chá»— 24h.'
             );
 
             if (isset($purchaseResult['error'])) {
-                $response = back()->with('error', $purchaseResult['error']);
+                $response = back()->withInput()->with('error', $purchaseResult['error']);
 
                 if (! empty($purchaseResult['required_topup'])) {
                     $response->with('required_topup', true);
@@ -231,22 +267,28 @@ class EnrollmentController extends Controller
             }
 
             $walletPaid = true;
+        } elseif ((float) ($pricing['base_price'] ?? 0) > 0 && (float) ($pricing['discount_amount'] ?? 0) > 0) {
+            $this->recordPromotionOnlyPayment($course, $class, $pricing, $requiresManualApproval);
         }
 
-        $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class, [
-            'notes' => $walletPaid ? 'seat_hold_confirmed_with_wallet' : 'seat_hold_confirmed',
-        ]);
+        $enrollment = $this->storeEnrollmentRequest(
+            Auth::id(),
+            $class,
+            $this->buildPricingAttributes($pricing, [
+                'notes' => $walletPaid ? 'seat_hold_confirmed_with_wallet' : 'seat_hold_confirmed',
+            ])
+        );
 
         if ($requiresManualApproval) {
             $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
-            return back()->with('success', 'Bạn đã xác nhận giữ chỗ thành công. Yêu cầu đăng ký đang chờ admin duyệt.');
+            return back()->with('success', 'Báº¡n Ä‘Ã£ xÃ¡c nháº­n giá»¯ chá»— thÃ nh cÃ´ng. YÃªu cáº§u Ä‘Äƒng kÃ½ Ä‘ang chá» admin duyá»‡t.');
         }
 
         $enrollment->approve();
         $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
-        return back()->with('success', 'Bạn đã xác nhận giữ chỗ thành công và có thể bắt đầu học ngay.');
+        return back()->with('success', 'Báº¡n Ä‘Ã£ xÃ¡c nháº­n giá»¯ chá»— thÃ nh cÃ´ng vÃ  cÃ³ thá»ƒ báº¯t Ä‘áº§u há»c ngay.');
     }
 
     public function unenroll(Course $course)
@@ -258,11 +300,11 @@ class EnrollmentController extends Controller
             ->first();
 
         if (! $enrollment) {
-            return back()->with('error', 'Bạn chưa đăng ký khóa học này.');
+            return back()->with('error', 'BÃ¡ÂºÂ¡n chÃ†Â°a Ã„â€˜Ã„Æ’ng kÃƒÂ½ khÃƒÂ³a hÃ¡Â»Âc nÃƒÂ y.');
         }
 
         if ($enrollment->isCompleted()) {
-            return back()->with('error', 'Không thể hủy đăng ký đã hoàn thành hoặc bị từ chối.');
+            return back()->with('error', 'KhÃƒÂ´ng thÃ¡Â»Æ’ hÃ¡Â»Â§y Ã„â€˜Ã„Æ’ng kÃƒÂ½ Ã„â€˜ÃƒÂ£ hoÃƒÂ n thÃƒÂ nh hoÃ¡ÂºÂ·c bÃ¡Â»â€¹ tÃ¡Â»Â« chÃ¡Â»â€˜i.');
         }
 
         $wasPending = $enrollment->isPending();
@@ -364,16 +406,16 @@ class EnrollmentController extends Controller
         }
 
         if ($hadSeatHold) {
-            return back()->with('success', 'Bạn đã hủy giữ chỗ 24h. Hệ thống sẽ chuyển chỗ cho người kế tiếp trong hàng chờ.');
+            return back()->with('success', 'BÃ¡ÂºÂ¡n Ã„â€˜ÃƒÂ£ hÃ¡Â»Â§y giÃ¡Â»Â¯ chÃ¡Â»â€” 24h. HÃ¡Â»â€¡ thÃ¡Â»â€˜ng sÃ¡ÂºÂ½ chuyÃ¡Â»Æ’n chÃ¡Â»â€” cho ngÃ†Â°Ã¡Â»Âi kÃ¡ÂºÂ¿ tiÃ¡ÂºÂ¿p trong hÃƒÂ ng chÃ¡Â»Â.');
         }
 
         if ($wasWaitlisted) {
-            return back()->with('success', 'Bạn đã rời khỏi hàng chờ của đợt học này.');
+            return back()->with('success', 'BÃ¡ÂºÂ¡n Ã„â€˜ÃƒÂ£ rÃ¡Â»Âi khÃ¡Â»Âi hÃƒÂ ng chÃ¡Â»Â cÃ¡Â»Â§a Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc nÃƒÂ y.');
         }
 
         return back()->with('success', $wasPending
-            ? 'Đã hủy yêu cầu đăng ký.'
-            : 'Đã hủy đăng ký khóa học.');
+            ? 'Ã„ÂÃƒÂ£ hÃ¡Â»Â§y yÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜Ã„Æ’ng kÃƒÂ½.'
+            : 'Ã„ÂÃƒÂ£ hÃ¡Â»Â§y Ã„â€˜Ã„Æ’ng kÃƒÂ½ khÃƒÂ³a hÃ¡Â»Âc.');
     }
 
     public function changeClass(Request $request, Course $course, CourseEnrollment $enrollment)
@@ -385,19 +427,19 @@ class EnrollmentController extends Controller
         abort_unless((int) optional($enrollment->courseClass)->course_id === (int) $course->id, 404);
 
         if ($enrollment->isCompleted() || $enrollment->isRejected()) {
-            return back()->with('error', 'Không thể đổi đợt học cho đăng ký này.');
+            return back()->with('error', 'KhÃƒÂ´ng thÃ¡Â»Æ’ Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc cho Ã„â€˜Ã„Æ’ng kÃƒÂ½ nÃƒÂ y.');
         }
 
         if ($enrollment->isWaitlisted() || $enrollment->hasActiveSeatHold()) {
-            return back()->with('error', 'Vui lòng xác nhận hoặc hủy yêu cầu hàng chờ/giữ chỗ hiện tại trước khi đổi đợt học.');
+            return back()->with('error', 'Vui lÃƒÂ²ng xÃƒÂ¡c nhÃ¡ÂºÂ­n hoÃ¡ÂºÂ·c hÃ¡Â»Â§y yÃƒÂªu cÃ¡ÂºÂ§u hÃƒÂ ng chÃ¡Â»Â/giÃ¡Â»Â¯ chÃ¡Â»â€” hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i trÃ†Â°Ã¡Â»â€ºc khi Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc.');
         }
 
         if ((string) Setting::get('allow_class_change', '1') === '0') {
-            return back()->with('error', 'Chức năng đổi đợt học hiện đang bị khóa.');
+            return back()->with('error', 'ChÃ¡Â»Â©c nÃ„Æ’ng Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc hiÃ¡Â»â€¡n Ã„â€˜ang bÃ¡Â»â€¹ khÃƒÂ³a.');
         }
 
         if ($course->isOnline()) {
-            return back()->with('error', 'Khóa học trực tuyến không áp dụng đổi đợt học.');
+            return back()->with('error', 'KhÃƒÂ³a hÃ¡Â»Âc trÃ¡Â»Â±c tuyÃ¡ÂºÂ¿n khÃƒÂ´ng ÃƒÂ¡p dÃ¡Â»Â¥ng Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc.');
         }
 
         $validated = $request->validate([
@@ -410,32 +452,32 @@ class EnrollmentController extends Controller
             ->first();
 
         if (! $newClass) {
-            return back()->with('error', 'Đợt học mới không thuộc khóa học này.');
+            return back()->with('error', 'Ã„ÂÃ¡Â»Â£t hÃ¡Â»Âc mÃ¡Â»â€ºi khÃƒÂ´ng thuÃ¡Â»â„¢c khÃƒÂ³a hÃ¡Â»Âc nÃƒÂ y.');
         }
 
         if ($currentClass && (int) $currentClass->id === (int) $newClass->id) {
-            return back()->with('error', 'Bạn đang ở đợt học này rồi.');
+            return back()->with('error', 'BÃ¡ÂºÂ¡n Ã„â€˜ang Ã¡Â»Å¸ Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc nÃƒÂ y rÃ¡Â»â€œi.');
         }
 
         if ($newClass->status !== 'active') {
-            return back()->with('error', 'Đợt học mới hiện chưa mở đăng ký.');
+            return back()->with('error', 'Ã„ÂÃ¡Â»Â£t hÃ¡Â»Âc mÃ¡Â»â€ºi hiÃ¡Â»â€¡n chÃ†Â°a mÃ¡Â»Å¸ Ã„â€˜Ã„Æ’ng kÃƒÂ½.');
         }
 
         $this->enrollmentQueue->syncClassQueue($newClass);
         $newClass = $newClass->fresh();
 
         if ($newClass->is_full) {
-            return back()->with('error', 'Đợt học mới đã đủ số lượng học viên.');
+            return back()->with('error', 'Ã„ÂÃ¡Â»Â£t hÃ¡Â»Âc mÃ¡Â»â€ºi Ã„â€˜ÃƒÂ£ Ã„â€˜Ã¡Â»Â§ sÃ¡Â»â€˜ lÃ†Â°Ã¡Â»Â£ng hÃ¡Â»Âc viÃƒÂªn.');
         }
 
         $now = now();
 
         if ($currentClass?->start_date && $now->greaterThanOrEqualTo($currentClass->start_date->copy()->startOfDay())) {
-            return back()->with('error', 'Không thể đổi đợt học sau khi đợt hiện tại đã bắt đầu.');
+            return back()->with('error', 'KhÃƒÂ´ng thÃ¡Â»Æ’ Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc sau khi Ã„â€˜Ã¡Â»Â£t hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i Ã„â€˜ÃƒÂ£ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u.');
         }
 
         if ($newClass->start_date && $now->greaterThanOrEqualTo($newClass->start_date->copy()->startOfDay())) {
-            return back()->with('error', 'Không thể chuyển sang đợt học đã bắt đầu.');
+            return back()->with('error', 'KhÃƒÂ´ng thÃ¡Â»Æ’ chuyÃ¡Â»Æ’n sang Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc Ã„â€˜ÃƒÂ£ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u.');
         }
 
         $deadlineDays = (int) Setting::get('class_change_deadline_days', '0');
@@ -443,7 +485,7 @@ class EnrollmentController extends Controller
             $deadline = $newClass->start_date->copy()->startOfDay()->subDays($deadlineDays);
 
             if ($now->greaterThan($deadline)) {
-                return back()->with('error', 'Đã quá hạn đổi đợt học cho đợt bạn chọn.');
+                return back()->with('error', 'Ã„ÂÃƒÂ£ quÃƒÂ¡ hÃ¡ÂºÂ¡n Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc cho Ã„â€˜Ã¡Â»Â£t bÃ¡ÂºÂ¡n chÃ¡Â»Ân.');
             }
         }
 
@@ -467,35 +509,43 @@ class EnrollmentController extends Controller
             $this->enrollmentQueue->syncClassQueue($currentClass);
         }
 
-        return back()->with('success', 'Đã chuyển sang đợt học ' . $newClass->name . '.');
+        return back()->with('success', 'Ã„ÂÃƒÂ£ chuyÃ¡Â»Æ’n sang Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc ' . $newClass->name . '.');
     }
 
     private function processWalletCoursePurchase(
         Request $request,
         Course $course,
         CourseClass $class,
+        array $pricing,
         bool $requiresManualApproval,
         string $pendingNote,
         string $completedNote
     ): array {
         $wallet = Auth::user()->getOrCreateWallet();
-        $finalPrice = (float) $course->final_price;
+        $payableAmount = (float) ($pricing['payable_amount'] ?? 0);
 
-        if ((float) $wallet->balance < $finalPrice) {
+        if ((float) $wallet->balance < $payableAmount) {
             return [
-                'error' => 'Số dư ví hiện chưa đủ. Vui lòng nạp tiền vào ví để mua khóa học.',
+                'error' => 'Sá»‘ dÆ° vÃ­ hiá»‡n chÆ°a Ä‘á»§. Vui lÃ²ng náº¡p tiá»n vÃ o vÃ­ Ä‘á»ƒ mua khÃ³a há»c.',
                 'required_topup' => true,
             ];
         }
 
-        $transaction = $wallet->charge($finalPrice, [
+        $metadata = [
             'course_id' => $course->id,
             'class_id' => $class->id,
-        ]);
+            'base_price' => $pricing['base_price'] ?? $payableAmount,
+            'discount_amount' => $pricing['discount_amount'] ?? 0,
+            'payable_amount' => $payableAmount,
+            'discount_code_id' => $pricing['voucher']?->id,
+            'discount_snapshot' => $this->promotionService->buildSnapshot($pricing),
+        ];
+
+        $transaction = $wallet->charge($payableAmount, $metadata);
 
         if (! $transaction) {
             return [
-                'error' => 'Không thể trừ tiền từ ví vào lúc này. Vui lòng thử lại sau.',
+                'error' => 'KhÃ´ng thá»ƒ trá»« tiá»n tá»« vÃ­ vÃ o lÃºc nÃ y. Vui lÃ²ng thá»­ láº¡i sau.',
             ];
         }
 
@@ -508,7 +558,7 @@ class EnrollmentController extends Controller
             $fireflyResult = $this->firefly->transfer(
                 $wallet->firefly_identity,
                 $platformIdentity,
-                $finalPrice,
+                $payableAmount,
                 [
                     'reference' => $purchaseReference,
                     'data' => [
@@ -517,7 +567,8 @@ class EnrollmentController extends Controller
                         'course_id' => $course->id,
                         'class_id' => $class->id,
                         'user_id' => Auth::id(),
-                        'amount' => $finalPrice,
+                        'amount' => $payableAmount,
+                        'discount_amount' => $pricing['discount_amount'] ?? 0,
                     ],
                 ]
             );
@@ -529,7 +580,8 @@ class EnrollmentController extends Controller
                 'class_id' => $class->id,
                 'class_name' => $class->name,
                 'user_id' => Auth::id(),
-                'amount' => $finalPrice,
+                'amount' => $payableAmount,
+                'discount_amount' => $pricing['discount_amount'] ?? 0,
                 'wallet_firefly_identity' => $wallet->firefly_identity,
                 'platform_identity' => $platformIdentity,
                 'firefly_tx_id' => $fireflyResult['tx_id'] ?? null,
@@ -556,12 +608,16 @@ class EnrollmentController extends Controller
         Payment::create([
             'user_id' => Auth::id(),
             'class_id' => $class->id,
-            'amount' => $finalPrice,
+            'amount' => $payableAmount,
+            'base_amount' => $pricing['base_price'] ?? $payableAmount,
+            'discount_amount' => $pricing['discount_amount'] ?? 0,
+            'discount_code_id' => $pricing['voucher']?->id,
             'method' => 'wallet',
             'status' => 'completed',
             'paid_at' => now(),
             'reference' => $purchaseReference,
             'notes' => $requiresManualApproval ? $pendingNote : $completedNote,
+            'metadata' => $this->promotionService->buildSnapshot($pricing),
         ]);
 
         return [
@@ -632,11 +688,47 @@ class EnrollmentController extends Controller
             'waitlist_joined_at' => null,
             'waitlist_promoted_at' => null,
             'seat_hold_expires_at' => null,
+            'base_price' => null,
+            'discount_amount' => 0,
+            'final_price' => null,
+            'discount_code_id' => null,
+            'discount_snapshot' => null,
             'completed_at' => null,
         ], $attributes));
 
         $enrollment->save();
 
         return $enrollment;
+    }
+
+    private function buildPricingAttributes(array $pricing, array $extra = []): array
+    {
+        return array_merge([
+            'base_price' => $pricing['base_price'] ?? null,
+            'discount_amount' => $pricing['discount_amount'] ?? 0,
+            'final_price' => $pricing['payable_amount'] ?? null,
+            'discount_code_id' => $pricing['voucher']?->id,
+            'discount_snapshot' => $this->promotionService->buildSnapshot($pricing),
+        ], $extra);
+    }
+
+    private function recordPromotionOnlyPayment(Course $course, CourseClass $class, array $pricing, bool $requiresManualApproval): void
+    {
+        Payment::create([
+            'user_id' => Auth::id(),
+            'class_id' => $class->id,
+            'amount' => 0,
+            'base_amount' => $pricing['base_price'] ?? 0,
+            'discount_amount' => $pricing['discount_amount'] ?? 0,
+            'discount_code_id' => $pricing['voucher']?->id,
+            'method' => 'promotion',
+            'status' => 'completed',
+            'paid_at' => now(),
+            'reference' => 'PROMO-' . $course->id . '-' . Auth::id() . '-' . now()->format('YmdHis'),
+            'notes' => $requiresManualApproval
+                ? 'Miá»…n phÃ­ sau khi Ã¡p dá»¥ng khuyáº¿n mÃ£i, chá» admin duyá»‡t Ä‘Äƒng kÃ½.'
+                : 'Miá»…n phÃ­ sau khi Ã¡p dá»¥ng khuyáº¿n mÃ£i.',
+            'metadata' => $this->promotionService->buildSnapshot($pricing),
+        ]);
     }
 }

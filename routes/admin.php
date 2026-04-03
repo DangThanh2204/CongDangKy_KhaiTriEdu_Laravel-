@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminEnrollmentController;
 use App\Http\Controllers\Admin\AdminNewsCategoryController;
 use App\Http\Controllers\Admin\AdminNewsController;
 use App\Http\Controllers\Admin\AdminQuizController;
+use App\Http\Controllers\Admin\AdminPromotionController;
 use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminSettingsController;
 use App\Http\Controllers\Admin\AdminVideoController;
@@ -155,7 +156,13 @@ Route::middleware(['web', 'auth', 'admin'])->group(function () {
                 Route::post('/{video}/process', [AdminVideoController::class, 'process'])->name('process');
                 Route::get('/{video}/stream', [AdminVideoController::class, 'stream'])->name('stream');
             });
-
+            Route::prefix('promotions')->as('promotions.')->group(function () {
+                Route::get('/', [AdminPromotionController::class, 'index'])->name('index');
+                Route::put('/settings', [AdminPromotionController::class, 'updateSettings'])->name('settings.update');
+                Route::post('/codes', [AdminPromotionController::class, 'storeCode'])->name('codes.store');
+                Route::patch('/codes/{discountCode}/toggle', [AdminPromotionController::class, 'toggleCode'])->name('codes.toggle');
+                Route::delete('/codes/{discountCode}', [AdminPromotionController::class, 'destroyCode'])->name('codes.destroy');
+            });
             Route::prefix('settings')->as('settings.')->group(function () {
                 Route::get('/', [AdminSettingsController::class, 'index'])->name('index');
                 Route::put('/', [AdminSettingsController::class, 'update'])->name('update');

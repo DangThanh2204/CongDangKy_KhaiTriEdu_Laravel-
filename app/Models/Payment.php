@@ -13,16 +13,23 @@ class Payment extends Model
         'user_id',
         'class_id',
         'amount',
+        'base_amount',
+        'discount_amount',
+        'discount_code_id',
         'method',
         'status',
         'paid_at',
         'notes',
         'reference',
+        'metadata',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
+        'base_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'paid_at' => 'datetime',
+        'metadata' => 'array',
     ];
 
     public function user()
@@ -38,6 +45,11 @@ class Payment extends Model
     public function courseClass()
     {
         return $this->belongsTo(CourseClass::class, 'class_id');
+    }
+
+    public function discountCode()
+    {
+        return $this->belongsTo(DiscountCode::class, 'discount_code_id');
     }
 
     public function getCourseAttribute()
@@ -71,6 +83,7 @@ class Payment extends Model
     {
         return [
             'wallet' => 'Ví nội bộ',
+            'promotion' => 'Khuyến mãi / miễn phí',
             'vnpay' => 'VNPay',
             'bank_transfer' => 'Chuyển khoản',
             'cash' => 'Tiền mặt',
@@ -85,6 +98,15 @@ class Payment extends Model
             'completed' => 'Đã thanh toán',
             'failed' => 'Thất bại',
         ][$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    public function getSavingsLabelAttribute(): ?string
+    {
+        if ((float) $this->discount_amount <= 0) {
+            return null;
+        }
+
+        return number_format((float) $this->discount_amount, 0) . 'đ';
     }
 
     public function markCompleted(?string $note = null): bool

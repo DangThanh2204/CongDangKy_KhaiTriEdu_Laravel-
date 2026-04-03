@@ -10,6 +10,7 @@ use App\Models\CourseEnrollment;
 use App\Models\CourseMaterial;
 use App\Models\CourseMaterialProgress;
 use App\Models\CourseMaterialQuizAttempt;
+use App\Services\PromotionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
@@ -226,7 +227,7 @@ class CourseController extends Controller
             });
     }
 
-    public function show(Course $course)
+    public function show(Course $course, PromotionService $promotionService)
     {
         if ($course->status !== 'published') {
             abort(404);
@@ -291,6 +292,21 @@ class CourseController extends Controller
             ? \App\Models\CourseReview::where('course_id', $course->id)->where('user_id', Auth::id())->first()
             : null;
 
+        $pricingPreviewClass = $currentEnrollment?->courseClass
+            ?: $classes->firstWhere('status', 'active')
+            ?: $classes->first();
+
+        $selectedDiscountCode = trim((string) session()->getOldInput('discount_code', ''));
+        $selectedDiscountCode = $selectedDiscountCode !== '' ? $selectedDiscountCode : null;
+
+        $promotionPreview = $promotionService->preview(Auth::user(), $course, $pricingPreviewClass, $selectedDiscountCode);
+        $classPromotionPreviews = $classes->mapWithKeys(function (CourseClass $classItem) use ($promotionService, $course, $selectedDiscountCode) {
+            return [
+                $classItem->id => $promotionService->preview(Auth::user(), $course, $classItem, $selectedDiscountCode),
+            ];
+        })->all();
+        $publicVoucherCodes = $promotionService->publicVoucherHints(Auth::user(), $course, $pricingPreviewClass);
+
         return view('courses.show', compact(
             'course',
             'classes',
@@ -300,7 +316,10 @@ class CourseController extends Controller
             'similarCourses',
             'reviews',
             'userReview',
-            'standaloneMaterials'
+            'standaloneMaterials',
+            'promotionPreview',
+            'classPromotionPreviews',
+            'publicVoucherCodes'
         ));
     }
 

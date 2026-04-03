@@ -20,6 +20,11 @@ class CourseEnrollment extends Model
         'waitlist_joined_at',
         'waitlist_promoted_at',
         'seat_hold_expires_at',
+        'base_price',
+        'discount_amount',
+        'final_price',
+        'discount_code_id',
+        'discount_snapshot',
         'completed_at',
         'notes',
     ];
@@ -32,6 +37,10 @@ class CourseEnrollment extends Model
         'waitlist_joined_at' => 'datetime',
         'waitlist_promoted_at' => 'datetime',
         'seat_hold_expires_at' => 'datetime',
+        'base_price' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'final_price' => 'decimal:2',
+        'discount_snapshot' => 'array',
         'completed_at' => 'datetime',
     ];
 
@@ -65,6 +74,11 @@ class CourseEnrollment extends Model
             'class_id',
             'course_id'
         );
+    }
+
+    public function discountCode()
+    {
+        return $this->belongsTo(DiscountCode::class, 'discount_code_id');
     }
 
     public function materialProgress()
@@ -296,23 +310,23 @@ class CourseEnrollment extends Model
     public function getStatusTextAttribute()
     {
         if ($this->hasActiveSeatHold()) {
-            return 'Giữ chỗ 24h';
+            return 'GiÃ¡Â»Â¯ chÃ¡Â»â€” 24h';
         }
 
         if ($this->isWaitlisted()) {
-            return 'Trong hàng chờ';
+            return 'Trong hÃƒÂ ng chÃ¡Â»Â';
         }
 
         if ($this->isCompleted()) {
-            return 'Hoàn thành';
+            return 'HoÃƒÂ n thÃƒÂ nh';
         }
 
         $statuses = [
-            'pending' => 'Chờ duyệt',
-            'approved' => 'Đã duyệt',
-            'rejected' => 'Từ chối',
-            'cancelled' => 'Đã hủy',
-            'completed' => 'Hoàn thành',
+            'pending' => 'ChÃ¡Â»Â duyÃ¡Â»â€¡t',
+            'approved' => 'Ã„ÂÃƒÂ£ duyÃ¡Â»â€¡t',
+            'rejected' => 'TÃ¡Â»Â« chÃ¡Â»â€˜i',
+            'cancelled' => 'Ã„ÂÃƒÂ£ hÃ¡Â»Â§y',
+            'completed' => 'HoÃƒÂ n thÃƒÂ nh',
         ];
 
         return $statuses[$this->status] ?? $this->status;

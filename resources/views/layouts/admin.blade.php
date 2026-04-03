@@ -76,18 +76,18 @@
                 </a>
             </li>
 
-            <!-- Group: Quản lý người dùng -->
+            <!-- Group: QuÃ¡ÂºÂ£n lÃƒÂ½ ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng -->
             <li class="sidebar-group">
                 <div class="sidebar-group-header">
                     <span>
                         <i class="fas fa-users"></i>
-                        <span class="nav-text">Quản lý người dùng</span>
+                        <span class="nav-text">QuÃ¡ÂºÂ£n lÃƒÂ½ ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng</span>
                     </span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý người dùng">
+                <ul class="sidebar-subnav" data-group-title="QuÃ¡ÂºÂ£n lÃƒÂ½ ngÃ†Â°Ã¡Â»Âi dÃƒÂ¹ng">
                     <li class="nav-item">
-                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" title="Quản lý Users">
+                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" title="QuÃ¡ÂºÂ£n lÃƒÂ½ Users">
                             <i class="fas fa-user"></i>
                             <span class="nav-text">Users</span>
                         </a>
@@ -95,63 +95,63 @@
                 </ul>
             </li>
 
-            <!-- Group: Quản lý tin tức -->
+            <!-- Group: QuÃ¡ÂºÂ£n lÃƒÂ½ tin tÃ¡Â»Â©c -->
             <li class="sidebar-group">
                 <div class="sidebar-group-header">
                     <span>
                         <i class="fas fa-newspaper"></i>
-                        <span class="nav-text">Quản lý tin tức</span>
+                        <span class="nav-text">QuÃ¡ÂºÂ£n lÃƒÂ½ tin tÃ¡Â»Â©c</span>
                     </span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý tin tức">
+                <ul class="sidebar-subnav" data-group-title="QuÃ¡ÂºÂ£n lÃƒÂ½ tin tÃ¡Â»Â©c">
                     <li class="nav-item">
-                        <a href="{{ route('admin.news-categories.index') }}" class="nav-link {{ request()->routeIs('admin.news-categories.*') ? 'active' : '' }}" title="Danh mục Tin tức">
+                        <a href="{{ route('admin.news-categories.index') }}" class="nav-link {{ request()->routeIs('admin.news-categories.*') ? 'active' : '' }}" title="Danh mÃ¡Â»Â¥c Tin tÃ¡Â»Â©c">
                             <i class="fas fa-folder"></i>
-                            <span class="nav-text">Danh mục</span>
+                            <span class="nav-text">Danh mÃ¡Â»Â¥c</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('admin.news.index') }}" class="nav-link {{ request()->routeIs('admin.news.*') ? 'active' : '' }}" title="Quản lý Tin tức">
+                        <a href="{{ route('admin.news.index') }}" class="nav-link {{ request()->routeIs('admin.news.*') ? 'active' : '' }}" title="QuÃ¡ÂºÂ£n lÃƒÂ½ Tin tÃ¡Â»Â©c">
                             <i class="fas fa-newspaper"></i>
-                            <span class="nav-text">Tin tức</span>
+                            <span class="nav-text">Tin tÃ¡Â»Â©c</span>
                         </a>
                     </li>
                 </ul>
             </li>
 
-            <!-- Group: Quản lý khóa học -->
+            <!-- Group: QuÃ¡ÂºÂ£n lÃƒÂ½ khÃƒÂ³a hÃ¡Â»Âc -->
             <li class="sidebar-group">
                 <div class="sidebar-group-header">
                     <span class="sidebar-group-title">
                         <i class="fas fa-book-open"></i>
-                        <span class="nav-text">Quản lý khóa học</span>
+                        <span class="nav-text">QuÃ¡ÂºÂ£n lÃƒÂ½ khÃƒÂ³a hÃ¡Â»Âc</span>
                         @if($adminNewReviewCount > 0)
-                            <span class="admin-attention-dot" title="Có đánh giá mới cần xem"></span>
+                            <span class="admin-attention-dot" title="CÃƒÂ³ Ã„â€˜ÃƒÂ¡nh giÃƒÂ¡ mÃ¡Â»â€ºi cÃ¡ÂºÂ§n xem"></span>
                         @endif
                     </span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý khóa học">
+                <ul class="sidebar-subnav" data-group-title="QuÃ¡ÂºÂ£n lÃƒÂ½ khÃƒÂ³a hÃ¡Â»Âc">
                     <li class="nav-item">
-                        <a href="{{ route('admin.course-categories.index') }}" class="nav-link {{ request()->routeIs('admin.course-categories.*') ? 'active' : '' }}" title="Nhóm ngành">
+                        <a href="{{ route('admin.course-categories.index') }}" class="nav-link {{ request()->routeIs('admin.course-categories.*') ? 'active' : '' }}" title="NhÃƒÂ³m ngÃƒÂ nh">
                             <i class="fas fa-folder-tree"></i>
-                            <span class="nav-text">Nhóm ngành</span>
+                            <span class="nav-text">NhÃƒÂ³m ngÃƒÂ nh</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('admin.courses.index') }}" class="nav-link {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}" title="Quản lý Khóa học">
+                        <a href="{{ route('admin.courses.index') }}" class="nav-link {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}" title="QuÃ¡ÂºÂ£n lÃƒÂ½ KhÃƒÂ³a hÃ¡Â»Âc">
                             <i class="fas fa-book-open"></i>
-                            <span class="nav-text">Khóa học</span>
+                            <span class="nav-text">KhÃƒÂ³a hÃ¡Â»Âc</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" title="Quản lý Đánh giá">
+                        <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" title="QuÃ¡ÂºÂ£n lÃƒÂ½ Ã„ÂÃƒÂ¡nh giÃƒÂ¡">
                             <i class="fas fa-star"></i>
                             <span class="nav-link-label">
-                                <span class="nav-text">Đánh giá</span>
+                                <span class="nav-text">Ã„ÂÃƒÂ¡nh giÃƒÂ¡</span>
                                 @if($adminNewReviewCount > 0)
-                                    <span class="admin-attention-dot" title="{{ $adminNewReviewCount }} đánh giá mới"></span>
+                                    <span class="admin-attention-dot" title="{{ $adminNewReviewCount }} Ã„â€˜ÃƒÂ¡nh giÃƒÂ¡ mÃ¡Â»â€ºi"></span>
                                 @endif
                             </span>
                         </a>
@@ -159,32 +159,32 @@
                 </ul>
             </li>
 
-            <!-- Group: Quản lý đợt học & đăng ký -->
+            <!-- Group: QuÃ¡ÂºÂ£n lÃƒÂ½ Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc & Ã„â€˜Ã„Æ’ng kÃƒÂ½ -->
             <li class="sidebar-group">
                 <div class="sidebar-group-header">
                     <span class="sidebar-group-title">
                         <i class="fas fa-chalkboard-teacher"></i>
-                        <span class="nav-text">Quản lý đợt học</span>
+                        <span class="nav-text">QuÃ¡ÂºÂ£n lÃƒÂ½ Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc</span>
                         @if($adminPendingEnrollmentCount > 0)
-                            <span class="admin-attention-dot" title="Có đăng ký mới cần duyệt"></span>
+                            <span class="admin-attention-dot" title="CÃƒÂ³ Ã„â€˜Ã„Æ’ng kÃƒÂ½ mÃ¡Â»â€ºi cÃ¡ÂºÂ§n duyÃ¡Â»â€¡t"></span>
                         @endif
                     </span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý đợt học">
+                <ul class="sidebar-subnav" data-group-title="QuÃ¡ÂºÂ£n lÃƒÂ½ Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc">
                     <li class="nav-item">
-                        <a href="{{ route('admin.classes.index') }}" class="nav-link {{ request()->routeIs('admin.classes.*') ? 'active' : '' }}" title="Quản lý đợt học">
+                        <a href="{{ route('admin.classes.index') }}" class="nav-link {{ request()->routeIs('admin.classes.*') ? 'active' : '' }}" title="QuÃ¡ÂºÂ£n lÃƒÂ½ Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc">
                             <i class="fas fa-chalkboard-teacher"></i>
-                            <span class="nav-text">Đợt học</span>
+                            <span class="nav-text">Ã„ÂÃ¡Â»Â£t hÃ¡Â»Âc</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('admin.enrollments.pending') }}" class="nav-link {{ request()->routeIs('admin.enrollments.*') ? 'active' : '' }}" title="Quản lý Đăng ký">
+                        <a href="{{ route('admin.enrollments.pending') }}" class="nav-link {{ request()->routeIs('admin.enrollments.*') ? 'active' : '' }}" title="QuÃ¡ÂºÂ£n lÃƒÂ½ Ã„ÂÃ„Æ’ng kÃƒÂ½">
                             <i class="fas fa-user-graduate"></i>
                             <span class="nav-link-label">
-                                <span class="nav-text">Đăng ký</span>
+                                <span class="nav-text">Ã„ÂÃ„Æ’ng kÃƒÂ½</span>
                                 @if($adminPendingEnrollmentCount > 0)
-                                    <span class="admin-attention-dot" title="{{ $adminPendingEnrollmentCount }} đăng ký chờ duyệt"></span>
+                                    <span class="admin-attention-dot" title="{{ $adminPendingEnrollmentCount }} Ã„â€˜Ã„Æ’ng kÃƒÂ½ chÃ¡Â»Â duyÃ¡Â»â€¡t"></span>
                                 @endif
                             </span>
                         </a>
@@ -192,39 +192,45 @@
                 </ul>
             </li>
 
-            <!-- Group: Quản lý thanh toán -->
+            <!-- Group: QuÃ¡ÂºÂ£n lÃƒÂ½ thanh toÃƒÂ¡n -->
             <li class="sidebar-group">
                 <div class="sidebar-group-header">
                     <span class="sidebar-group-title">
                         <i class="fas fa-money-bill-wave"></i>
-                        <span class="nav-text">Quản lý thanh toán</span>
+                        <span class="nav-text">QuÃ¡ÂºÂ£n lÃƒÂ½ thanh toÃƒÂ¡n</span>
                         @if($adminPaymentAttentionCount > 0)
-                            <span class="admin-attention-dot" title="Có thanh toán mới cần xử lý"></span>
+                            <span class="admin-attention-dot" title="CÃƒÂ³ thanh toÃƒÂ¡n mÃ¡Â»â€ºi cÃ¡ÂºÂ§n xÃ¡Â»Â­ lÃƒÂ½"></span>
                         @endif
                     </span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý thanh toán">
+                <ul class="sidebar-subnav" data-group-title="QuÃ¡ÂºÂ£n lÃƒÂ½ thanh toÃƒÂ¡n">
                     <li class="nav-item">
-                        <a href="{{ route('admin.payments.index', ['status' => 'pending']) }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" title="Quản lý Thanh toán khóa học">
+                        <a href="{{ route('admin.payments.index', ['status' => 'pending']) }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" title="QuÃ¡ÂºÂ£n lÃƒÂ½ Thanh toÃƒÂ¡n khÃƒÂ³a hÃ¡Â»Âc">
                             <i class="fas fa-file-invoice-dollar"></i>
                             <span class="nav-link-label">
-                                <span class="nav-text">Thanh toán khóa học</span>
+                                <span class="nav-text">Thanh toÃƒÂ¡n khÃƒÂ³a hÃ¡Â»Âc</span>
                                 @if($adminPendingPaymentCount > 0)
-                                    <span class="admin-attention-dot" title="{{ $adminPendingPaymentCount }} thanh toán chờ xử lý"></span>
+                                    <span class="admin-attention-dot" title="{{ $adminPendingPaymentCount }} thanh toÃƒÂ¡n chÃ¡Â»Â xÃ¡Â»Â­ lÃƒÂ½"></span>
                                 @endif
                             </span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('admin.wallet-transactions.index', ['status' => 'pending']) }}" class="nav-link {{ request()->routeIs('admin.wallet-transactions.*') ? 'active' : '' }}" title="Duyệt nạp ví thủ công">
+                        <a href="{{ route('admin.wallet-transactions.index', ['status' => 'pending']) }}" class="nav-link {{ request()->routeIs('admin.wallet-transactions.*') ? 'active' : '' }}" title="DuyÃ¡Â»â€¡t nÃ¡ÂºÂ¡p vÃƒÂ­ thÃ¡Â»Â§ cÃƒÂ´ng">
                             <i class="fas fa-wallet"></i>
                             <span class="nav-link-label">
-                                <span class="nav-text">Nạp ví thủ công</span>
+                                <span class="nav-text">NÃ¡ÂºÂ¡p vÃƒÂ­ thÃ¡Â»Â§ cÃƒÂ´ng</span>
                                 @if($adminPendingWalletTopupCount > 0)
-                                    <span class="admin-attention-dot" title="{{ $adminPendingWalletTopupCount }} yêu cầu nạp ví chờ duyệt"></span>
+                                    <span class="admin-attention-dot" title="{{ $adminPendingWalletTopupCount }} yÃƒÂªu cÃ¡ÂºÂ§u nÃ¡ÂºÂ¡p vÃƒÂ­ chÃ¡Â»Â duyÃ¡Â»â€¡t"></span>
                                 @endif
                             </span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ route('admin.promotions.index') }}" class="nav-link {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}" title="Khuyáº¿n mÃ£i & voucher">
+                            <i class="fas fa-tags"></i>
+                            <span class="nav-text">Khuyáº¿n mÃ£i & voucher</span>
                         </a>
                     </li>
                 </ul>
@@ -232,38 +238,38 @@
 
             <!-- System Logs -->
             <li class="nav-item">
-                <a href="{{ route('admin.system-logs.index') }}" class="nav-link {{ request()->routeIs('admin.system-logs.*') ? 'active' : '' }}" title="Nhật ký Hệ thống">
+                <a href="{{ route('admin.system-logs.index') }}" class="nav-link {{ request()->routeIs('admin.system-logs.*') ? 'active' : '' }}" title="NhÃ¡ÂºÂ­t kÃƒÂ½ HÃ¡Â»â€¡ thÃ¡Â»â€˜ng">
                     <i class="fas fa-clipboard-list"></i>
-                    <span class="nav-text">Nhật ký hệ thống</span>
+                    <span class="nav-text">NhÃ¡ÂºÂ­t kÃƒÂ½ hÃ¡Â»â€¡ thÃ¡Â»â€˜ng</span>
                 </a>
             </li>
 
             <li class="nav-item">
-                <a href="{{ route('admin.backups.index') }}" class="nav-link {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}" title="Sao lưu dữ liệu">
+                <a href="{{ route('admin.backups.index') }}" class="nav-link {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}" title="Sao lÃ†Â°u dÃ¡Â»Â¯ liÃ¡Â»â€¡u">
                     <i class="fas fa-shield-halved"></i>
-                    <span class="nav-text">Sao lưu dữ liệu</span>
+                    <span class="nav-text">Sao lÃ†Â°u dÃ¡Â»Â¯ liÃ¡Â»â€¡u</span>
                 </a>
             </li>
 
-            <!-- Cài đặt hệ thống - standalone -->
+            <!-- CÃƒÂ i Ã„â€˜Ã¡ÂºÂ·t hÃ¡Â»â€¡ thÃ¡Â»â€˜ng - standalone -->
             <li class="nav-item">
-                <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" title="Cài đặt Hệ thống">
+                <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" title="CÃƒÂ i Ã„â€˜Ã¡ÂºÂ·t HÃ¡Â»â€¡ thÃ¡Â»â€˜ng">
                     <i class="fas fa-cog"></i>
-                    <span class="nav-text">Cài đặt Hệ thống</span>
+                    <span class="nav-text">CÃƒÂ i Ã„â€˜Ã¡ÂºÂ·t HÃ¡Â»â€¡ thÃ¡Â»â€˜ng</span>
                 </a>
             </li>
         </ul>
         
         <div class="sidebar-footer">
-            <a href="{{ route('home') }}" class="btn btn-outline-light btn-sm mb-2 sidebar-btn" title="Về trang chủ">
+            <a href="{{ route('home') }}" class="btn btn-outline-light btn-sm mb-2 sidebar-btn" title="VÃ¡Â»Â trang chÃ¡Â»Â§">
                 <i class="fas fa-home"></i>
-                <span class="btn-text">Về trang chủ</span>
+                <span class="btn-text">VÃ¡Â»Â trang chÃ¡Â»Â§</span>
             </a>
             <form method="POST" action="{{ route('logout') }}" class="w-100" data-browser-session-logout="manual">
                 @csrf
-                <button type="submit" class="btn btn-danger btn-sm w-100 sidebar-btn" title="Đăng xuất">
+                <button type="submit" class="btn btn-danger btn-sm w-100 sidebar-btn" title="Ã„ÂÃ„Æ’ng xuÃ¡ÂºÂ¥t">
                     <i class="fas fa-sign-out-alt"></i>
-                    <span class="btn-text">Đăng xuất</span>
+                    <span class="btn-text">Ã„ÂÃ„Æ’ng xuÃ¡ÂºÂ¥t</span>
                 </button>
             </form>
         </div>
@@ -284,7 +290,7 @@
                 </button>
 
                 <div class="dropdown admin-alert-dropdown">
-                    <button class="btn btn-sm admin-alert-bell dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo quản trị">
+                    <button class="btn btn-sm admin-alert-bell dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="ThÃƒÂ´ng bÃƒÂ¡o quÃ¡ÂºÂ£n trÃ¡Â»â€¹">
                         <i class="fas fa-bell"></i>
                         @if($adminHasAttentionItems)
                             <span class="admin-alert-bell-dot"></span>
@@ -293,8 +299,8 @@
                     <div class="dropdown-menu dropdown-menu-end admin-alert-menu">
                         <div class="admin-alert-menu-header">
                             <div>
-                                <strong>Thông báo quản trị</strong>
-                                <div class="small text-muted">Các mục mới cần admin kiểm tra</div>
+                                <strong>ThÃƒÂ´ng bÃƒÂ¡o quÃ¡ÂºÂ£n trÃ¡Â»â€¹</strong>
+                                <div class="small text-muted">CÃƒÂ¡c mÃ¡Â»Â¥c mÃ¡Â»â€ºi cÃ¡ÂºÂ§n admin kiÃ¡Â»Æ’m tra</div>
                             </div>
                             @if($adminHasAttentionItems)
                                 <span class="badge text-bg-danger">{{ $adminTotalAttentionCount > 99 ? '99+' : $adminTotalAttentionCount }}</span>
@@ -303,29 +309,29 @@
                         <div class="admin-alert-menu-list">
                             <a href="{{ route('admin.enrollments.pending') }}" class="dropdown-item admin-alert-item">
                                 <span class="item-copy">
-                                    <strong>Đăng ký chờ duyệt</strong>
-                                    <small>Yêu cầu ghi danh offline mới</small>
+                                    <strong>Ã„ÂÃ„Æ’ng kÃƒÂ½ chÃ¡Â»Â duyÃ¡Â»â€¡t</strong>
+                                    <small>YÃƒÂªu cÃ¡ÂºÂ§u ghi danh offline mÃ¡Â»â€ºi</small>
                                 </span>
                                 <span class="badge {{ $adminPendingEnrollmentCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminPendingEnrollmentCount }}</span>
                             </a>
                             <a href="{{ route('admin.reviews.index') }}" class="dropdown-item admin-alert-item">
                                 <span class="item-copy">
-                                    <strong>Đánh giá mới</strong>
-                                    <small>Ý kiến mới từ học viên</small>
+                                    <strong>Ã„ÂÃƒÂ¡nh giÃƒÂ¡ mÃ¡Â»â€ºi</strong>
+                                    <small>ÃƒÂ kiÃ¡ÂºÂ¿n mÃ¡Â»â€ºi tÃ¡Â»Â« hÃ¡Â»Âc viÃƒÂªn</small>
                                 </span>
                                 <span class="badge {{ $adminNewReviewCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminNewReviewCount }}</span>
                             </a>
                             <a href="{{ route('admin.payments.index', ['status' => 'pending']) }}" class="dropdown-item admin-alert-item">
                                 <span class="item-copy">
-                                    <strong>Thanh toán khóa học</strong>
-                                    <small>Giao dịch đang chờ xử lý</small>
+                                    <strong>Thanh toÃƒÂ¡n khÃƒÂ³a hÃ¡Â»Âc</strong>
+                                    <small>Giao dÃ¡Â»â€¹ch Ã„â€˜ang chÃ¡Â»Â xÃ¡Â»Â­ lÃƒÂ½</small>
                                 </span>
                                 <span class="badge {{ $adminPendingPaymentCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminPendingPaymentCount }}</span>
                             </a>
                             <a href="{{ route('admin.wallet-transactions.index', ['status' => 'pending']) }}" class="dropdown-item admin-alert-item">
                                 <span class="item-copy">
-                                    <strong>Nạp ví thủ công</strong>
-                                    <small>Yêu cầu topup direct và bank cần duyệt</small>
+                                    <strong>NÃ¡ÂºÂ¡p vÃƒÂ­ thÃ¡Â»Â§ cÃƒÂ´ng</strong>
+                                    <small>YÃƒÂªu cÃ¡ÂºÂ§u topup direct vÃƒÂ  bank cÃ¡ÂºÂ§n duyÃ¡Â»â€¡t</small>
                                 </span>
                                 <span class="badge {{ $adminPendingWalletTopupCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminPendingWalletTopupCount }}</span>
                             </a>
