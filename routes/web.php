@@ -83,6 +83,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('courses')->group(function () {
         Route::post('/{course}/enroll', [EnrollmentController::class, 'enroll'])->name('courses.enroll');
+        Route::post('/{course}/confirm-seat-hold', [EnrollmentController::class, 'confirmSeatHold'])->name('courses.confirm-seat-hold');
         Route::post('/{course}/unenroll', [EnrollmentController::class, 'unenroll'])->name('courses.unenroll');
         Route::delete('/{course}/unenroll', [EnrollmentController::class, 'unenroll']);
         Route::get('/{course}/learn', [CourseController::class, 'learn'])->name('courses.learn');

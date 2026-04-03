@@ -16,6 +16,10 @@
         $requiresPaidCheckout = (float) $course->final_price > 0;
         $activeClasses = $classes->where('status', 'active');
         $pendingClassName = $currentEnrollment?->courseClass?->name ?? $currentEnrollment?->class?->name;
+        $currentEnrollmentIsWaitlisted = ($currentEnrollment?->isWaitlisted()) ?? false;
+        $currentEnrollmentIsSeatHeld = ($currentEnrollment?->hasActiveSeatHold()) ?? false;
+        $currentEnrollmentWaitlistPosition = $currentEnrollment?->waitlist_position;
+        $seatHoldEndsAt = $currentEnrollment?->seat_hold_expires_at;
         $walletBalance = 0;
 
         if (Auth::check()) {
@@ -301,15 +305,46 @@
                                     </button>
                                 </form>
                             @elseif($isPending)
-                                <div class="alert alert-warning mb-3">
-                                    <i class="fas fa-clock me-2"></i>
-                                    @if($course->isOffline() && $pendingClassName)
-                                        Yêu cầu đăng ký đợt học <strong>{{ $pendingClassName }}</strong> đang chờ admin duyệt.
+                                @if($currentEnrollmentIsSeatHeld)
+                                    <div class="alert alert-primary mb-3">
+                                        <i class="fas fa-hourglass-half me-2"></i>
+                                        Bạn đang được giữ chỗ 24h cho đợt học <strong>{{ $pendingClassName }}</strong>
+                                        đến <strong>{{ optional($seatHoldEndsAt)->format('d/m/Y H:i') }}</strong>.
+                                    </div>
+                                    @if($requiresPaidCheckout && ! $walletEnough)
+                                        <a href="{{ route('wallet.index') }}" class="btn btn-primary w-100">
+                                            <i class="fas fa-wallet me-2"></i>Nạp ví để giữ chỗ
+                                        </a>
+                                        <small class="text-muted d-block mt-2">Bạn cần nạp thêm {{ number_format($walletShortage, 0) }}đ trước khi hết hạn giữ chỗ.</small>
                                     @else
-                                        Yêu cầu đăng ký của bạn đang chờ admin xử lý.
+                                        <form action="{{ route('courses.confirm-seat-hold', $course) }}" method="POST" class="d-grid gap-2">
+                                            @csrf
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="fas fa-check-circle me-2"></i>Xác nhận giữ chỗ
+                                            </button>
+                                        </form>
+                                        <small class="text-muted d-block mt-2">Sau khi xác nhận, yêu cầu đăng ký sẽ tiếp tục vào bước chờ admin duyệt hoặc kích hoạt học ngay tùy loại khóa học.</small>
                                     @endif
-                                </div>
-                                <button class="btn btn-warning text-dark w-100" disabled>Chờ admin duyệt</button>
+                                @elseif($currentEnrollmentIsWaitlisted)
+                                    <div class="alert alert-dark mb-3">
+                                        <i class="fas fa-list-ol me-2"></i>
+                                        Bạn đang ở hàng chờ cho đợt học <strong>{{ $pendingClassName }}</strong>
+                                        @if($currentEnrollmentWaitlistPosition)
+                                            với vị trí <strong>#{{ $currentEnrollmentWaitlistPosition }}</strong>.
+                                        @endif
+                                    </div>
+                                    <button class="btn btn-dark w-100" disabled>Đang chờ tới lượt</button>
+                                @else
+                                    <div class="alert alert-warning mb-3">
+                                        <i class="fas fa-clock me-2"></i>
+                                        @if($course->isOffline() && $pendingClassName)
+                                            Yêu cầu đăng ký đợt học <strong>{{ $pendingClassName }}</strong> đang chờ admin duyệt.
+                                        @else
+                                            Yêu cầu đăng ký của bạn đang chờ admin xử lý.
+                                        @endif
+                                    </div>
+                                    <button class="btn btn-warning text-dark w-100" disabled>Chờ admin duyệt</button>
+                                @endif
                             @elseif($course->isOnline())
                                 @if($requiresPaidCheckout && ! $walletEnough)
                                     <a href="{{ route('wallet.index') }}" class="btn btn-primary btn-lg w-100">
@@ -342,8 +377,11 @@
                                             @php
                                                 $scheduleLines = $cls->structured_schedule_lines;
                                                 $isThisClass = isset($currentEnrollment) && $currentEnrollment->class_id == $cls->id;
-                                                $isFull = ($cls->max_students ?: 0) > 0 && $cls->current_students_count >= ($cls->max_students ?: 0);
-                                                $remainingSlots = $cls->max_students > 0 ? max(0, $cls->max_students - $cls->current_students_count) : null;
+                                                $isHeldClass = $isThisClass && $currentEnrollmentIsSeatHeld;
+                                                $isWaitlistClass = $isThisClass && $currentEnrollmentIsWaitlisted;
+                                                $isFull = $cls->is_full;
+                                                $remainingSlots = $cls->remaining_slots;
+                                                $waitlistCount = $cls->waitlist_count;
                                                 $classInstructor = optional($cls->instructor)->fullname ?? optional($cls->instructor)->username;
                                             @endphp
 
@@ -355,10 +393,14 @@
                                                             {{ optional($cls->start_date)->format('d/m/Y') }} - {{ optional($cls->end_date)->format('d/m/Y') }}
                                                         </div>
                                                     </div>
-                                                    @if($isThisClass)
+                                                    @if($isHeldClass)
+                                                        <span class="badge bg-primary">Giữ chỗ 24h</span>
+                                                    @elseif($isWaitlistClass)
+                                                        <span class="badge bg-dark">Trong hàng chờ</span>
+                                                    @elseif($isThisClass)
                                                         <span class="badge bg-success">Đang chọn</span>
                                                     @elseif($isFull)
-                                                        <span class="badge bg-secondary">Hết chỗ</span>
+                                                        <span class="badge bg-secondary">Đã đầy</span>
                                                     @elseif(!is_null($remainingSlots))
                                                         <span class="badge bg-light text-dark border">Còn {{ $remainingSlots }} chỗ</span>
                                                     @endif
@@ -373,16 +415,38 @@
                                                 </div>
                                                 <div class="small text-muted mb-3">{{ $cls->meeting_info ?: 'Chưa cập nhật phòng học / địa điểm' }}</div>
 
-                                                @if($isThisClass)
+                                                @if($isHeldClass)
+                                                    @if($requiresPaidCheckout && ! $walletEnough)
+                                                        <a href="{{ route('wallet.index') }}" class="btn btn-primary btn-sm w-100">
+                                                            <i class="fas fa-wallet me-1"></i>Nạp ví để giữ chỗ
+                                                        </a>
+                                                    @else
+                                                        <form action="{{ route('courses.confirm-seat-hold', $course) }}" method="POST" class="d-grid gap-2">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                                Xác nhận giữ chỗ
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                @elseif($isThisClass)
                                                     <form action="{{ route('courses.unenroll', $course) }}" method="POST">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Bạn có chắc muốn hủy đăng ký đợt học này?')">
-                                                            Hủy đăng ký
+                                                            {{ $isWaitlistClass ? 'Rời hàng chờ' : 'Hủy đăng ký' }}
                                                         </button>
                                                     </form>
                                                 @elseif($isFull)
-                                                    <button class="btn btn-secondary btn-sm w-100" disabled>Đợt học đã đầy</button>
+                                                    <form action="{{ route('courses.enroll', $course) }}" method="POST" class="d-grid gap-2">
+                                                        @csrf
+                                                        <input type="hidden" name="class_id" value="{{ $cls->id }}">
+                                                        <button type="submit" class="btn btn-outline-dark btn-sm w-100">
+                                                            Vào hàng chờ
+                                                        </button>
+                                                    </form>
+                                                    @if($waitlistCount > 0)
+                                                        <div class="small text-muted mt-2">Hiện có {{ $waitlistCount }} học viên đang chờ.</div>
+                                                    @endif
                                                 @elseif($requiresPaidCheckout && ! $walletEnough)
                                                     <a href="{{ route('wallet.index') }}" class="btn btn-primary btn-sm w-100">
                                                         <i class="fas fa-wallet me-1"></i>Nạp ví rồi đăng ký
@@ -400,7 +464,7 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    <small class="text-muted d-block mt-3">Khóa offline sẽ giữ hình thức chờ admin duyệt, nhưng học phí vẫn được thanh toán trước bằng ví nội bộ.</small>
+                                    <small class="text-muted d-block mt-3">Khi lớp đầy, học viên sẽ được đưa vào hàng chờ. Khi có chỗ trống, hệ thống sẽ tự giữ chỗ 24h cho người kế tiếp để xác nhận đăng ký.</small>
                                 @endif
                             @endif
                         @endguest

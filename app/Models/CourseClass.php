@@ -56,13 +56,32 @@ class CourseClass extends Model
         return $this->enrollments()->whereIn('status', ['approved', 'completed'])->count();
     }
 
+    public function getHeldSeatsCountAttribute(): int
+    {
+        if (($this->max_students ?: 0) <= 0) {
+            return 0;
+        }
+
+        return $this->enrollments()
+            ->holdingSeat()
+            ->count();
+    }
+
+    public function getWaitlistCountAttribute(): int
+    {
+        return $this->enrollments()
+            ->pending()
+            ->waitlisted()
+            ->count();
+    }
+
     public function getRemainingSlotsAttribute(): ?int
     {
         if (($this->max_students ?: 0) <= 0) {
             return null;
         }
 
-        return max(0, $this->max_students - $this->current_students_count);
+        return max(0, $this->max_students - $this->current_students_count - $this->held_seats_count);
     }
 
     public function getIsFullAttribute()
@@ -71,7 +90,7 @@ class CourseClass extends Model
             return false;
         }
 
-        return $this->current_students_count >= $this->max_students;
+        return $this->remaining_slots <= 0;
     }
 
     public function getDeliveryModeAttribute(): string
@@ -101,7 +120,7 @@ class CourseClass extends Model
 
     public function getStatusTextAttribute()
     {
-        return $this->status === 'active' ? 'Mo dang ky' : 'Tam dung';
+        return $this->status === 'active' ? 'Mở đăng ký' : 'Tạm dừng';
     }
 
     public function getStructuredScheduleLinesAttribute()
@@ -129,11 +148,11 @@ class CourseClass extends Model
                         }
 
                         if ($schedule->start_time) {
-                            return 'Bat dau ' . date('H:i', strtotime($schedule->start_time));
+                            return 'Bắt đầu ' . date('H:i', strtotime($schedule->start_time));
                         }
 
                         if ($schedule->end_time) {
-                            return 'Ket thuc ' . date('H:i', strtotime($schedule->end_time));
+                            return 'Kết thúc ' . date('H:i', strtotime($schedule->end_time));
                         }
 
                         return null;

@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\Setting;
 use App\Notifications\RefundIssuedNotification;
 use App\Services\BlockchainAuditService;
+use App\Services\EnrollmentQueueService;
 use App\Services\FireflyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ class EnrollmentController extends Controller
     public function __construct(
         protected FireflyService $firefly,
         protected BlockchainAuditService $blockchainAudit,
+        protected EnrollmentQueueService $enrollmentQueue,
     ) {
     }
 
@@ -46,8 +48,9 @@ class EnrollmentController extends Controller
                 : 'Khóa học này hiện chưa mở đăng ký.');
         }
 
-        if ($course->isOffline() && $class->is_full) {
-            return back()->withInput()->with('error', 'Đợt học này đã đủ số lượng học viên.');
+        if ($course->isOffline()) {
+            $this->enrollmentQueue->syncClassQueue($class);
+            $class = $class->fresh();
         }
 
         $existing = CourseEnrollment::where('user_id', Auth::id())
@@ -58,6 +61,23 @@ class EnrollmentController extends Controller
 
         if ($existing) {
             $currentClassName = $existing->courseClass->name ?? null;
+
+            if ($existing->hasActiveSeatHold()) {
+                $deadline = optional($existing->seat_hold_expires_at)->format('d/m/Y H:i');
+
+                return back()->with('error', $currentClassName
+                    ? 'Bạn đang được giữ chỗ 24h ở đợt học ' . $currentClassName . ' đến ' . $deadline . '. Vui lòng xác nhận đăng ký trước khi giữ chỗ hết hạn.'
+                    : 'Bạn đang có một chỗ giữ tạm 24h. Vui lòng xác nhận đăng ký trước khi hết hạn.');
+            }
+
+            if ($existing->isWaitlisted()) {
+                $position = $existing->waitlist_position;
+                $positionLabel = $position ? ' ở vị trí ' . $position : '';
+
+                return back()->with('error', $currentClassName
+                    ? 'Bạn đã ở trong hàng chờ' . $positionLabel . ' cho đợt học ' . $currentClassName . '.'
+                    : 'Bạn đã ở trong hàng chờ cho khóa học này.');
+            }
 
             if ($existing->isPending()) {
                 return back()->with('error', $currentClassName
@@ -70,6 +90,14 @@ class EnrollmentController extends Controller
                     ? 'Bạn đã đăng ký khóa học này ở đợt học ' . $currentClassName . ' rồi.'
                     : 'Bạn đã đăng ký khóa học này rồi.');
             }
+        }
+
+        if ($course->isOffline() && $class->is_full) {
+            $waitlistEnrollment = $this->enrollmentQueue->joinWaitlist(Auth::id(), $class, 'waitlist_joined');
+            $position = $waitlistEnrollment->waitlist_position;
+            $positionLabel = $position ? ' Vị trí hiện tại của bạn là #' . $position . '.' : '';
+
+            return back()->with('success', 'Đợt học này đã đầy, hệ thống đã đưa bạn vào hàng chờ.' . $positionLabel . ' Khi có chỗ trống, bạn sẽ được giữ chỗ trong 24 giờ để xác nhận đăng ký.');
         }
 
         if ($course->isOnline() && $course->series_key) {
@@ -103,89 +131,24 @@ class EnrollmentController extends Controller
                     ->with('error', 'Khóa học trả phí hiện chỉ hỗ trợ thanh toán bằng số dư ví. Vui lòng nạp tiền vào ví rồi đăng ký lại.');
             }
 
-            $wallet = Auth::user()->getOrCreateWallet();
+            $purchaseResult = $this->processWalletCoursePurchase(
+                $request,
+                $course,
+                $class,
+                $requiresManualApproval,
+                'Thanh toán bằng ví nội bộ, chờ admin duyệt đăng ký.',
+                'Thanh toán bằng ví nội bộ.'
+            );
 
-            if ((float) $wallet->balance < $finalPrice) {
-                return back()
-                    ->with('error', 'Số dư ví hiện chưa đủ. Vui lòng nạp tiền vào ví để mua khóa học.')
-                    ->with('required_topup', true);
+            if (isset($purchaseResult['error'])) {
+                $response = back()->with('error', $purchaseResult['error']);
+
+                if (! empty($purchaseResult['required_topup'])) {
+                    $response->with('required_topup', true);
+                }
+
+                return $response;
             }
-
-            $transaction = $wallet->charge($finalPrice, [
-                'course_id' => $course->id,
-                'class_id' => $class->id,
-            ]);
-
-            if (! $transaction) {
-                return back()->with('error', 'Không thể trừ tiền từ ví vào lúc này. Vui lòng thử lại sau.');
-            }
-
-            $purchaseReference = $transaction->reference ?: ('COURSE-' . $course->id . '-' . Auth::id() . '-' . now()->format('YmdHis'));
-            $fireflyResult = null;
-            $auditResponse = null;
-
-            try {
-                $platformIdentity = $this->firefly->getPlatformIdentity();
-                $fireflyResult = $this->firefly->transfer(
-                    $wallet->firefly_identity,
-                    $platformIdentity,
-                    $finalPrice,
-                    [
-                        'reference' => $purchaseReference,
-                        'data' => [
-                            'type' => 'course_purchase',
-                            'wallet_transaction_id' => $transaction->id,
-                            'course_id' => $course->id,
-                            'class_id' => $class->id,
-                            'user_id' => Auth::id(),
-                            'amount' => $finalPrice,
-                        ],
-                    ]
-                );
-
-                $auditResponse = $this->blockchainAudit->record('wallet.course_purchase', [
-                    'wallet_transaction_id' => $transaction->id,
-                    'course_id' => $course->id,
-                    'course_title' => $course->title,
-                    'class_id' => $class->id,
-                    'class_name' => $class->name,
-                    'user_id' => Auth::id(),
-                    'amount' => $finalPrice,
-                    'wallet_firefly_identity' => $wallet->firefly_identity,
-                    'platform_identity' => $platformIdentity,
-                    'firefly_tx_id' => $fireflyResult['tx_id'] ?? null,
-                    'firefly_message_id' => $fireflyResult['message_id'] ?? null,
-                ], [
-                    'reference' => $purchaseReference,
-                    'user_id' => Auth::id(),
-                    'username' => Auth::user()?->username,
-                    'role' => Auth::user()?->role,
-                    'ip' => $request->ip(),
-                ]);
-            } catch (\Throwable $exception) {
-                report($exception);
-            }
-
-            $transaction->update([
-                'reference' => $purchaseReference,
-                'metadata' => array_merge($transaction->metadata ?? [], array_filter([
-                    'firefly' => $fireflyResult,
-                    'blockchain_audit' => $auditResponse,
-                ])),
-            ]);
-
-            Payment::create([
-                'user_id' => Auth::id(),
-                'class_id' => $class->id,
-                'amount' => $finalPrice,
-                'method' => 'wallet',
-                'status' => 'completed',
-                'paid_at' => now(),
-                'reference' => $purchaseReference,
-                'notes' => $requiresManualApproval
-                    ? 'Thanh toán bằng ví nội bộ, chờ admin duyệt đăng ký.'
-                    : 'Thanh toán bằng ví nội bộ.',
-            ]);
 
             $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class);
 
@@ -215,6 +178,75 @@ class EnrollmentController extends Controller
         return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
     }
 
+    public function confirmSeatHold(Request $request, Course $course)
+    {
+        $enrollment = CourseEnrollment::where('user_id', Auth::id())
+            ->forCourse($course)
+            ->pending()
+            ->latest('id')
+            ->first();
+
+        if (! $enrollment) {
+            return back()->with('error', 'Không tìm thấy yêu cầu giữ chỗ phù hợp.');
+        }
+
+        $class = $enrollment->courseClass;
+
+        if (! $course->isOffline() || ! $class) {
+            return back()->with('error', 'Yêu cầu này không áp dụng giữ chỗ 24h.');
+        }
+
+        $this->enrollmentQueue->syncClassQueue($class);
+        $enrollment->refresh();
+
+        if (! $enrollment->hasActiveSeatHold()) {
+            return back()->with('error', 'Thời gian giữ chỗ đã hết hoặc chưa tới lượt của bạn.');
+        }
+
+        $class = $enrollment->courseClass?->fresh();
+        $finalPrice = (float) $course->final_price;
+        $requiresManualApproval = $course->requiresManualApproval();
+        $walletPaid = false;
+
+        if ($finalPrice > 0) {
+            $purchaseResult = $this->processWalletCoursePurchase(
+                $request,
+                $course,
+                $class,
+                $requiresManualApproval,
+                'Thanh toán bằng ví nội bộ sau khi được giữ chỗ 24h, chờ admin duyệt đăng ký.',
+                'Thanh toán bằng ví nội bộ sau khi xác nhận giữ chỗ 24h.'
+            );
+
+            if (isset($purchaseResult['error'])) {
+                $response = back()->with('error', $purchaseResult['error']);
+
+                if (! empty($purchaseResult['required_topup'])) {
+                    $response->with('required_topup', true);
+                }
+
+                return $response;
+            }
+
+            $walletPaid = true;
+        }
+
+        $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class, [
+            'notes' => $walletPaid ? 'seat_hold_confirmed_with_wallet' : 'seat_hold_confirmed',
+        ]);
+
+        if ($requiresManualApproval) {
+            $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
+
+            return back()->with('success', 'Bạn đã xác nhận giữ chỗ thành công. Yêu cầu đăng ký đang chờ admin duyệt.');
+        }
+
+        $enrollment->approve();
+        $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
+
+        return back()->with('success', 'Bạn đã xác nhận giữ chỗ thành công và có thể bắt đầu học ngay.');
+    }
+
     public function unenroll(Course $course)
     {
         $enrollment = CourseEnrollment::where('user_id', Auth::id())
@@ -232,10 +264,12 @@ class EnrollmentController extends Controller
         }
 
         $wasPending = $enrollment->isPending();
+        $wasWaitlisted = $enrollment->isWaitlisted();
+        $hadSeatHold = $enrollment->hasActiveSeatHold();
         $class = $enrollment->class;
         $now = now();
 
-        if ($class && $class->start_date && $now->lt($class->start_date)) {
+        if ($class && $class->start_date && $now->lt($class->start_date) && ! $wasWaitlisted && ! $hadSeatHold) {
             try {
                 $wallet = Auth::user()->getOrCreateWallet();
                 $purchase = $wallet->transactions()
@@ -321,7 +355,19 @@ class EnrollmentController extends Controller
             }
         }
 
-        $enrollment->cancel('student_cancelled');
+        $enrollment->cancel($hadSeatHold ? 'student_cancelled_held_seat' : ($wasWaitlisted ? 'student_left_waitlist' : 'student_cancelled'));
+
+        if ($class && $course->isOffline()) {
+            $this->enrollmentQueue->syncClassQueue($class);
+        }
+
+        if ($hadSeatHold) {
+            return back()->with('success', 'Bạn đã hủy giữ chỗ 24h. Hệ thống sẽ chuyển chỗ cho người kế tiếp trong hàng chờ.');
+        }
+
+        if ($wasWaitlisted) {
+            return back()->with('success', 'Bạn đã rời khỏi hàng chờ của đợt học này.');
+        }
 
         return back()->with('success', $wasPending
             ? 'Đã hủy yêu cầu đăng ký.'
@@ -338,6 +384,10 @@ class EnrollmentController extends Controller
 
         if ($enrollment->isCompleted() || $enrollment->isRejected()) {
             return back()->with('error', 'Không thể đổi đợt học cho đăng ký này.');
+        }
+
+        if ($enrollment->isWaitlisted() || $enrollment->hasActiveSeatHold()) {
+            return back()->with('error', 'Vui lòng xác nhận hoặc hủy yêu cầu hàng chờ/giữ chỗ hiện tại trước khi đổi đợt học.');
         }
 
         if ((string) Setting::get('allow_class_change', '1') === '0') {
@@ -368,6 +418,9 @@ class EnrollmentController extends Controller
         if ($newClass->status !== 'active') {
             return back()->with('error', 'Đợt học mới hiện chưa mở đăng ký.');
         }
+
+        $this->enrollmentQueue->syncClassQueue($newClass);
+        $newClass = $newClass->fresh();
 
         if ($newClass->is_full) {
             return back()->with('error', 'Đợt học mới đã đủ số lượng học viên.');
@@ -408,7 +461,110 @@ class EnrollmentController extends Controller
             ]);
         }
 
+        if ($currentClass) {
+            $this->enrollmentQueue->syncClassQueue($currentClass);
+        }
+
         return back()->with('success', 'Đã chuyển sang đợt học ' . $newClass->name . '.');
+    }
+
+    private function processWalletCoursePurchase(
+        Request $request,
+        Course $course,
+        CourseClass $class,
+        bool $requiresManualApproval,
+        string $pendingNote,
+        string $completedNote
+    ): array {
+        $wallet = Auth::user()->getOrCreateWallet();
+        $finalPrice = (float) $course->final_price;
+
+        if ((float) $wallet->balance < $finalPrice) {
+            return [
+                'error' => 'Số dư ví hiện chưa đủ. Vui lòng nạp tiền vào ví để mua khóa học.',
+                'required_topup' => true,
+            ];
+        }
+
+        $transaction = $wallet->charge($finalPrice, [
+            'course_id' => $course->id,
+            'class_id' => $class->id,
+        ]);
+
+        if (! $transaction) {
+            return [
+                'error' => 'Không thể trừ tiền từ ví vào lúc này. Vui lòng thử lại sau.',
+            ];
+        }
+
+        $purchaseReference = $transaction->reference ?: ('COURSE-' . $course->id . '-' . Auth::id() . '-' . now()->format('YmdHis'));
+        $fireflyResult = null;
+        $auditResponse = null;
+
+        try {
+            $platformIdentity = $this->firefly->getPlatformIdentity();
+            $fireflyResult = $this->firefly->transfer(
+                $wallet->firefly_identity,
+                $platformIdentity,
+                $finalPrice,
+                [
+                    'reference' => $purchaseReference,
+                    'data' => [
+                        'type' => 'course_purchase',
+                        'wallet_transaction_id' => $transaction->id,
+                        'course_id' => $course->id,
+                        'class_id' => $class->id,
+                        'user_id' => Auth::id(),
+                        'amount' => $finalPrice,
+                    ],
+                ]
+            );
+
+            $auditResponse = $this->blockchainAudit->record('wallet.course_purchase', [
+                'wallet_transaction_id' => $transaction->id,
+                'course_id' => $course->id,
+                'course_title' => $course->title,
+                'class_id' => $class->id,
+                'class_name' => $class->name,
+                'user_id' => Auth::id(),
+                'amount' => $finalPrice,
+                'wallet_firefly_identity' => $wallet->firefly_identity,
+                'platform_identity' => $platformIdentity,
+                'firefly_tx_id' => $fireflyResult['tx_id'] ?? null,
+                'firefly_message_id' => $fireflyResult['message_id'] ?? null,
+            ], [
+                'reference' => $purchaseReference,
+                'user_id' => Auth::id(),
+                'username' => Auth::user()?->username,
+                'role' => Auth::user()?->role,
+                'ip' => $request->ip(),
+            ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+
+        $transaction->update([
+            'reference' => $purchaseReference,
+            'metadata' => array_merge($transaction->metadata ?? [], array_filter([
+                'firefly' => $fireflyResult,
+                'blockchain_audit' => $auditResponse,
+            ])),
+        ]);
+
+        Payment::create([
+            'user_id' => Auth::id(),
+            'class_id' => $class->id,
+            'amount' => $finalPrice,
+            'method' => 'wallet',
+            'status' => 'completed',
+            'paid_at' => now(),
+            'reference' => $purchaseReference,
+            'notes' => $requiresManualApproval ? $pendingNote : $completedNote,
+        ]);
+
+        return [
+            'wallet_paid' => true,
+        ];
     }
 
     private function sendRegistrationSuccessMail(CourseEnrollment $enrollment, bool $walletPaid = false): void
@@ -508,6 +664,9 @@ class EnrollmentController extends Controller
             'approved_at' => null,
             'rejected_at' => null,
             'cancelled_at' => null,
+            'waitlist_joined_at' => null,
+            'waitlist_promoted_at' => null,
+            'seat_hold_expires_at' => null,
             'completed_at' => null,
         ], $attributes));
 

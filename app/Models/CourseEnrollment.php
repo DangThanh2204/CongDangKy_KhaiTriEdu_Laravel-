@@ -17,6 +17,9 @@ class CourseEnrollment extends Model
         'approved_at',
         'rejected_at',
         'cancelled_at',
+        'waitlist_joined_at',
+        'waitlist_promoted_at',
+        'seat_hold_expires_at',
         'completed_at',
         'notes',
     ];
@@ -26,6 +29,9 @@ class CourseEnrollment extends Model
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'waitlist_joined_at' => 'datetime',
+        'waitlist_promoted_at' => 'datetime',
+        'seat_hold_expires_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
 
@@ -104,6 +110,20 @@ class CourseEnrollment extends Model
         });
     }
 
+    public function scopeWaitlisted($query)
+    {
+        return $query->whereNotNull('waitlist_joined_at')
+            ->whereNull('waitlist_promoted_at');
+    }
+
+    public function scopeHoldingSeat($query)
+    {
+        return $query->whereNotNull('waitlist_promoted_at')
+            ->whereNotNull('seat_hold_expires_at')
+            ->where('seat_hold_expires_at', '>', now())
+            ->where('status', 'pending');
+    }
+
     public function scopeForCourse($query, $course)
     {
         $courseId = $course instanceof Course ? $course->id : $course;
@@ -123,6 +143,9 @@ class CourseEnrollment extends Model
             'approved_at' => now(),
             'rejected_at' => null,
             'cancelled_at' => null,
+            'waitlist_joined_at' => null,
+            'waitlist_promoted_at' => null,
+            'seat_hold_expires_at' => null,
         ])->save();
 
         if ($shouldIncreaseCount) {
@@ -139,6 +162,8 @@ class CourseEnrollment extends Model
             'rejected_at' => now(),
             'cancelled_at' => null,
             'completed_at' => null,
+            'waitlist_promoted_at' => null,
+            'seat_hold_expires_at' => null,
         ];
 
         if ($notes !== null) {
@@ -159,6 +184,8 @@ class CourseEnrollment extends Model
         $payload = [
             'status' => 'cancelled',
             'cancelled_at' => now(),
+            'waitlist_promoted_at' => null,
+            'seat_hold_expires_at' => null,
         ];
 
         if ($notes !== null) {
@@ -179,6 +206,9 @@ class CourseEnrollment extends Model
             'enrolled_at' => $this->enrolled_at ?: now(),
             'approved_at' => $this->approved_at ?: ($this->enrolled_at ?: now()),
             'completed_at' => now(),
+            'waitlist_joined_at' => null,
+            'waitlist_promoted_at' => null,
+            'seat_hold_expires_at' => null,
         ])->save();
     }
 
@@ -207,6 +237,43 @@ class CourseEnrollment extends Model
         return ! is_null($this->completed_at) || $this->status === 'completed';
     }
 
+    public function isWaitlisted(): bool
+    {
+        return $this->isPending()
+            && ! is_null($this->waitlist_joined_at)
+            && is_null($this->waitlist_promoted_at);
+    }
+
+    public function hasActiveSeatHold(): bool
+    {
+        return $this->isPending()
+            && ! is_null($this->waitlist_promoted_at)
+            && ! is_null($this->seat_hold_expires_at)
+            && $this->seat_hold_expires_at->isFuture();
+    }
+
+    public function getWaitlistPositionAttribute(): ?int
+    {
+        if (! $this->isWaitlisted()) {
+            return null;
+        }
+
+        $joinedAt = $this->waitlist_joined_at ?: $this->created_at;
+
+        return static::query()
+            ->where('class_id', $this->class_id)
+            ->pending()
+            ->waitlisted()
+            ->where(function ($query) use ($joinedAt) {
+                $query->where('waitlist_joined_at', '<', $joinedAt)
+                    ->orWhere(function ($sameTimeQuery) use ($joinedAt) {
+                        $sameTimeQuery->where('waitlist_joined_at', $joinedAt)
+                            ->where('id', '<=', $this->id);
+                    });
+            })
+            ->count();
+    }
+
     public function getDeliveryModeAttribute(): string
     {
         $this->loadMissing('courseClass.course');
@@ -216,6 +283,14 @@ class CourseEnrollment extends Model
 
     public function getStatusTextAttribute()
     {
+        if ($this->hasActiveSeatHold()) {
+            return 'Giữ chỗ 24h';
+        }
+
+        if ($this->isWaitlisted()) {
+            return 'Trong hàng chờ';
+        }
+
         if ($this->isCompleted()) {
             return 'Hoàn thành';
         }
@@ -233,6 +308,14 @@ class CourseEnrollment extends Model
 
     public function getStatusColorAttribute()
     {
+        if ($this->hasActiveSeatHold()) {
+            return 'primary';
+        }
+
+        if ($this->isWaitlisted()) {
+            return 'dark';
+        }
+
         if ($this->isCompleted()) {
             return 'info';
         }

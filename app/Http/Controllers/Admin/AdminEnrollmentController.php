@@ -8,6 +8,7 @@ use App\Models\CourseClass;
 use App\Models\CourseEnrollment;
 use App\Models\User;
 use App\Services\CsvExportService;
+use App\Services\EnrollmentQueueService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -15,6 +16,11 @@ use Illuminate\Validation\Rule;
 
 class AdminEnrollmentController extends Controller
 {
+    public function __construct(
+        protected EnrollmentQueueService $enrollmentQueue,
+    ) {
+    }
+
     public function pendingEnrollments(Request $request)
     {
         $query = $this->offlinePendingQuery($request);
@@ -97,8 +103,9 @@ class AdminEnrollmentController extends Controller
                 return back()->withInput()->with('error', 'Đợt học đã chọn hiện chưa mở đăng ký.');
             }
 
-            if ($requiresManualApproval && $class->is_full) {
-                return back()->withInput()->with('error', 'Đợt học đã chọn đã đủ số lượng học viên.');
+            if ($course->isOffline()) {
+                $this->enrollmentQueue->syncClassQueue($class);
+                $class = $class->fresh();
             }
 
             $user = User::where('email', $validated['email'])->first();
@@ -122,6 +129,15 @@ class AdminEnrollmentController extends Controller
                 return back()->withInput()->with('error', 'Học viên đã có đăng ký cho khóa học này rồi.');
             }
 
+            if ($course->isOffline() && $class->is_full) {
+                $waitlistEnrollment = $this->enrollmentQueue->joinWaitlist($user->id, $class, $validated['notes'] ?? 'admin_waitlist');
+                $position = $waitlistEnrollment->waitlist_position;
+
+                return redirect()
+                    ->route('admin.enrollments.pending')
+                    ->with('success', 'Lớp hiện đã đầy. Hệ thống đã đưa học viên vào hàng chờ' . ($position ? ' ở vị trí #' . $position : '') . '.');
+            }
+
             $shouldApprove = ! $requiresManualApproval || $request->boolean('auto_approve');
 
             $enrollment = CourseEnrollment::firstOrNew([
@@ -136,6 +152,9 @@ class AdminEnrollmentController extends Controller
                 'approved_at' => null,
                 'rejected_at' => null,
                 'cancelled_at' => null,
+                'waitlist_joined_at' => null,
+                'waitlist_promoted_at' => null,
+                'seat_hold_expires_at' => null,
                 'completed_at' => null,
             ])->save();
 
@@ -203,6 +222,19 @@ class AdminEnrollmentController extends Controller
             return back()->with('error', 'Yêu cầu này đã được xử lý.');
         }
 
+        if ($enrollment->hasActiveSeatHold()) {
+            return back()->with('error', 'Học viên này đang được giữ chỗ 24h. Vui lòng chờ học viên xác nhận hoặc để giữ chỗ tự hết hạn.');
+        }
+
+        if ($enrollment->isWaitlisted()) {
+            return back()->with('error', 'Đăng ký này vẫn đang ở hàng chờ, chưa thể duyệt ngay.');
+        }
+
+        if ($enrollment->courseClass?->course?->isOffline()) {
+            $this->enrollmentQueue->syncClassQueue($enrollment->courseClass);
+            $enrollment->refresh();
+        }
+
         if ($enrollment->courseClass?->course?->isOffline() && $enrollment->courseClass?->is_full) {
             return back()->with('error', 'Đợt học đã đầy. Không thể duyệt đăng ký này.');
         }
@@ -222,7 +254,12 @@ class AdminEnrollmentController extends Controller
             'rejection_notes' => 'required|string|max:500',
         ]);
 
+        $class = $enrollment->courseClass;
         $enrollment->reject($request->rejection_notes);
+
+        if ($class && $class->isOffline()) {
+            $this->enrollmentQueue->syncClassQueue($class);
+        }
 
         return back()->with('success', 'Đã từ chối đăng ký.');
     }
@@ -292,11 +329,17 @@ class AdminEnrollmentController extends Controller
 
     public function destroy(CourseEnrollment $enrollment)
     {
+        $class = $enrollment->courseClass;
+
         if (in_array($enrollment->status, ['approved', 'completed'], true) && $enrollment->course) {
             $enrollment->course->decrement('students_count');
         }
 
         $enrollment->delete();
+
+        if ($class && $class->isOffline()) {
+            $this->enrollmentQueue->syncClassQueue($class);
+        }
 
         return back()->with('success', 'Đã xóa đăng ký.');
     }
@@ -317,6 +360,16 @@ class AdminEnrollmentController extends Controller
         $skippedCount = 0;
 
         foreach ($enrollments as $enrollment) {
+            if ($enrollment->hasActiveSeatHold() || $enrollment->isWaitlisted()) {
+                $skippedCount++;
+                continue;
+            }
+
+            if ($enrollment->courseClass?->course?->isOffline()) {
+                $this->enrollmentQueue->syncClassQueue($enrollment->courseClass);
+                $enrollment->refresh();
+            }
+
             if ($enrollment->courseClass?->course?->isOffline() && $enrollment->courseClass?->is_full) {
                 $skippedCount++;
                 continue;
@@ -328,7 +381,7 @@ class AdminEnrollmentController extends Controller
 
         $message = 'Đã duyệt ' . $approvedCount . ' đăng ký.';
         if ($skippedCount > 0) {
-            $message .= ' Bỏ qua ' . $skippedCount . ' đăng ký vì đợt học đã đầy.';
+            $message .= ' Bỏ qua ' . $skippedCount . ' đăng ký vì lớp đã đầy hoặc đang ở trạng thái hàng chờ/giữ chỗ.';
         }
 
         return back()->with('success', $message);
