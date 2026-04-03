@@ -151,6 +151,12 @@ class CourseEnrollment extends Model
         if ($shouldIncreaseCount) {
             $this->adjustCourseStudentsCount(1);
         }
+
+        try {
+            app(\App\Services\PortalNotificationService::class)->notifyEnrollmentApproved($this->fresh());
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     public function reject($notes = null): void
@@ -174,6 +180,12 @@ class CourseEnrollment extends Model
 
         if ($shouldDecreaseCount) {
             $this->adjustCourseStudentsCount(-1);
+        }
+
+        try {
+            app(\App\Services\PortalNotificationService::class)->notifyEnrollmentRejected($this->fresh(), $this->notes);
+        } catch (\Throwable $exception) {
+            report($exception);
         }
     }
 

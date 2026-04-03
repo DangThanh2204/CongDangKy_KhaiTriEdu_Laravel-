@@ -9,6 +9,7 @@ use App\Models\CourseEnrollment;
 use App\Models\User;
 use App\Services\CsvExportService;
 use App\Services\EnrollmentQueueService;
+use App\Services\PortalNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -18,6 +19,7 @@ class AdminEnrollmentController extends Controller
 {
     public function __construct(
         protected EnrollmentQueueService $enrollmentQueue,
+        protected PortalNotificationService $notificationService,
     ) {
     }
 
@@ -131,6 +133,7 @@ class AdminEnrollmentController extends Controller
 
             if ($course->isOffline() && $class->is_full) {
                 $waitlistEnrollment = $this->enrollmentQueue->joinWaitlist($user->id, $class, $validated['notes'] ?? 'admin_waitlist');
+                $this->notificationService->notifyWaitlistJoined($waitlistEnrollment);
                 $position = $waitlistEnrollment->waitlist_position;
 
                 return redirect()
@@ -160,6 +163,8 @@ class AdminEnrollmentController extends Controller
 
             if ($shouldApprove) {
                 $enrollment->approve();
+            } else {
+                $this->notificationService->notifyEnrollmentReceived($enrollment);
             }
 
             $message = $course->isOnline()

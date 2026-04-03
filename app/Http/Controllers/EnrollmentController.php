@@ -12,9 +12,9 @@ use App\Notifications\RefundIssuedNotification;
 use App\Services\BlockchainAuditService;
 use App\Services\EnrollmentQueueService;
 use App\Services\FireflyService;
+use App\Services\PortalNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 
 class EnrollmentController extends Controller
@@ -23,6 +23,7 @@ class EnrollmentController extends Controller
         protected FireflyService $firefly,
         protected BlockchainAuditService $blockchainAudit,
         protected EnrollmentQueueService $enrollmentQueue,
+        protected PortalNotificationService $notificationService,
     ) {
     }
 
@@ -94,6 +95,7 @@ class EnrollmentController extends Controller
 
         if ($course->isOffline() && $class->is_full) {
             $waitlistEnrollment = $this->enrollmentQueue->joinWaitlist(Auth::id(), $class, 'waitlist_joined');
+            $this->notificationService->notifyWaitlistJoined($waitlistEnrollment);
             $position = $waitlistEnrollment->waitlist_position;
             $positionLabel = $position ? ' Vị trí hiện tại của bạn là #' . $position . '.' : '';
 
@@ -570,46 +572,9 @@ class EnrollmentController extends Controller
     private function sendRegistrationSuccessMail(CourseEnrollment $enrollment, bool $walletPaid = false): void
     {
         try {
-            $enrollment->loadMissing(['user', 'courseClass.course.category', 'courseClass.instructor']);
-
-            $user = $enrollment->user;
-            $class = $enrollment->courseClass;
-            $course = $class?->course;
-
-            if (! $user || ! $course || ! $class || empty($user->email)) {
-                return;
+            if ($enrollment->isPending()) {
+                $this->notificationService->notifyEnrollmentReceived($enrollment, $walletPaid);
             }
-
-            $isPending = $enrollment->isPending();
-            $canLearnNow = ! $isPending && $course->isOnline();
-            $subject = $isPending
-                ? 'Đã tiếp nhận đăng ký khóa học - ' . $course->title
-                : 'Đăng ký khóa học thành công - ' . $course->title;
-
-            Mail::send('emails.course-registration', [
-                'userName' => $user->fullname ?: $user->username,
-                'courseTitle' => $course->title,
-                'courseUrl' => route('courses.show', $course),
-                'dashboardUrl' => route('student.dashboard'),
-                'learnUrl' => $canLearnNow ? route('courses.learn', $course) : null,
-                'className' => $class->name,
-                'deliveryModeLabel' => $course->delivery_mode_label,
-                'categoryName' => $course->category?->name,
-                'instructorName' => $class->instructor?->fullname ?? $class->instructor?->username,
-                'startDateLabel' => optional($class->start_date)->format('d/m/Y'),
-                'endDateLabel' => optional($class->end_date)->format('d/m/Y'),
-                'scheduleText' => $class->schedule_text,
-                'meetingInfo' => $class->meeting_info,
-                'statusText' => $isPending ? 'Chờ admin duyệt' : 'Đăng ký thành công',
-                'statusMessage' => $isPending
-                    ? 'Yêu cầu đăng ký của bạn đã được ghi nhận. Trung tâm sẽ xem xét hồ sơ và phản hồi sớm qua hệ thống.'
-                    : 'Đăng ký của bạn đã được xử lý thành công. Vui lòng vào dashboard để theo dõi lớp học và các thông báo mới.',
-                'walletPaid' => $walletPaid,
-                'amount' => (float) ($class->price_override ?: $course->final_price ?: 0),
-            ], function ($message) use ($user, $subject) {
-                $message->to($user->email, $user->fullname ?? $user->username)
-                    ->subject($subject);
-            });
         } catch (\Throwable $exception) {
             report($exception);
         }

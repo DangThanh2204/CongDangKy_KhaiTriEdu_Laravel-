@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -104,6 +104,60 @@
                         </ul>
                     </li>
                     @auth
+                        <li class="nav-item dropdown notification-nav-item">
+                            <a class="nav-link notification-bell-link" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="notification-bell-icon">
+                                    <i class="fas fa-bell"></i>
+                                </span>
+                                @if($unreadNotificationsCount > 0)
+                                    <span class="notification-bell-badge">{{ $unreadNotificationsCount > 9 ? '9+' : $unreadNotificationsCount }}</span>
+                                @endif
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end notification-dropdown shadow-sm border-0 p-0">
+                                <div class="notification-dropdown-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Thông báo</h6>
+                                        <small class="text-muted">Các cập nhật mới nhất dành cho bạn</small>
+                                    </div>
+                                    @if($unreadNotificationsCount > 0)
+                                        <span class="badge rounded-pill bg-danger">{{ $unreadNotificationsCount }}</span>
+                                    @endif
+                                </div>
+
+                                <div class="notification-dropdown-list">
+                                    @forelse($appNotifications as $notification)
+                                        @php($notificationData = $notification->data ?? [])
+                                        <a href="{{ route('notifications.visit', $notification->id) }}"
+                                           class="dropdown-item notification-dropdown-item {{ is_null($notification->read_at) ? 'is-unread' : '' }}">
+                                            <div class="notification-item-icon bg-{{ $notificationData['variant'] ?? 'primary' }}">
+                                                <i class="{{ $notificationData['icon'] ?? 'fas fa-bell' }}"></i>
+                                            </div>
+                                            <div class="notification-item-body">
+                                                <div class="notification-item-title">{{ $notificationData['title'] ?? 'Thông báo mới' }}</div>
+                                                <div class="notification-item-message">{{ \Illuminate\Support\Str::limit($notificationData['message'] ?? '', 110) }}</div>
+                                                <small class="notification-item-time">{{ optional($notification->created_at)->diffForHumans() }}</small>
+                                            </div>
+                                        </a>
+                                    @empty
+                                        <div class="notification-empty-state text-center text-muted py-4 px-3">
+                                            <i class="fas fa-bell-slash mb-2"></i>
+                                            <p class="mb-0">Chưa có thông báo mới.</p>
+                                        </div>
+                                    @endforelse
+                                </div>
+
+                                <div class="notification-dropdown-footer d-flex justify-content-between align-items-center gap-2">
+                                    <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                                    @if($unreadNotificationsCount > 0)
+                                        <form method="POST" action="{{ route('notifications.mark-all-read') }}">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-link text-decoration-none">Đánh dấu đã đọc</button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </div>
+                        </li>
+
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="fas fa-user me-1"></i>{{ Auth::user()->fullname ?? Auth::user()->username }}

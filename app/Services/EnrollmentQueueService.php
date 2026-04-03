@@ -8,6 +8,11 @@ use App\Models\Setting;
 
 class EnrollmentQueueService
 {
+    public function __construct(
+        protected PortalNotificationService $notificationService,
+    ) {
+    }
+
     public function syncClassQueue(CourseClass $class): void
     {
         $class->loadMissing('course');
@@ -134,7 +139,10 @@ class EnrollmentQueueService
             'cancelled_at' => null,
         ])->save();
 
-        return $enrollment->fresh();
+        $enrollment = $enrollment->fresh();
+        $this->notificationService->notifySeatHoldGranted($enrollment);
+
+        return $enrollment;
     }
 
     public function clearQueueState(CourseEnrollment $enrollment): void
