@@ -310,23 +310,23 @@ class CourseEnrollment extends Model
     public function getStatusTextAttribute()
     {
         if ($this->hasActiveSeatHold()) {
-            return 'GiÃ¡Â»Â¯ chÃ¡Â»â€” 24h';
+            return 'Giữ chỗ 24h';
         }
 
         if ($this->isWaitlisted()) {
-            return 'Trong hÃƒÂ ng chÃ¡Â»Â';
+            return 'Trong hàng chờ';
         }
 
         if ($this->isCompleted()) {
-            return 'HoÃƒÂ n thÃƒÂ nh';
+            return 'Hoàn thành';
         }
 
         $statuses = [
-            'pending' => 'ChÃ¡Â»Â duyÃ¡Â»â€¡t',
-            'approved' => 'Ã„ÂÃƒÂ£ duyÃ¡Â»â€¡t',
-            'rejected' => 'TÃ¡Â»Â« chÃ¡Â»â€˜i',
-            'cancelled' => 'Ã„ÂÃƒÂ£ hÃ¡Â»Â§y',
-            'completed' => 'HoÃƒÂ n thÃƒÂ nh',
+            'pending' => 'Chờ duyệt',
+            'approved' => 'Đã duyệt',
+            'rejected' => 'Từ chối',
+            'cancelled' => 'Đã hủy',
+            'completed' => 'Hoàn thành',
         ];
 
         return $statuses[$this->status] ?? $this->status;

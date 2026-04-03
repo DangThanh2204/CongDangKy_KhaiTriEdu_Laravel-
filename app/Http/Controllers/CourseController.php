@@ -299,13 +299,32 @@ class CourseController extends Controller
         $selectedDiscountCode = trim((string) session()->getOldInput('discount_code', ''));
         $selectedDiscountCode = $selectedDiscountCode !== '' ? $selectedDiscountCode : null;
 
-        $promotionPreview = $promotionService->preview(Auth::user(), $course, $pricingPreviewClass, $selectedDiscountCode);
-        $classPromotionPreviews = $classes->mapWithKeys(function (CourseClass $classItem) use ($promotionService, $course, $selectedDiscountCode) {
-            return [
-                $classItem->id => $promotionService->preview(Auth::user(), $course, $classItem, $selectedDiscountCode),
-            ];
-        })->all();
-        $publicVoucherCodes = $promotionService->publicVoucherHints(Auth::user(), $course, $pricingPreviewClass);
+        $promotionPreview = [
+            'base_price' => (float) $course->final_price,
+            'automatic_options' => [],
+            'best_automatic' => null,
+            'voucher' => null,
+            'voucher_option' => null,
+            'voucher_error' => null,
+            'applied_items' => [],
+            'discount_amount' => 0.0,
+            'payable_amount' => (float) $course->final_price,
+            'savings_percentage' => 0,
+        ];
+        $classPromotionPreviews = [];
+        $publicVoucherCodes = collect();
+
+        try {
+            $promotionPreview = $promotionService->preview(Auth::user(), $course, $pricingPreviewClass, $selectedDiscountCode);
+            $classPromotionPreviews = $classes->mapWithKeys(function (CourseClass $classItem) use ($promotionService, $course, $selectedDiscountCode) {
+                return [
+                    $classItem->id => $promotionService->preview(Auth::user(), $course, $classItem, $selectedDiscountCode),
+                ];
+            })->all();
+            $publicVoucherCodes = $promotionService->publicVoucherHints(Auth::user(), $course, $pricingPreviewClass);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
 
         return view('courses.show', compact(
             'course',
