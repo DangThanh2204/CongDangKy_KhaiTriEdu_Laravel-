@@ -59,6 +59,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::post('/logout/browser-close', [AuthController::class, 'logoutOnBrowserClose'])->name('logout.browser-close');
 
 Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
+Route::get('/lich-khai-giang', [CourseController::class, 'intakes'])->name('courses.intakes');
 Route::get('/courses/{course}/image/{type}', [CourseImageController::class, 'show'])->name('courses.image');
 Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
 Route::get('/payments/vnpay/return', [PaymentController::class, 'vnpayReturn'])->name('payments.vnpay.return');

@@ -113,7 +113,7 @@ class CourseClass extends Model
         }
 
         $weekdayOrder = ['2' => 2, '3' => 3, '4' => 4, '5' => 5, '6' => 6, '7' => 7, 'CN' => 8];
-        $weekdayLabels = ['2' => 'Thu 2', '3' => 'Thu 3', '4' => 'Thu 4', '5' => 'Thu 5', '6' => 'Thu 6', '7' => 'Thu 7', 'CN' => 'Chu nhat'];
+        $weekdayLabels = ['2' => 'Thứ 2', '3' => 'Thứ 3', '4' => 'Thứ 4', '5' => 'Thứ 5', '6' => 'Thứ 6', '7' => 'Thứ 7', 'CN' => 'Chủ nhật'];
 
         return $schedules
             ->sortBy(function ($item) use ($weekdayOrder) {

@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -66,7 +66,7 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle {{ request()->delivery_mode === 'online' || request()->delivery_mode === 'offline' ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle {{ request()->routeIs('courses.intakes') || request()->delivery_mode === 'online' || request()->delivery_mode === 'offline' ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-layer-group me-1"></i>Hình thức học
                         </a>
                         <ul class="dropdown-menu navbar-dropdown-menu">
@@ -78,6 +78,11 @@
                             <li>
                                 <a class="dropdown-item {{ request()->delivery_mode === 'offline' ? 'active' : '' }}" href="{{ route('courses.index', array_merge(request()->except('page'), ['delivery_mode' => 'offline'])) }}">
                                     <i class="fas fa-school me-2"></i>Lớp offline / đợt học
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('courses.intakes') ? 'active' : '' }}" href="{{ route('courses.intakes') }}">
+                                    <i class="fas fa-calendar-alt me-2"></i>Lịch khai giảng / đợt học mở
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>
@@ -217,6 +222,7 @@
                             <ul class="list-unstyled">
                                 <li class="mb-2"><a href="{{ route('home') }}#home" class="text-light text-decoration-none">Trang chủ</a></li>
                                 <li class="mb-2"><a href="{{ route('courses.index') }}" class="text-light text-decoration-none">Khóa học</a></li>
+                                <li class="mb-2"><a href="{{ route('courses.intakes') }}" class="text-light text-decoration-none">Lịch khai giảng</a></li>
                                 <li class="mb-2"><a href="{{ route('about') }}" class="text-light text-decoration-none">Giới thiệu</a></li>
                                 <li class="mb-2"><a href="{{ route('news.index') }}" class="text-light text-decoration-none">Tin tức</a></li>
                             </ul>

@@ -15,6 +15,7 @@ export default defineConfig({
                 'resources/css/admin.css',
                 'resources/css/pages/home.css',
                 'resources/css/pages/courses/show.css',
+                'resources/css/pages/courses/intakes.css',
                 'resources/css/pages/student/dashboard.css',
                 'resources/css/pages/admin/dashboard.css',
                 'resources/css/pages/admin/settings.css',

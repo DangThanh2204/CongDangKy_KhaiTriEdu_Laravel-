@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\CourseCategory;
 use App\Models\CourseCertificate;
 use App\Models\CourseClass;
 use App\Models\CourseEnrollment;
@@ -11,6 +12,7 @@ use App\Models\CourseMaterialProgress;
 use App\Models\CourseMaterialQuizAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 class CourseController extends Controller
@@ -86,6 +88,142 @@ class CourseController extends Controller
         $categories = \App\Models\CourseCategory::orderBy('name')->get();
 
         return view('courses.index', compact('courses', 'enrolledCourses', 'pendingCourses', 'categories'));
+    }
+
+    public function intakes(Request $request)
+    {
+        $categories = CourseCategory::query()->orderBy('name')->get();
+        $statsBaseQuery = $this->openIntakesBaseQuery();
+
+        $stats = [
+            'open_intakes' => (clone $statsBaseQuery)->count('classes.id'),
+            'opening_this_month' => (clone $statsBaseQuery)
+                ->whereBetween('classes.start_date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])
+                ->count('classes.id'),
+            'online_count' => (clone $statsBaseQuery)
+                ->where(function ($query) {
+                    $query->where('courses.learning_type', 'online')
+                        ->orWhereNull('courses.learning_type');
+                })
+                ->count('classes.id'),
+            'offline_count' => (clone $statsBaseQuery)
+                ->whereIn('courses.learning_type', ['offline', 'hybrid'])
+                ->count('classes.id'),
+        ];
+
+        $query = $this->openIntakesBaseQuery()
+            ->with([
+                'course.category',
+                'instructor',
+                'schedules',
+            ])
+            ->withCount([
+                'enrollments as active_enrollments_count' => function ($query) {
+                    $query->whereIn('status', ['approved', 'completed']);
+                },
+            ]);
+
+        if ($request->filled('q')) {
+            $keyword = trim((string) $request->input('q'));
+
+            $query->where(function ($searchQuery) use ($keyword) {
+                $searchQuery->where('classes.name', 'like', '%' . $keyword . '%')
+                    ->orWhere('classes.schedule', 'like', '%' . $keyword . '%')
+                    ->orWhere('classes.meeting_info', 'like', '%' . $keyword . '%')
+                    ->orWhere('courses.title', 'like', '%' . $keyword . '%')
+                    ->orWhere('course_categories.name', 'like', '%' . $keyword . '%');
+            });
+        }
+
+        if ($request->filled('category')) {
+            $query->where('courses.category_id', $request->integer('category'));
+        }
+
+        if ($request->filled('delivery_mode')) {
+            if ($request->input('delivery_mode') === 'online') {
+                $query->where(function ($deliveryQuery) {
+                    $deliveryQuery->where('courses.learning_type', 'online')
+                        ->orWhereNull('courses.learning_type');
+                });
+            }
+
+            if ($request->input('delivery_mode') === 'offline') {
+                $query->whereIn('courses.learning_type', ['offline', 'hybrid']);
+            }
+        }
+
+        if ($request->filled('month')) {
+            try {
+                $month = Carbon::createFromFormat('Y-m', (string) $request->input('month'))->startOfMonth();
+                $monthEnd = $month->copy()->endOfMonth();
+
+                $query->where(function ($dateQuery) use ($month, $monthEnd) {
+                    $dateQuery->whereBetween('classes.start_date', [$month->toDateString(), $monthEnd->toDateString()])
+                        ->orWhereBetween('classes.end_date', [$month->toDateString(), $monthEnd->toDateString()])
+                        ->orWhere(function ($rangeQuery) use ($month, $monthEnd) {
+                            $rangeQuery->whereDate('classes.start_date', '<', $month->toDateString())
+                                ->whereDate('classes.end_date', '>', $monthEnd->toDateString());
+                        });
+                });
+            } catch (\Throwable $exception) {
+            }
+        }
+
+        $dateFrom = $request->filled('date_from') ? Carbon::parse((string) $request->input('date_from'))->startOfDay() : null;
+        $dateTo = $request->filled('date_to') ? Carbon::parse((string) $request->input('date_to'))->endOfDay() : null;
+
+        if ($dateFrom && $dateTo && $dateFrom->gt($dateTo)) {
+            [$dateFrom, $dateTo] = [$dateTo->copy()->startOfDay(), $dateFrom->copy()->endOfDay()];
+        }
+
+        if ($dateFrom) {
+            $query->whereDate('classes.start_date', '>=', $dateFrom->toDateString());
+        }
+
+        if ($dateTo) {
+            $query->whereDate('classes.start_date', '<=', $dateTo->toDateString());
+        }
+
+        $minPrice = $request->filled('min_price') ? (float) $request->input('min_price') : null;
+        $maxPrice = $request->filled('max_price') ? (float) $request->input('max_price') : null;
+
+        if ($minPrice !== null) {
+            $query->whereRaw('COALESCE(classes.price_override, courses.sale_price, courses.price, 0) >= ?', [$minPrice]);
+        }
+
+        if ($maxPrice !== null) {
+            $query->whereRaw('COALESCE(classes.price_override, courses.sale_price, courses.price, 0) <= ?', [$maxPrice]);
+        }
+
+        if ($request->boolean('has_slots')) {
+            $query->havingRaw('(classes.max_students IS NULL OR classes.max_students = 0 OR classes.max_students > active_enrollments_count)');
+        }
+
+        $intakes = $query
+            ->orderByRaw('CASE WHEN classes.start_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('classes.start_date')
+            ->orderBy('classes.id')
+            ->paginate(12)
+            ->withQueryString();
+
+        return view('courses.intakes', compact('intakes', 'categories', 'stats'));
+    }
+
+    private function openIntakesBaseQuery()
+    {
+        $today = now()->startOfDay()->toDateString();
+
+        return CourseClass::query()
+            ->select('classes.*')
+            ->selectRaw('COALESCE(classes.price_override, courses.sale_price, courses.price, 0) as listing_price')
+            ->join('courses', 'courses.id', '=', 'classes.course_id')
+            ->leftJoin('course_categories', 'course_categories.id', '=', 'courses.category_id')
+            ->where('classes.status', 'active')
+            ->where('courses.status', 'published')
+            ->where(function ($query) use ($today) {
+                $query->whereNull('classes.end_date')
+                    ->orWhereDate('classes.end_date', '>=', $today);
+            });
     }
 
     public function show(Course $course)

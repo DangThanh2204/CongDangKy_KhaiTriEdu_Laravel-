@@ -13,6 +13,7 @@ use App\Services\BlockchainAuditService;
 use App\Services\FireflyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 
 class EnrollmentController extends Controller
@@ -84,6 +85,7 @@ class EnrollmentController extends Controller
             if ($existingSeries) {
                 $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class);
                 $enrollment->approve();
+                $this->sendRegistrationSuccessMail($enrollment);
 
                 return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
             }
@@ -188,10 +190,13 @@ class EnrollmentController extends Controller
             $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class);
 
             if ($requiresManualApproval) {
+                $this->sendRegistrationSuccessMail($enrollment, true);
+
                 return back()->with('success', 'Thanh toán bằng ví thành công. Yêu cầu đăng ký của bạn đang chờ admin duyệt.');
             }
 
             $enrollment->approve();
+            $this->sendRegistrationSuccessMail($enrollment, true);
 
             return back()->with('success', 'Thanh toán bằng ví thành công, bạn có thể học ngay.');
         }
@@ -199,10 +204,13 @@ class EnrollmentController extends Controller
         $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class);
 
         if ($requiresManualApproval) {
+            $this->sendRegistrationSuccessMail($enrollment);
+
             return back()->with('success', 'Đăng ký thành công, vui lòng chờ admin duyệt.');
         }
 
         $enrollment->approve();
+        $this->sendRegistrationSuccessMail($enrollment);
 
         return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
     }
@@ -401,6 +409,54 @@ class EnrollmentController extends Controller
         }
 
         return back()->with('success', 'Đã chuyển sang đợt học ' . $newClass->name . '.');
+    }
+
+    private function sendRegistrationSuccessMail(CourseEnrollment $enrollment, bool $walletPaid = false): void
+    {
+        try {
+            $enrollment->loadMissing(['user', 'courseClass.course.category', 'courseClass.instructor']);
+
+            $user = $enrollment->user;
+            $class = $enrollment->courseClass;
+            $course = $class?->course;
+
+            if (! $user || ! $course || ! $class || empty($user->email)) {
+                return;
+            }
+
+            $isPending = $enrollment->isPending();
+            $canLearnNow = ! $isPending && $course->isOnline();
+            $subject = $isPending
+                ? 'Đã tiếp nhận đăng ký khóa học - ' . $course->title
+                : 'Đăng ký khóa học thành công - ' . $course->title;
+
+            Mail::send('emails.course-registration', [
+                'userName' => $user->fullname ?: $user->username,
+                'courseTitle' => $course->title,
+                'courseUrl' => route('courses.show', $course),
+                'dashboardUrl' => route('student.dashboard'),
+                'learnUrl' => $canLearnNow ? route('courses.learn', $course) : null,
+                'className' => $class->name,
+                'deliveryModeLabel' => $course->delivery_mode_label,
+                'categoryName' => $course->category?->name,
+                'instructorName' => $class->instructor?->fullname ?? $class->instructor?->username,
+                'startDateLabel' => optional($class->start_date)->format('d/m/Y'),
+                'endDateLabel' => optional($class->end_date)->format('d/m/Y'),
+                'scheduleText' => $class->schedule_text,
+                'meetingInfo' => $class->meeting_info,
+                'statusText' => $isPending ? 'Chờ admin duyệt' : 'Đăng ký thành công',
+                'statusMessage' => $isPending
+                    ? 'Yêu cầu đăng ký của bạn đã được ghi nhận. Trung tâm sẽ xem xét hồ sơ và phản hồi sớm qua hệ thống.'
+                    : 'Đăng ký của bạn đã được xử lý thành công. Vui lòng vào dashboard để theo dõi lớp học và các thông báo mới.',
+                'walletPaid' => $walletPaid,
+                'amount' => (float) ($class->price_override ?: $course->final_price ?: 0),
+            ], function ($message) use ($user, $subject) {
+                $message->to($user->email, $user->fullname ?? $user->username)
+                    ->subject($subject);
+            });
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     private function resolveSelectedClass(Request $request, Course $course): ?CourseClass
