@@ -9,14 +9,11 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminSettingsController extends Controller
 {
-    /**
-     * Hien thi trang cai dat
-     */
     public function index()
     {
         $settings = [
             'site_name' => Setting::get('site_name', 'Khai Tri Education'),
-            'site_tagline' => Setting::get('site_tagline', 'Nen tang hoc tap truc tuyen'),
+            'site_tagline' => Setting::get('site_tagline', 'Nền tảng học tập trực tuyến'),
             'site_logo' => Setting::get('site_logo', ''),
             'site_favicon' => Setting::get('site_favicon', ''),
             'contact_email' => Setting::get('contact_email', ''),
@@ -29,14 +26,15 @@ class AdminSettingsController extends Controller
             'allow_class_change' => Setting::get('allow_class_change', '0'),
             'class_change_deadline_days' => Setting::get('class_change_deadline_days', '0'),
             'ai_assistant_prompt' => Setting::get('ai_assistant_prompt', ''),
+            'wallet_bank_name' => Setting::get('wallet_bank_name', ''),
+            'wallet_bank_bin' => Setting::get('wallet_bank_bin', ''),
+            'wallet_bank_account_name' => Setting::get('wallet_bank_account_name', ''),
+            'wallet_bank_account_number' => Setting::get('wallet_bank_account_number', ''),
         ];
 
         return view('admin.settings.index', compact('settings'));
     }
 
-    /**
-     * Cap nhat cai dat
-     */
     public function update(Request $request)
     {
         $validated = $request->validate([
@@ -54,6 +52,10 @@ class AdminSettingsController extends Controller
             'ai_assistant_prompt' => 'nullable|string|max:10000',
             'allow_class_change' => 'nullable|in:0,1',
             'class_change_deadline_days' => 'nullable|integer|min:0',
+            'wallet_bank_name' => 'nullable|string|max:120',
+            'wallet_bank_bin' => 'nullable|string|max:20',
+            'wallet_bank_account_name' => 'nullable|string|max:120',
+            'wallet_bank_account_number' => 'nullable|string|max:40',
         ]);
 
         if ($request->hasFile('site_logo')) {
@@ -89,6 +91,10 @@ class AdminSettingsController extends Controller
             'ai_assistant_prompt',
             'allow_class_change',
             'class_change_deadline_days',
+            'wallet_bank_name',
+            'wallet_bank_bin',
+            'wallet_bank_account_name',
+            'wallet_bank_account_number',
         ];
 
         foreach ($filledSettings as $key) {
@@ -103,6 +109,6 @@ class AdminSettingsController extends Controller
 
         return redirect()
             ->route('admin.settings.index')
-            ->with('success', 'Cap nhat cai dat thanh cong.');
+            ->with('success', 'Cập nhật cài đặt thành công.');
     }
 }

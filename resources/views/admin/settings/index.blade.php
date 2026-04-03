@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', 'Cài đặt hệ thống')
 @section('page-class', 'page-admin-settings')

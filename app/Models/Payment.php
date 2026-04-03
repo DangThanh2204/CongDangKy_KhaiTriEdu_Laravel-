@@ -78,6 +78,15 @@ class Payment extends Model
         ][$this->method] ?? ucfirst(str_replace('_', ' ', (string) $this->method));
     }
 
+    public function getStatusLabelAttribute(): string
+    {
+        return [
+            'pending' => 'Chờ thanh toán',
+            'completed' => 'Đã thanh toán',
+            'failed' => 'Thất bại',
+        ][$this->status] ?? ucfirst((string) $this->status);
+    }
+
     public function markCompleted(?string $note = null): bool
     {
         if ($this->isCompleted()) {

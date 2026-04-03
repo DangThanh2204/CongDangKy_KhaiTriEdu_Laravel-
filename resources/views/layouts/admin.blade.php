@@ -217,10 +217,10 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('admin.wallet-transactions.index', ['method' => 'direct', 'status' => 'pending']) }}" class="nav-link {{ request()->routeIs('admin.wallet-transactions.*') ? 'active' : '' }}" title="Duyệt nạp trực tiếp">
+                        <a href="{{ route('admin.wallet-transactions.index', ['status' => 'pending']) }}" class="nav-link {{ request()->routeIs('admin.wallet-transactions.*') ? 'active' : '' }}" title="Duyệt nạp ví thủ công">
                             <i class="fas fa-wallet"></i>
                             <span class="nav-link-label">
-                                <span class="nav-text">Nạp ví trực tiếp</span>
+                                <span class="nav-text">Nạp ví thủ công</span>
                                 @if($adminPendingWalletTopupCount > 0)
                                     <span class="admin-attention-dot" title="{{ $adminPendingWalletTopupCount }} yêu cầu nạp ví chờ duyệt"></span>
                                 @endif
@@ -322,10 +322,10 @@
                                 </span>
                                 <span class="badge {{ $adminPendingPaymentCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminPendingPaymentCount }}</span>
                             </a>
-                            <a href="{{ route('admin.wallet-transactions.index', ['method' => 'direct', 'status' => 'pending']) }}" class="dropdown-item admin-alert-item">
+                            <a href="{{ route('admin.wallet-transactions.index', ['status' => 'pending']) }}" class="dropdown-item admin-alert-item">
                                 <span class="item-copy">
-                                    <strong>Nạp ví trực tiếp</strong>
-                                    <small>Yêu cầu topup cần duyệt</small>
+                                    <strong>Nạp ví thủ công</strong>
+                                    <small>Yêu cầu topup direct và bank cần duyệt</small>
                                 </span>
                                 <span class="badge {{ $adminPendingWalletTopupCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminPendingWalletTopupCount }}</span>
                             </a>

@@ -39,7 +39,7 @@ class AdminLayoutComposer
                 WalletTransaction::expireOverdueDirectTopups();
 
                 $summary['pending_wallet_topup_count'] = WalletTransaction::query()
-                    ->pendingDirectApproval()
+                    ->pendingManualApproval()
                     ->count();
             }
 

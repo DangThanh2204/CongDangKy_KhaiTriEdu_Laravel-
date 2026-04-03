@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Setting;
 use App\Models\WalletTransaction;
 use App\Services\BlockchainAuditService;
 use App\Services\FireflyService;
@@ -28,36 +29,34 @@ class WalletController extends Controller
         $wallet = $user->getOrCreateWallet();
         $transactions = $wallet->transactions()->latest()->paginate(10);
 
-        $qrToken = session('qr_token');
-        $qrAmount = session('qr_amount');
-        $paymentMethod = session('payment_method');
         $supportsVnpayTopup = $this->vnpay->isConfigured();
+        $bankTransferConfig = $this->bankTransferConfig();
+        $supportsBankTransferTopup = $this->supportsBankTransferTopup($bankTransferConfig);
 
-        $directRequest = null;
+        $directRequest = $wallet->transactions()
+            ->where('type', 'deposit')
+            ->where('metadata->method', WalletTransaction::DIRECT_METHOD)
+            ->whereIn('status', ['pending', 'expired'])
+            ->latest()
+            ->first();
 
-        if ($paymentMethod === WalletTransaction::DIRECT_METHOD && $qrToken) {
-            $directRequest = $wallet->transactions()
-                ->where('reference', $qrToken)
-                ->where('type', 'deposit')
-                ->first();
-        }
+        $bankRequest = $wallet->transactions()
+            ->where('type', 'deposit')
+            ->where('metadata->method', WalletTransaction::BANK_METHOD)
+            ->whereIn('status', ['pending', 'failed'])
+            ->latest()
+            ->first();
 
-        if (! $directRequest || ! $directRequest->isDirectTopup()) {
-            $directRequest = $wallet->transactions()
-                ->where('type', 'deposit')
-                ->where('metadata->method', WalletTransaction::DIRECT_METHOD)
-                ->whereIn('status', ['pending', 'expired'])
-                ->latest()
-                ->first();
-        }
+        $bankRequestQrUrl = $bankRequest ? $this->buildBankTransferQrUrl($bankRequest) : null;
 
         return view('wallet.index', compact(
             'wallet',
             'transactions',
-            'qrToken',
-            'qrAmount',
-            'paymentMethod',
             'directRequest',
+            'bankRequest',
+            'bankRequestQrUrl',
+            'bankTransferConfig',
+            'supportsBankTransferTopup',
             'supportsVnpayTopup'
         ));
     }
@@ -68,17 +67,27 @@ class WalletController extends Controller
 
         $request->validate([
             'amount' => 'required|numeric|min:1000|max:10000000',
-            'method' => 'required|in:direct,qr,bank,vnpay',
+            'method' => 'required|in:direct,bank,vnpay',
         ]);
 
         $user = Auth::user();
         $wallet = $user->getOrCreateWallet();
         $amount = (float) $request->input('amount');
-        $method = $request->input('method');
+        $method = (string) $request->input('method');
+
+        $bankTransferConfig = $this->bankTransferConfig();
+
+        if ($method === WalletTransaction::BANK_METHOD && ! $this->supportsBankTransferTopup($bankTransferConfig)) {
+            return redirect()
+                ->route('wallet.index')
+                ->withInput()
+                ->with('error', 'Hệ thống chưa cấu hình đầy đủ thông tin tài khoản ngân hàng để nhận chuyển khoản.');
+        }
 
         $reference = match ($method) {
             WalletTransaction::DIRECT_METHOD => Str::upper('DEP' . uniqid()),
-            'vnpay' => 'WVN' . Str::upper(Str::random(18)),
+            WalletTransaction::BANK_METHOD => Str::upper('BNK' . now()->format('ymdHis') . random_int(100, 999)),
+            WalletTransaction::VNPAY_METHOD => 'WVN' . Str::upper(Str::random(18)),
             default => Str::uuid()->toString(),
         };
 
@@ -86,16 +95,28 @@ class WalletController extends Controller
             ? now()->addHours(WalletTransaction::DIRECT_TOPUP_EXPIRY_HOURS)
             : null;
 
+        $metadata = [
+            'method' => $method,
+            'requested_by' => $user->id,
+        ];
+
+        if ($method === WalletTransaction::BANK_METHOD) {
+            $metadata['bank_transfer'] = [
+                'bank_name' => $bankTransferConfig['bank_name'],
+                'bank_bin' => $bankTransferConfig['bank_bin'],
+                'account_name' => $bankTransferConfig['account_name'],
+                'account_number' => $bankTransferConfig['account_number'],
+            ];
+            $metadata['transfer_content'] = $reference;
+        }
+
         $transaction = $wallet->transactions()->create([
             'type' => 'deposit',
             'amount' => $amount,
             'status' => 'pending',
             'reference' => $reference,
             'expires_at' => $expiresAt,
-            'metadata' => [
-                'method' => $method,
-                'requested_by' => $user->id,
-            ],
+            'metadata' => $metadata,
         ]);
 
         SystemLogService::record('transaction', 'topup_requested', [
@@ -121,27 +142,21 @@ class WalletController extends Controller
         ]);
         $this->appendMetadata($transaction, ['blockchain_audit' => $auditResponse]);
 
-        if ($method === 'vnpay') {
+        if ($method === WalletTransaction::VNPAY_METHOD) {
             return redirect()
                 ->route('wallet.vnpay.redirect', $transaction)
                 ->with('success', 'Yêu cầu nạp tiền qua VNPay đã được tạo. Hệ thống sẽ chuyển bạn sang cổng thanh toán.');
         }
 
-        session()->flash('qr_token', $reference);
-        session()->flash('qr_amount', $amount);
-        session()->flash('payment_method', $method);
-
         if ($method === WalletTransaction::DIRECT_METHOD) {
-            return redirect()->route('wallet.index')->with(
-                'success',
-                'Yêu cầu nạp tiền đã được tạo. Vui lòng mang mã thanh toán đến trung tâm trước ' . $transaction->expires_at_label . '.'
-            );
+            return redirect()
+                ->route('wallet.index')
+                ->with('success', 'Đã tạo mã nạp trực tiếp. Vui lòng mang mã này tới quầy và chờ admin xác nhận.');
         }
 
-        return redirect()->route('wallet.index')->with(
-            'success',
-            'Giao dịch đã được tạo. Vui lòng thực hiện chuyển khoản và xác nhận khi hoàn tất.'
-        );
+        return redirect()
+            ->route('wallet.index')
+            ->with('success', 'Đã tạo yêu cầu chuyển khoản. Hãy chuyển đúng số tiền, đúng nội dung rồi nhấn xác nhận để admin đối soát.');
     }
 
     public function redirectToVnpay(Request $request, WalletTransaction $walletTransaction)
@@ -151,7 +166,7 @@ class WalletController extends Controller
         WalletTransaction::expireOverdueDirectTopups();
         $walletTransaction->refresh();
 
-        if (! $walletTransaction->isDeposit() || data_get($walletTransaction->metadata, 'method') !== 'vnpay') {
+        if (! $walletTransaction->isDeposit() || data_get($walletTransaction->metadata, 'method') !== WalletTransaction::VNPAY_METHOD) {
             return redirect()->route('wallet.index')->with('error', 'Giao dịch nạp ví này không sử dụng VNPay.');
         }
 
@@ -208,7 +223,7 @@ class WalletController extends Controller
         }
 
         if ($transaction->status === 'expired' || $transaction->isExpired()) {
-            if ($transaction->status === 'pending') {
+            if ($transaction->status === 'pending' && $transaction->isDirectTopup()) {
                 $transaction->expire([
                     'expired_reason' => 'timeout',
                     'expired_by_system' => true,
@@ -219,17 +234,42 @@ class WalletController extends Controller
             return back()->with('error', 'Yêu cầu thanh toán này đã hết hạn. Vui lòng tạo yêu cầu mới.');
         }
 
+        $method = data_get($transaction->metadata, 'method');
+
+        if ($method === WalletTransaction::DIRECT_METHOD) {
+            return back()->with('error', 'Yêu cầu nạp trực tiếp chỉ được xác nhận bởi quản trị viên hoặc nhân viên tại quầy.');
+        }
+
+        if ($method === WalletTransaction::VNPAY_METHOD) {
+            return back()->with('error', 'Giao dịch VNPay sẽ được hệ thống xác nhận tự động sau khi thanh toán thành công.');
+        }
+
+        if ($method === WalletTransaction::BANK_METHOD) {
+            if ($transaction->status !== 'pending') {
+                return back()->with('error', 'Yêu cầu chuyển khoản này đã được xử lý trước đó.');
+            }
+
+            $metadata = array_merge($transaction->metadata ?? [], [
+                'user_transfer_confirmed_at' => now()->toDateTimeString(),
+                'user_transfer_confirmed_ip' => $request->ip(),
+            ]);
+
+            $transaction->metadata = $metadata;
+            $transaction->save();
+
+            SystemLogService::record('transaction', 'bank_topup_marked_transferred', [
+                'wallet_tx_id' => $transaction->id,
+                'amount' => $transaction->amount,
+                'reference' => $transaction->reference,
+            ], $transaction->reference, $request);
+
+            return redirect()
+                ->route('wallet.index')
+                ->with('success', 'Đã ghi nhận bạn đã chuyển khoản. Admin sẽ kiểm tra và cộng tiền vào ví sau khi đối soát.');
+        }
+
         if (! $transaction->isPending()) {
             return back()->with('error', 'Giao dịch này đã được xử lý trước đó.');
-        }
-
-        $method = data_get($transaction->metadata, 'method');
-        if ($method === WalletTransaction::DIRECT_METHOD) {
-            return back()->with('error', 'Giao dịch nạp trực tiếp phải được xác nhận bởi quản trị viên hoặc nhân viên. Vui lòng mang mã thanh toán tới điểm thu để được xử lý.');
-        }
-
-        if ($method === 'vnpay') {
-            return back()->with('error', 'Giao dịch VNPay sẽ được hệ thống xác nhận tự động sau khi thanh toán thành công.');
         }
 
         if (! $transaction->complete()) {
@@ -312,5 +352,46 @@ class WalletController extends Controller
     {
         $transaction->metadata = array_merge($transaction->metadata ?? [], $payload);
         $transaction->save();
+    }
+
+    protected function bankTransferConfig(): array
+    {
+        return [
+            'bank_name' => trim((string) Setting::get('wallet_bank_name', '')),
+            'bank_bin' => trim((string) Setting::get('wallet_bank_bin', '')),
+            'account_name' => trim((string) Setting::get('wallet_bank_account_name', '')),
+            'account_number' => trim((string) Setting::get('wallet_bank_account_number', '')),
+        ];
+    }
+
+    protected function supportsBankTransferTopup(array $config): bool
+    {
+        return $config['bank_name'] !== ''
+            && $config['account_name'] !== ''
+            && $config['account_number'] !== '';
+    }
+
+    protected function buildBankTransferQrUrl(WalletTransaction $transaction): ?string
+    {
+        $snapshot = data_get($transaction->metadata, 'bank_transfer', []);
+        $bankBin = trim((string) data_get($snapshot, 'bank_bin'));
+        $accountNumber = trim((string) data_get($snapshot, 'account_number'));
+        $accountName = trim((string) data_get($snapshot, 'account_name'));
+        $transferContent = trim((string) data_get($transaction->metadata, 'transfer_content', $transaction->reference));
+
+        if ($bankBin === '' || $accountNumber === '' || $accountName === '' || $transferContent === '') {
+            return null;
+        }
+
+        return 'https://img.vietqr.io/image/'
+            . rawurlencode($bankBin)
+            . '-'
+            . rawurlencode($accountNumber)
+            . '-compact2.png?'
+            . http_build_query([
+                'amount' => (int) round((float) $transaction->amount),
+                'addInfo' => $transferContent,
+                'accountName' => $accountName,
+            ]);
     }
 }

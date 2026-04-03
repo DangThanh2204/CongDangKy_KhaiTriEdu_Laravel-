@@ -11,6 +11,8 @@ class WalletTransaction extends Model
     use HasFactory;
 
     public const DIRECT_METHOD = 'direct';
+    public const BANK_METHOD = 'bank';
+    public const VNPAY_METHOD = 'vnpay';
     public const DIRECT_TOPUP_EXPIRY_HOURS = 48;
 
     protected $fillable = [
@@ -49,11 +51,37 @@ class WalletTransaction extends Model
             ->where('metadata->method', self::DIRECT_METHOD);
     }
 
+    public function scopeBankTopups(Builder $query): Builder
+    {
+        return $query
+            ->where('type', 'deposit')
+            ->where('metadata->method', self::BANK_METHOD);
+    }
+
+    public function scopeManualTopups(Builder $query): Builder
+    {
+        return $query
+            ->where('type', 'deposit')
+            ->whereIn('metadata->method', [self::DIRECT_METHOD, self::BANK_METHOD]);
+    }
+
     public function scopePendingDirectApproval(Builder $query): Builder
     {
         return $query
             ->directTopups()
             ->where('status', 'pending');
+    }
+
+    public function scopePendingManualApproval(Builder $query): Builder
+    {
+        return $query
+            ->manualTopups()
+            ->where('status', 'pending');
+    }
+
+    public function paymentMethod(): string
+    {
+        return (string) data_get($this->metadata, 'method', '');
     }
 
     public function isPending(): bool
@@ -79,7 +107,22 @@ class WalletTransaction extends Model
 
     public function isDirectTopup(): bool
     {
-        return $this->isDeposit() && data_get($this->metadata, 'method') === self::DIRECT_METHOD;
+        return $this->isDeposit() && $this->paymentMethod() === self::DIRECT_METHOD;
+    }
+
+    public function isBankTopup(): bool
+    {
+        return $this->isDeposit() && $this->paymentMethod() === self::BANK_METHOD;
+    }
+
+    public function isVnpayTopup(): bool
+    {
+        return $this->isDeposit() && $this->paymentMethod() === self::VNPAY_METHOD;
+    }
+
+    public function requiresAdminApproval(): bool
+    {
+        return $this->isDeposit() && in_array($this->paymentMethod(), [self::DIRECT_METHOD, self::BANK_METHOD], true);
     }
 
     public function complete(): bool
@@ -156,6 +199,16 @@ class WalletTransaction extends Model
         }
 
         return $expiredCount;
+    }
+
+    public function getMethodLabelAttribute(): string
+    {
+        return match ($this->paymentMethod()) {
+            self::DIRECT_METHOD => 'Nạp trực tiếp',
+            self::BANK_METHOD => 'Chuyển khoản ngân hàng',
+            self::VNPAY_METHOD => 'VNPay',
+            default => ucfirst(str_replace('_', ' ', $this->paymentMethod() ?: '-')),
+        };
     }
 
     public function getStatusLabelAttribute(): string

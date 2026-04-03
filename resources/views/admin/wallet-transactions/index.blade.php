@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', 'Giao dịch nạp tiền')
 
@@ -9,7 +9,7 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
                 <div>
                     <h5 class="mb-1 text-primary">Giao dịch nạp tiền</h5>
-                    <div class="text-muted small">Theo dõi yêu cầu nạp trực tiếp, chuyển khoản QR và các giao dịch đã hết hạn ngay tại một màn hình.</div>
+                    <div class="text-muted small">Theo dõi các yêu cầu nạp thủ công, giao dịch VNPay và lịch sử cộng tiền vào ví tại một màn hình.</div>
                 </div>
                 <a href="{{ route('admin.wallet-transactions.export', request()->query(), false) }}" class="btn btn-outline-success">
                     <i class="fas fa-file-excel me-2"></i>Xuất Excel
@@ -45,29 +45,19 @@
                         <select id="method" name="method" class="form-select filter-control">
                             <option value="">Tất cả phương thức</option>
                             <option value="direct" {{ request('method') === 'direct' ? 'selected' : '' }}>Nạp trực tiếp</option>
-                            <option value="qr" {{ request('method') === 'qr' ? 'selected' : '' }}>QR</option>
-                            <option value="bank" {{ request('method') === 'bank' ? 'selected' : '' }}>Ngân hàng</option>
+                            <option value="bank" {{ request('method') === 'bank' ? 'selected' : '' }}>Chuyển khoản ngân hàng</option>
+                            <option value="vnpay" {{ request('method') === 'vnpay' ? 'selected' : '' }}>VNPay</option>
                         </select>
                     </div>
 
                     <div class="col-12 col-md-6 col-xl-2">
                         <label for="from_date" class="form-label filter-label">Từ ngày</label>
-                        <input
-                            id="from_date"
-                            type="date"
-                            name="from_date"
-                            class="form-control filter-control"
-                            value="{{ request('from_date') }}">
+                        <input id="from_date" type="date" name="from_date" class="form-control filter-control" value="{{ request('from_date') }}">
                     </div>
 
                     <div class="col-12 col-md-6 col-xl-2">
                         <label for="to_date" class="form-label filter-label">Đến ngày</label>
-                        <input
-                            id="to_date"
-                            type="date"
-                            name="to_date"
-                            class="form-control filter-control"
-                            value="{{ request('to_date') }}">
+                        <input id="to_date" type="date" name="to_date" class="form-control filter-control" value="{{ request('to_date') }}">
                     </div>
                 </div>
 
@@ -99,7 +89,6 @@
                         </thead>
                         <tbody>
                             @foreach($transactions as $tx)
-                                @php $method = data_get($tx->metadata, 'method', '-'); @endphp
                                 <tr>
                                     <td>{{ $tx->id }}</td>
                                     <td>
@@ -109,16 +98,16 @@
                                     <td>{{ number_format($tx->amount, 0) }}đ</td>
                                     <td><code>{{ $tx->reference }}</code></td>
                                     <td>
-                                        <span class="badge {{ $method === 'direct' ? 'bg-primary' : 'bg-secondary' }}">
-                                            {{ strtoupper($method) }}
+                                        <span class="badge {{ $tx->paymentMethod() === 'vnpay' ? 'bg-primary' : 'bg-secondary' }}">
+                                            {{ $tx->method_label }}
                                         </span>
                                     </td>
                                     <td>
-                                        <div>
-                                            <span class="badge {{ $tx->status_badge_class }}">{{ $tx->status_label }}</span>
-                                        </div>
+                                        <div><span class="badge {{ $tx->status_badge_class }}">{{ $tx->status_label }}</span></div>
                                         @if($tx->isDirectTopup() && $tx->expiry_notice)
                                             <div class="small text-muted mt-1">{{ $tx->expiry_notice }}</div>
+                                        @elseif($tx->requiresAdminApproval() && data_get($tx->metadata, 'user_transfer_confirmed_at'))
+                                            <div class="small text-muted mt-1">Học viên đã báo đã chuyển khoản.</div>
                                         @endif
                                     </td>
                                     <td>{{ $tx->requested_at_label ?? '—' }}</td>
@@ -131,7 +120,7 @@
                                     </td>
                                     <td class="text-nowrap">
                                         <a href="{{ route('admin.wallet-transactions.show', $tx, false) }}" class="btn btn-sm btn-outline-primary">Xem</a>
-                                        @if($tx->isPending())
+                                        @if($tx->isPending() && $tx->requiresAdminApproval())
                                             <form method="POST" action="{{ route('admin.wallet-transactions.confirm', $tx, false) }}" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')

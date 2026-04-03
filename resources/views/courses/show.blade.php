@@ -14,10 +14,16 @@
             ? \App\Support\StudyDuration::formatMinutes($standaloneDurationMinutes)
             : 'Chưa ước tính';
         $requiresPaidCheckout = (float) $course->final_price > 0;
-        $vnpayIssues = app(\App\Services\VnpayService::class)->configurationIssues();
-        $supportsVnpay = $vnpayIssues === [];
         $activeClasses = $classes->where('status', 'active');
         $pendingClassName = $currentEnrollment?->courseClass?->name ?? $currentEnrollment?->class?->name;
+        $walletBalance = 0;
+
+        if (Auth::check()) {
+            $walletBalance = (float) (Auth::user()->wallet->balance ?? Auth::user()->getOrCreateWallet()->balance);
+        }
+
+        $walletShortage = $requiresPaidCheckout ? max(0, (float) $course->final_price - $walletBalance) : 0;
+        $walletEnough = ! $requiresPaidCheckout || $walletShortage <= 0;
     @endphp
 
     <div class="container py-5">
@@ -249,7 +255,7 @@
                             <div class="alert alert-warning">
                                 <i class="fas fa-wallet me-2"></i>Số dư ví hiện chưa đủ để đăng ký khóa học này.
                                 <a href="{{ route('wallet.index') }}" class="alert-link">Nạp thêm tiền vào ví</a>
-                                rồi quay lại chọn đợt học phù hợp.
+                                rồi quay lại đăng ký.
                             </div>
                         @endif
 
@@ -269,6 +275,17 @@
                                 <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập để đăng ký
                             </a>
                         @else
+                            @if($requiresPaidCheckout)
+                                <div class="border rounded p-3 bg-light-subtle mb-3">
+                                    <div class="small text-muted mb-1">Thanh toán khóa học</div>
+                                    <div class="fw-semibold">Chỉ dùng số dư ví nội bộ</div>
+                                    <div class="small text-muted mt-2">Số dư ví hiện tại: <strong>{{ number_format($walletBalance, 0) }}đ</strong></div>
+                                    @if(! $walletEnough)
+                                        <div class="small text-danger mt-1">Bạn cần nạp thêm {{ number_format($walletShortage, 0) }}đ để mua khóa học này.</div>
+                                    @endif
+                                </div>
+                            @endif
+
                             @if($isEnrolled)
                                 <div class="alert alert-success">
                                     <i class="fas fa-check-circle me-2"></i>Bạn đã đăng ký khóa học này.
@@ -294,43 +311,27 @@
                                 </div>
                                 <button class="btn btn-warning text-dark w-100" disabled>Chờ admin duyệt</button>
                             @elseif($course->isOnline())
-                                <form action="{{ route('courses.enroll', $course) }}" method="POST" class="d-grid gap-2">
-                                    @csrf
-                                    @if($requiresPaidCheckout)
-                                        <div>
-                                            <label class="form-label small text-muted mb-1">Phương thức thanh toán</label>
-                                            <select name="payment_method" class="form-select">
-                                                <option value="wallet">Ví nội bộ</option>
-                                                @if($supportsVnpay)
-                                                    <option value="vnpay">VNPay</option>
-                                                @endif
-                                                <option value="bank_transfer">Chuyển khoản</option>
-                                                <option value="cash">Tiền mặt</option>
-                                                <option value="counter">Tại quầy</option>
-                                            </select>
-                                        </div>
-                                    @else
+                                @if($requiresPaidCheckout && ! $walletEnough)
+                                    <a href="{{ route('wallet.index') }}" class="btn btn-primary btn-lg w-100">
+                                        <i class="fas fa-wallet me-2"></i>Nạp tiền vào ví
+                                    </a>
+                                    <small class="text-muted d-block mt-2">Nạp đủ tiền vào ví rồi quay lại bấm đăng ký học ngay.</small>
+                                @else
+                                    <form action="{{ route('courses.enroll', $course) }}" method="POST" class="d-grid gap-2">
+                                        @csrf
                                         <input type="hidden" name="payment_method" value="wallet">
-                                    @endif
-
-                                    <button type="submit" class="btn btn-primary btn-lg w-100">
-                                        <i class="fas fa-plus me-2"></i>Đăng ký học ngay
-                                    </button>
-                                </form>
-
-                                @if($requiresPaidCheckout && ! $supportsVnpay)
-                                    <div class="alert alert-light border mt-3 small mb-0">
-                                        <strong>VNPay hiện chưa sẵn sàng:</strong> {{ implode(' ', $vnpayIssues) }}
-                                    </div>
+                                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                                            <i class="fas fa-plus me-2"></i>{{ $requiresPaidCheckout ? 'Thanh toán ví và đăng ký' : 'Đăng ký học ngay' }}
+                                        </button>
+                                    </form>
+                                    <small class="text-muted d-block mt-2">
+                                        @if($requiresPaidCheckout)
+                                            Hệ thống sẽ trừ tiền trực tiếp từ ví nội bộ và kích hoạt quyền học ngay sau khi đăng ký thành công.
+                                        @else
+                                            Đăng ký thành công là bạn có thể vào học ngay mà không cần admin duyệt.
+                                        @endif
+                                    </small>
                                 @endif
-
-                                <small class="text-muted d-block mt-2">
-                                    @if($requiresPaidCheckout)
-                                        Ví nội bộ hoặc VNPay sẽ xử lý nhanh. Chuyển khoản, tiền mặt và tại quầy sẽ cần thêm bước xác nhận.
-                                    @else
-                                        Đăng ký thành công là bạn có thể vào học ngay mà không cần admin duyệt.
-                                    @endif
-                                </small>
                             @else
                                 @if($activeClasses->isEmpty())
                                     <div class="alert alert-danger mb-0">Khóa học này hiện chưa có đợt học nào đang mở đăng ký.</div>
@@ -382,29 +383,24 @@
                                                     </form>
                                                 @elseif($isFull)
                                                     <button class="btn btn-secondary btn-sm w-100" disabled>Đợt học đã đầy</button>
+                                                @elseif($requiresPaidCheckout && ! $walletEnough)
+                                                    <a href="{{ route('wallet.index') }}" class="btn btn-primary btn-sm w-100">
+                                                        <i class="fas fa-wallet me-1"></i>Nạp ví rồi đăng ký
+                                                    </a>
                                                 @else
                                                     <form action="{{ route('courses.enroll', $course) }}" method="POST" class="d-grid gap-2">
                                                         @csrf
                                                         <input type="hidden" name="class_id" value="{{ $cls->id }}">
-                                                        @if($requiresPaidCheckout)
-                                                            <select name="payment_method" class="form-select form-select-sm">
-                                                                <option value="wallet">Ví nội bộ</option>
-                                                                @if($supportsVnpay)
-                                                                    <option value="vnpay">VNPay</option>
-                                                                @endif
-                                                                <option value="bank_transfer">Chuyển khoản</option>
-                                                                <option value="cash">Tiền mặt</option>
-                                                                <option value="counter">Tại quầy</option>
-                                                            </select>
-                                                        @else
-                                                            <input type="hidden" name="payment_method" value="wallet">
-                                                        @endif
-                                                        <button type="submit" class="btn btn-primary btn-sm w-100">Gửi yêu cầu đăng ký</button>
+                                                        <input type="hidden" name="payment_method" value="wallet">
+                                                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                            {{ $requiresPaidCheckout ? 'Thanh toán ví và gửi yêu cầu' : 'Gửi yêu cầu đăng ký' }}
+                                                        </button>
                                                     </form>
                                                 @endif
                                             </div>
                                         @endforeach
                                     </div>
+                                    <small class="text-muted d-block mt-3">Khóa offline sẽ giữ hình thức chờ admin duyệt, nhưng học phí vẫn được thanh toán trước bằng ví nội bộ.</small>
                                 @endif
                             @endif
                         @endguest

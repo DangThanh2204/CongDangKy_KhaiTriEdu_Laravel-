@@ -54,7 +54,7 @@ class WalletTransactionController extends Controller
                     $transaction->wallet->user->email ?? '',
                     $transaction->amount,
                     $transaction->reference,
-                    data_get($transaction->metadata, 'method', ''),
+                    $transaction->method_label,
                     $transaction->status_label,
                     $transaction->requested_at_label,
                     $transaction->expires_at_label,
@@ -118,7 +118,7 @@ class WalletTransactionController extends Controller
         $walletTransaction->refresh();
 
         if ($walletTransaction->status === 'expired' || $walletTransaction->isExpired()) {
-            return back()->with('error', 'Yêu cầu nạp trực tiếp này đã hết hạn, không thể xác nhận nữa.');
+            return back()->with('error', 'Yêu cầu nạp tiền thủ công này đã hết hạn, không thể xác nhận nữa.');
         }
 
         if (! $walletTransaction->isPending()) {
@@ -194,7 +194,7 @@ class WalletTransactionController extends Controller
         $walletTransaction->refresh();
 
         if ($walletTransaction->status === 'expired' || $walletTransaction->isExpired()) {
-            return back()->with('error', 'Yêu cầu nạp trực tiếp này đã hết hạn và không cần đánh dấu thất bại thêm nữa.');
+            return back()->with('error', 'Yêu cầu nạp tiền thủ công này đã hết hạn và không cần đánh dấu thất bại thêm nữa.');
         }
 
         if (! $walletTransaction->isPending()) {
