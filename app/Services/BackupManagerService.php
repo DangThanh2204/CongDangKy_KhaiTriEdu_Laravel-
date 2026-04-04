@@ -36,6 +36,7 @@ class BackupManagerService
             'app_name' => config('app.name', 'Khai Tri Edu'),
             'environment' => config('app.env'),
             'database' => $this->databaseName(),
+            'driver' => $this->driver(),
             'tables_count' => count($tables),
             'public_files_count' => count($publicFiles),
             'generated_by' => $actor,
@@ -135,15 +136,15 @@ class BackupManagerService
         DB::connection()->getPdo();
 
         try {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            $this->disableForeignKeys();
             foreach ($this->fetchTables() as $table) {
-                DB::statement('DROP TABLE IF EXISTS `' . str_replace('`', '``', $table) . '`');
+                DB::statement('DROP TABLE IF EXISTS ' . $this->quoteIdentifier($table));
             }
             DB::unprepared($sql);
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+            $this->enableForeignKeys();
         } catch (\Throwable $exception) {
             try {
-                DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                $this->enableForeignKeys();
             } catch (\Throwable $innerException) {
             }
 
@@ -173,28 +174,34 @@ class BackupManagerService
 
     private function buildDatabaseDump(array $tables): string
     {
-        $dump = [
-            '-- Khai Tri Edu backup',
-            '-- Generated at: ' . now()->toDateTimeString(),
-            'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";',
-            'SET time_zone = "+00:00";',
-            'SET FOREIGN_KEY_CHECKS=0;',
-            '',
-        ];
+        $dump = $this->driver() === 'sqlite'
+            ? [
+                '-- Khai Tri Edu backup',
+                '-- Generated at: ' . now()->toDateTimeString(),
+                'PRAGMA foreign_keys=OFF;',
+                'BEGIN TRANSACTION;',
+                '',
+            ]
+            : [
+                '-- Khai Tri Edu backup',
+                '-- Generated at: ' . now()->toDateTimeString(),
+                'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";',
+                'SET time_zone = "+00:00";',
+                'SET FOREIGN_KEY_CHECKS=0;',
+                '',
+            ];
 
         foreach ($tables as $table) {
-            $escapedTable = str_replace('`', '``', $table);
-            $createTableRow = (array) (DB::select('SHOW CREATE TABLE `' . $escapedTable . '`')[0] ?? []);
-            $createTableSql = array_values($createTableRow)[1] ?? null;
+            $createTableSql = $this->fetchCreateTableSql($table);
 
             if (! $createTableSql) {
                 continue;
             }
 
             $dump[] = '-- --------------------------------------------------------';
-            $dump[] = '-- Table structure for `' . $table . '`';
-            $dump[] = 'DROP TABLE IF EXISTS `' . $escapedTable . '`;';
-            $dump[] = $createTableSql . ';';
+            $dump[] = '-- Table structure for ' . $this->quoteIdentifier($table);
+            $dump[] = 'DROP TABLE IF EXISTS ' . $this->quoteIdentifier($table) . ';';
+            $dump[] = rtrim($createTableSql, ';') . ';';
             $dump[] = '';
 
             $rows = collect(DB::table($table)->get())->map(fn ($row) => (array) $row);
@@ -204,7 +211,7 @@ class BackupManagerService
 
             $columns = array_keys($rows->first());
             $columnSql = collect($columns)
-                ->map(fn ($column) => '`' . str_replace('`', '``', $column) . '`')
+                ->map(fn ($column) => $this->quoteIdentifier($column))
                 ->implode(', ');
 
             foreach ($rows->chunk(200) as $chunk) {
@@ -216,19 +223,32 @@ class BackupManagerService
                     return '(' . $values . ')';
                 })->implode(",\n");
 
-                $dump[] = 'INSERT INTO `' . $escapedTable . '` (' . $columnSql . ') VALUES';
+                $dump[] = 'INSERT INTO ' . $this->quoteIdentifier($table) . ' (' . $columnSql . ') VALUES';
                 $dump[] = $valueSql . ';';
                 $dump[] = '';
             }
         }
 
-        $dump[] = 'SET FOREIGN_KEY_CHECKS=1;';
+        if ($this->driver() === 'sqlite') {
+            $dump[] = 'COMMIT;';
+            $dump[] = 'PRAGMA foreign_keys=ON;';
+        } else {
+            $dump[] = 'SET FOREIGN_KEY_CHECKS=1;';
+        }
 
         return implode("\n", $dump);
     }
 
     private function fetchTables(): array
     {
+        if ($this->driver() === 'sqlite') {
+            return collect(DB::select("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"))
+                ->map(fn ($row) => data_get((array) $row, 'name'))
+                ->filter()
+                ->values()
+                ->all();
+        }
+
         $rows = DB::select('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"');
 
         return collect($rows)
@@ -236,6 +256,49 @@ class BackupManagerService
             ->filter()
             ->values()
             ->all();
+    }
+
+    private function fetchCreateTableSql(string $table): ?string
+    {
+        if ($this->driver() === 'sqlite') {
+            $row = DB::selectOne('SELECT sql FROM sqlite_master WHERE type = ? AND name = ?', ['table', $table]);
+
+            return $row?->sql ?: null;
+        }
+
+        $escapedTable = str_replace('`', '``', $table);
+        $createTableRow = (array) (DB::select('SHOW CREATE TABLE `' . $escapedTable . '`')[0] ?? []);
+
+        return array_values($createTableRow)[1] ?? null;
+    }
+
+    private function disableForeignKeys(): void
+    {
+        if ($this->driver() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF');
+            return;
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+    }
+
+    private function enableForeignKeys(): void
+    {
+        if ($this->driver() === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON');
+            return;
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+    }
+
+    private function quoteIdentifier(string $identifier): string
+    {
+        if ($this->driver() === 'sqlite') {
+            return '"' . str_replace('"', '""', $identifier) . '"';
+        }
+
+        return '`' . str_replace('`', '``', $identifier) . '`';
     }
 
     private function publicFiles(): array
@@ -342,6 +405,11 @@ class BackupManagerService
     private function databaseName(): ?string
     {
         return DB::connection()->getDatabaseName();
+    }
+
+    private function driver(): string
+    {
+        return DB::connection()->getDriverName();
     }
 
     private function formatBytes(int $bytes): string

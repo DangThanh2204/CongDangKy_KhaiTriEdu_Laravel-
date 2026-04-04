@@ -37,9 +37,6 @@
 
                     <form action="{{ route('admin.backups.store') }}" method="POST" class="d-flex flex-wrap gap-2">
                         @csrf
-                        <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Quay lại dashboard
-                        </a>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-database me-2"></i>Tạo bản sao lưu mới
                         </button>
