@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Bảng điều khiển học viên')
 @section('page-class', 'page-student-dashboard')
@@ -18,9 +18,14 @@
         <div class="card shadow-sm border-0">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h4 class="card-title mb-0">Hành trình học tập của bạn</h4>
-                <a href="{{ route('courses.index') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i>Đăng ký khóa học mới
-                </a>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ route('student.application-status') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-waveform me-1"></i>Tra cứu hồ sơ
+                    </a>
+                    <a href="{{ route('courses.index') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Đăng ký khóa học mới
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row mb-4 g-3 align-items-stretch">

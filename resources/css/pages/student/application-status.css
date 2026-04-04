@@ -1,0 +1,352 @@
+.student-application-page {
+    padding-top: 6rem;
+    padding-bottom: 5rem;
+}
+
+.application-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+    align-items: end;
+    padding: 2rem 2.25rem;
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.16), transparent 34%),
+        linear-gradient(145deg, #f8fbff 0%, #ffffff 46%, #eef4ff 100%);
+    border: 1px solid rgba(37, 99, 235, 0.12);
+    box-shadow: 0 26px 60px rgba(15, 23, 42, 0.08);
+}
+
+.application-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.1);
+    color: #2563eb;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.application-hero h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.application-hero p {
+    max-width: 720px;
+    margin: 1rem 0 0;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #475569;
+}
+
+.application-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+}
+
+.application-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.application-summary-card {
+    padding: 1.35rem 1.4rem;
+    border-radius: 24px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
+}
+
+.application-summary-card span {
+    display: block;
+    color: #64748b;
+    font-size: 0.92rem;
+    margin-bottom: 0.5rem;
+}
+
+.application-summary-card strong {
+    display: block;
+    font-size: 2rem;
+    line-height: 1;
+    color: #0f172a;
+    margin-bottom: 0.45rem;
+}
+
+.application-summary-card small {
+    color: #475569;
+    line-height: 1.6;
+}
+
+.application-summary-card.tone-primary {
+    border-color: rgba(37, 99, 235, 0.18);
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.06), #fff);
+}
+
+.application-summary-card.tone-success {
+    border-color: rgba(22, 163, 74, 0.18);
+    background: linear-gradient(180deg, rgba(22, 163, 74, 0.06), #fff);
+}
+
+.application-summary-card.tone-warning {
+    border-color: rgba(217, 119, 6, 0.18);
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.08), #fff);
+}
+
+.application-summary-card.tone-info {
+    border-color: rgba(14, 116, 144, 0.18);
+    background: linear-gradient(180deg, rgba(6, 182, 212, 0.08), #fff);
+}
+
+.application-list {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.application-card {
+    padding: 1.6rem;
+    border-radius: 28px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 24px 54px rgba(15, 23, 42, 0.06);
+}
+
+.application-card.needs-attention {
+    border-color: rgba(245, 158, 11, 0.2);
+    box-shadow: 0 24px 54px rgba(245, 158, 11, 0.08);
+}
+
+.application-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 1.4rem;
+}
+
+.application-card-kicker {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 0.83rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.application-card-header h2 {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.application-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem 1.1rem;
+    margin-top: 0.85rem;
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+.application-card-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: end;
+}
+
+.application-step-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.application-step-card {
+    display: flex;
+    gap: 0.9rem;
+    padding: 1rem;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.application-step-icon {
+    width: 2.8rem;
+    height: 2.8rem;
+    flex: 0 0 2.8rem;
+    display: grid;
+    place-items: center;
+    border-radius: 16px;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.tone-success .application-step-icon { background: linear-gradient(135deg, #16a34a, #15803d); }
+.tone-warning .application-step-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.tone-danger .application-step-icon { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.tone-primary .application-step-icon { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.tone-info .application-step-icon { background: linear-gradient(135deg, #0891b2, #0e7490); }
+.tone-secondary .application-step-icon,
+.tone-dark .application-step-icon { background: linear-gradient(135deg, #475569, #334155); }
+
+.application-step-title {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+}
+
+.application-step-label {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.35rem;
+}
+
+.application-step-card p {
+    margin: 0;
+    color: #475569;
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.application-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.application-detail-card {
+    padding: 1rem 1.05rem;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+}
+
+.application-detail-card span {
+    display: block;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.45rem;
+}
+
+.application-detail-card strong {
+    display: block;
+    color: #0f172a;
+    font-size: 1.08rem;
+    margin-bottom: 0.4rem;
+}
+
+.application-detail-card small {
+    color: #475569;
+    line-height: 1.6;
+}
+
+.application-note-box {
+    margin-bottom: 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: 18px;
+    background: #fff7ed;
+    border: 1px solid rgba(249, 115, 22, 0.18);
+    color: #7c2d12;
+}
+
+.application-note-box strong {
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+.application-card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.application-empty-state {
+    padding: 3.5rem 2rem;
+    border-radius: 30px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid #dbeafe;
+    box-shadow: 0 24px 54px rgba(15, 23, 42, 0.06);
+    text-align: center;
+}
+
+.application-empty-icon {
+    width: 5rem;
+    height: 5rem;
+    margin: 0 auto 1.5rem;
+    border-radius: 24px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    font-size: 2rem;
+}
+
+.application-empty-state h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.75rem;
+}
+
+.application-empty-state p {
+    max-width: 680px;
+    margin: 0 auto 1.6rem;
+    color: #475569;
+    line-height: 1.8;
+}
+
+@media (max-width: 1199.98px) {
+    .application-summary-grid,
+    .application-step-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .application-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .student-application-page {
+        padding-top: 5rem;
+    }
+
+    .application-hero,
+    .application-card-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .application-summary-grid,
+    .application-step-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .application-card {
+        padding: 1.2rem;
+    }
+
+    .application-card-badges {
+        justify-content: start;
+    }
+}

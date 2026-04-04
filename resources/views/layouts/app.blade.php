@@ -188,6 +188,7 @@
                                             @endif
                                         </a>
                                     </li>
+                                    <li><a class="dropdown-item" href="{{ route('student.application-status') }}"><i class="fas fa-file-waveform me-2"></i>Tra cứu hồ sơ</a></li>
                                     <li><a class="dropdown-item" href="{{ route('wallet.index') }}"><i class="fas fa-wallet me-2"></i>Ví của tôi</a></li>
                                 @endif
                                 <li><hr class="dropdown-divider"></li>
