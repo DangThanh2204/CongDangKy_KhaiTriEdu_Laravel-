@@ -213,7 +213,9 @@ html.dark, [data-bs-theme="dark"] {
   align-items: center;
   position: sticky;
   top: 0;
-  z-index: 999;
+  z-index: 1300;
+  overflow: visible;
+  isolation: isolate;
   height: 80px;
   border-bottom: 1px solid var(--border-color, #e9ecef);
 }
@@ -825,6 +827,8 @@ body.dark .admin-content::-webkit-scrollbar-thumb { background: rgba(100,100,100
 
 .topbar-right {
   gap: 0.75rem;
+  position: relative;
+  z-index: 1301;
 }
 
 .sidebar-group-title,
@@ -846,6 +850,7 @@ body.dark .admin-content::-webkit-scrollbar-thumb { background: rgba(100,100,100
 
 .admin-alert-dropdown {
   position: relative;
+  z-index: 1302;
 }
 
 .admin-alert-bell {
@@ -893,7 +898,8 @@ body.dark .admin-content::-webkit-scrollbar-thumb { background: rgba(100,100,100
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
-  background: var(--card-bg, #ffffff);
+    background: var(--card-bg, #ffffff);
+  z-index: 1305 !important;
 }
 
 .admin-alert-menu-header {
