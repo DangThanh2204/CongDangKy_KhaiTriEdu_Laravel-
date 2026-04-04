@@ -165,8 +165,24 @@ if [ "$DB_DRIVER" = "mysql" ] || [ "$DB_DRIVER" = "mariadb" ]; then
     php artisan db:seed --class=Database\\Seeders\\RenderDemoSeeder --force
   fi
 else
+  if [ "${RENDER_RESET_DATABASE:-false}" = "true" ]; then
+    echo "Resetting SQLite database before bootstrap..."
+    rm -f "$DB_DATABASE"
+    mkdir -p "$(dirname "$DB_DATABASE")"
+    touch "$DB_DATABASE"
+    chmod 666 "$DB_DATABASE" || true
+  fi
+
+  echo "Bootstrapping SQLite database from archived baseline migrations..."
   php artisan migrate --path=database/migrations_archive/2026-03-28_mysql_baseline --realpath --force
-  php artisan db:seed --class=Database\\Seeders\\RenderDemoSeeder --force
+
+  echo "Running active Laravel migrations on SQLite..."
+  php artisan migrate --force
+
+  if [ "${RENDER_SEED_DEMO:-false}" = "true" ]; then
+    echo "Seeding/updating Render demo data..."
+    php artisan db:seed --class=Database\\Seeders\\RenderDemoSeeder --force
+  fi
 fi
 
 php artisan storage:link || true
