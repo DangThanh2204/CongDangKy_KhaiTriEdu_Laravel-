@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\CourseClass;
 use App\Models\CourseEnrollment;
+use App\Models\Payment;
 use App\Models\Post;
 use App\Models\PostCategory;
 use App\Models\SystemLog;
 use App\Models\User;
+use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -18,7 +21,7 @@ use Illuminate\Support\Facades\Storage;
 class AdminController extends Controller
 {
     /**
-     * Hiển thị dashboard admin.
+     * HiÃ¡Â»Æ’n thÃ¡Â»â€¹ dashboard admin.
      */
     public function dashboard()
     {
@@ -46,6 +49,17 @@ class AdminController extends Controller
             'pending_enrollments' => 0,
             'approved_enrollments' => 0,
             'completed_enrollments' => 0,
+            'full_classes' => 0,
+            'upcoming_classes' => 0,
+            'online_classes' => 0,
+            'offline_classes' => 0,
+            'online_ratio' => 0,
+            'offline_ratio' => 0,
+            'pending_ratio' => 0,
+            'approved_ratio' => 0,
+            'wallet_revenue' => 0,
+            'vnpay_revenue' => 0,
+            'total_revenue' => 0,
         ];
 
         $usersByRole = collect();
@@ -62,7 +76,10 @@ class AdminController extends Controller
         try {
             $userTable = (new User())->getTable();
             $courseTable = (new Course())->getTable();
+            $classTable = (new CourseClass())->getTable();
             $enrollmentTable = (new CourseEnrollment())->getTable();
+            $paymentTable = (new Payment())->getTable();
+            $walletTransactionTable = (new WalletTransaction())->getTable();
             $hasVerifiedColumn = Schema::hasTable($userTable) && Schema::hasColumn($userTable, 'is_verified');
 
             if (Schema::hasTable($userTable)) {
@@ -120,9 +137,106 @@ class AdminController extends Controller
                 $stats['approved_enrollments'] = CourseEnrollment::approved()->count();
                 $stats['completed_enrollments'] = CourseEnrollment::completed()->count();
             }
+
+            if (Schema::hasTable($classTable)) {
+                $hasClassStatusColumn = Schema::hasColumn($classTable, 'status');
+                $hasClassStartDateColumn = Schema::hasColumn($classTable, 'start_date');
+                $hasWaitlistColumns = Schema::hasTable($enrollmentTable)
+                    && Schema::hasColumn($enrollmentTable, 'waitlist_promoted_at')
+                    && Schema::hasColumn($enrollmentTable, 'seat_hold_expires_at');
+
+                $classes = CourseClass::query()
+                    ->with('course:id,delivery_mode')
+                    ->get();
+
+                $approvedCounts = collect();
+                $heldSeatCounts = collect();
+
+                if (Schema::hasTable($enrollmentTable)) {
+                    $approvedCounts = CourseEnrollment::query()
+                        ->selectRaw('class_id, COUNT(*) as aggregate_count')
+                        ->whereIn('status', ['approved', 'completed'])
+                        ->groupBy('class_id')
+                        ->pluck('aggregate_count', 'class_id');
+
+                    if ($hasWaitlistColumns) {
+                        $heldSeatCounts = CourseEnrollment::query()
+                            ->selectRaw('class_id, COUNT(*) as aggregate_count')
+                            ->where('status', 'pending')
+                            ->whereNotNull('waitlist_promoted_at')
+                            ->whereNotNull('seat_hold_expires_at')
+                            ->where('seat_hold_expires_at', '>', now())
+                            ->groupBy('class_id')
+                            ->pluck('aggregate_count', 'class_id');
+                    }
+                }
+
+                $activeClasses = $hasClassStatusColumn
+                    ? $classes->where('status', 'active')->values()
+                    : $classes->values();
+                $classPool = $activeClasses->isNotEmpty() ? $activeClasses : $classes;
+
+                $stats['full_classes'] = $classPool->filter(function (CourseClass $class) use ($approvedCounts, $heldSeatCounts) {
+                    $maxStudents = (int) ($class->max_students ?? 0);
+
+                    if ($maxStudents <= 0) {
+                        return false;
+                    }
+
+                    $approved = (int) ($approvedCounts[$class->id] ?? 0);
+                    $held = (int) ($heldSeatCounts[$class->id] ?? 0);
+
+                    return ($approved + $held) >= $maxStudents;
+                })->count();
+
+                $stats['upcoming_classes'] = $hasClassStartDateColumn
+                    ? $classPool->filter(function (CourseClass $class) use ($today) {
+                        return $class->start_date
+                            && $class->start_date->between($today->copy()->startOfDay(), $today->copy()->addDays(30)->endOfDay());
+                    })->count()
+                    : 0;
+
+                $stats['online_classes'] = $classPool->filter(function (CourseClass $class) {
+                    return ($class->course?->delivery_mode ?? 'offline') === 'online';
+                })->count();
+                $stats['offline_classes'] = max($classPool->count() - $stats['online_classes'], 0);
+            }
+
+            if (Schema::hasTable($paymentTable)
+                && Schema::hasColumn($paymentTable, 'status')
+                && Schema::hasColumn($paymentTable, 'method')
+                && Schema::hasColumn($paymentTable, 'amount')) {
+                $completedPayments = Payment::query()->where('status', 'completed');
+                $stats['wallet_revenue'] = (float) (clone $completedPayments)->where('method', 'wallet')->sum('amount');
+                $stats['vnpay_revenue'] = (float) (clone $completedPayments)->where('method', 'vnpay')->sum('amount');
+            }
+
+            if (Schema::hasTable($walletTransactionTable)
+                && Schema::hasColumn($walletTransactionTable, 'type')
+                && Schema::hasColumn($walletTransactionTable, 'status')
+                && Schema::hasColumn($walletTransactionTable, 'amount')) {
+                $stats['vnpay_revenue'] += (float) WalletTransaction::query()
+                    ->where('type', 'deposit')
+                    ->where('status', 'completed')
+                    ->get()
+                    ->filter(function (WalletTransaction $transaction) {
+                        return $transaction->paymentMethod() === WalletTransaction::VNPAY_METHOD;
+                    })
+                    ->sum(function (WalletTransaction $transaction) {
+                        return (float) $transaction->amount;
+                    });
+            }
         } catch (\Throwable $exception) {
             report($exception);
         }
+
+        $classModeTotal = max($stats['online_classes'] + $stats['offline_classes'], 1);
+        $decisionTotal = max($stats['pending_enrollments'] + $stats['approved_enrollments'], 1);
+        $stats['online_ratio'] = round(($stats['online_classes'] / $classModeTotal) * 100, 1);
+        $stats['offline_ratio'] = round(($stats['offline_classes'] / $classModeTotal) * 100, 1);
+        $stats['pending_ratio'] = round(($stats['pending_enrollments'] / $decisionTotal) * 100, 1);
+        $stats['approved_ratio'] = round(($stats['approved_enrollments'] / $decisionTotal) * 100, 1);
+        $stats['total_revenue'] = $stats['wallet_revenue'] + $stats['vnpay_revenue'];
 
         $securityAlertsCount = $securitySnapshot['count'];
         $latestSecurityAlert = $securitySnapshot['latest'];
@@ -162,9 +276,8 @@ class AdminController extends Controller
         ));
     }
 
-
     /**
-     * Lấy dữ liệu cho biểu đồ (API).
+     * LÃ¡ÂºÂ¥y dÃ¡Â»Â¯ liÃ¡Â»â€¡u cho biÃ¡Â»Æ’u Ã„â€˜Ã¡Â»â€œ (API).
      */
     public function getChartData(Request $request)
     {
@@ -221,7 +334,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Hiển thị profile admin.
+     * HiÃ¡Â»Æ’n thÃ¡Â»â€¹ profile admin.
      */
     public function profile()
     {
@@ -231,7 +344,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Cập nhật profile admin.
+     * CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t profile admin.
      */
     public function updateProfile(Request $request)
     {
@@ -252,7 +365,7 @@ class AdminController extends Controller
 
         if ($request->filled('current_password')) {
             if (! Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'Mật khẩu hiện tại không đúng']);
+                return back()->withErrors(['current_password' => 'MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i khÃƒÂ´ng Ã„â€˜ÃƒÂºng']);
             }
 
             $data['password'] = Hash::make($request->new_password);
@@ -270,11 +383,11 @@ class AdminController extends Controller
 
         return redirect()
             ->route('admin.profile')
-            ->with('success', 'Cập nhật thông tin thành công!');
+            ->with('success', 'CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t thÃƒÂ´ng tin thÃƒÂ nh cÃƒÂ´ng!');
     }
 
     /**
-     * Hiển thị hệ thống logs đơn giản.
+     * HiÃ¡Â»Æ’n thÃ¡Â»â€¹ hÃ¡Â»â€¡ thÃ¡Â»â€˜ng logs Ã„â€˜Ã†Â¡n giÃ¡ÂºÂ£n.
      */
     public function systemLogs()
     {
@@ -403,7 +516,7 @@ class AdminController extends Controller
 
 
     /**
-     * Đọc file log.
+     * Ã„ÂÃ¡Â»Âc file log.
      */
     private function readLogFile($filePath, $lines = 100)
     {
@@ -453,7 +566,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Xóa hệ thống logs.
+     * XÃƒÂ³a hÃ¡Â»â€¡ thÃ¡Â»â€˜ng logs.
      */
     public function clearLogs()
     {
@@ -465,7 +578,7 @@ class AdminController extends Controller
 
         return redirect()
             ->route('admin.system.logs')
-            ->with('success', 'Đã xóa tất cả logs!');
+            ->with('success', 'Ã„ÂÃƒÂ£ xÃƒÂ³a tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ logs!');
     }
 
     /**
@@ -478,7 +591,7 @@ class AdminController extends Controller
         if (! file_exists($logFile)) {
             return redirect()
                 ->route('admin.system.logs')
-                ->with('error', 'Log file không tồn tại!');
+                ->with('error', 'Log file khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i!');
         }
 
         return response()->download($logFile, 'laravel-log-' . date('Y-m-d') . '.log');
@@ -496,7 +609,7 @@ class AdminController extends Controller
             'database_driver' => config('database.default'),
             'timezone' => config('app.timezone'),
             'environment' => app()->environment(),
-            'debug_mode' => config('app.debug') ? 'Bật' : 'Tắt',
+            'debug_mode' => config('app.debug') ? 'BÃ¡ÂºÂ­t' : 'TÃ¡ÂºÂ¯t',
             'storage_free' => $this->formatBytes(disk_free_space(storage_path())),
             'storage_total' => $this->formatBytes(disk_total_space(storage_path())),
             'memory_usage' => $this->formatBytes(memory_get_usage(true)),
@@ -523,7 +636,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Quick actions - xử lý các hành động nhanh.
+     * Quick actions - xÃ¡Â»Â­ lÃƒÂ½ cÃƒÂ¡c hÃƒÂ nh Ã„â€˜Ã¡Â»â„¢ng nhanh.
      */
     public function quickAction(Request $request)
     {
@@ -532,28 +645,28 @@ class AdminController extends Controller
         switch ($action) {
             case 'clear_cache':
                 \Artisan::call('cache:clear');
-                $message = 'Đã xóa cache hệ thống!';
+                $message = 'Ã„ÂÃƒÂ£ xÃƒÂ³a cache hÃ¡Â»â€¡ thÃ¡Â»â€˜ng!';
                 break;
 
             case 'clear_view':
                 \Artisan::call('view:clear');
-                $message = 'Đã xóa cached views!';
+                $message = 'Ã„ÂÃƒÂ£ xÃƒÂ³a cached views!';
                 break;
 
             case 'migrate':
                 \Artisan::call('migrate', ['--force' => true]);
-                $message = 'Đã chạy migrations!';
+                $message = 'Ã„ÂÃƒÂ£ chÃ¡ÂºÂ¡y migrations!';
                 break;
 
             default:
-                return back()->with('error', 'Hành động không hợp lệ!');
+                return back()->with('error', 'HÃƒÂ nh Ã„â€˜Ã¡Â»â„¢ng khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡!');
         }
 
         return back()->with('success', $message);
     }
 
     /**
-     * Quản lý tin tức.
+     * QuÃ¡ÂºÂ£n lÃƒÂ½ tin tÃ¡Â»Â©c.
      */
     public function newsIndex(Request $request)
     {

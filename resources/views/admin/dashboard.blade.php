@@ -1,4 +1,4 @@
-﻿@extends('layouts.admin')
+@extends('layouts.admin')
 
 @section('title', 'Tổng quan admin')
 @section('page-title', 'Tổng quan hệ thống')
@@ -17,6 +17,7 @@
             'student' => 'Học viên',
         ];
         $totalRoleUsers = max((int) $usersByRole->sum(), 1);
+        $currency = static fn ($value) => number_format((float) $value, 0, ',', '.') . 'đ';
     @endphp
 
     <div class="dashboard-shell">
@@ -90,6 +91,99 @@
                 </div>
             </article>
         </div>
+
+        <section class="chart-card dashboard-admissions-card mb-4">
+            <div class="dashboard-card-header">
+                <div>
+                    <h5 class="chart-title">Dashboard tuyển sinh</h5>
+                    <p class="dashboard-card-copy mb-0">Tổng hợp nhanh lớp đầy, lịch khai giảng, trạng thái duyệt hồ sơ và doanh thu tuyển sinh theo đúng luồng đăng ký hiện tại.</p>
+                </div>
+                <span class="dashboard-chip">Cập nhật theo dữ liệu đang có trên hệ thống</span>
+            </div>
+
+            <div class="dashboard-admissions-grid">
+                <article class="dashboard-kpi-card is-blue">
+                    <span class="dashboard-kpi-eyebrow">Đăng ký trong tháng</span>
+                    <strong class="dashboard-kpi-value">{{ number_format($stats['monthly_enrollments']) }}</strong>
+                    <small class="dashboard-kpi-note">{{ number_format($stats['today_enrollments']) }} hồ sơ mới trong hôm nay</small>
+                </article>
+                <article class="dashboard-kpi-card is-orange">
+                    <span class="dashboard-kpi-eyebrow">Lớp đã kín chỗ</span>
+                    <strong class="dashboard-kpi-value">{{ number_format($stats['full_classes']) }}</strong>
+                    <small class="dashboard-kpi-note">Tính cả ghế đang giữ chỗ ở lớp đang mở</small>
+                </article>
+                <article class="dashboard-kpi-card is-slate">
+                    <span class="dashboard-kpi-eyebrow">Sắp khai giảng</span>
+                    <strong class="dashboard-kpi-value">{{ number_format($stats['upcoming_classes']) }}</strong>
+                    <small class="dashboard-kpi-note">Các lớp dự kiến mở trong 30 ngày tới</small>
+                </article>
+                <article class="dashboard-kpi-card is-green">
+                    <span class="dashboard-kpi-eyebrow">Doanh thu tuyển sinh</span>
+                    <strong class="dashboard-kpi-value">{{ $currency($stats['total_revenue']) }}</strong>
+                    <small class="dashboard-kpi-note">Tổng ghi nhận từ thanh toán ví nội bộ và VNPay</small>
+                </article>
+            </div>
+
+            <div class="dashboard-ratio-grid">
+                <article class="dashboard-ratio-card">
+                    <div class="dashboard-ratio-head">
+                        <div>
+                            <span class="dashboard-ratio-label">Tỷ lệ lớp online / offline</span>
+                            <strong>{{ number_format($stats['online_classes']) }} online · {{ number_format($stats['offline_classes']) }} offline</strong>
+                        </div>
+                        <span class="dashboard-ratio-percent">{{ number_format($stats['online_ratio'], 1, ',', '.') }}%</span>
+                    </div>
+                    <div class="dashboard-ratio-track">
+                        <span class="dashboard-ratio-fill is-online" style="width: {{ max($stats['online_ratio'], $stats['online_classes'] > 0 ? 8 : 0) }}%"></span>
+                    </div>
+                    <div class="dashboard-ratio-meta">
+                        <span>Online {{ number_format($stats['online_ratio'], 1, ',', '.') }}%</span>
+                        <span>Offline {{ number_format($stats['offline_ratio'], 1, ',', '.') }}%</span>
+                    </div>
+                </article>
+
+                <article class="dashboard-ratio-card">
+                    <div class="dashboard-ratio-head">
+                        <div>
+                            <span class="dashboard-ratio-label">Tỷ lệ pending / approved</span>
+                            <strong>{{ number_format($stats['approved_enrollments']) }} đã duyệt · {{ number_format($stats['pending_enrollments']) }} chờ duyệt</strong>
+                        </div>
+                        <span class="dashboard-ratio-percent">{{ number_format($stats['approved_ratio'], 1, ',', '.') }}%</span>
+                    </div>
+                    <div class="dashboard-ratio-track">
+                        <span class="dashboard-ratio-fill is-approved" style="width: {{ max($stats['approved_ratio'], $stats['approved_enrollments'] > 0 ? 8 : 0) }}%"></span>
+                    </div>
+                    <div class="dashboard-ratio-meta">
+                        <span>Đã duyệt {{ number_format($stats['approved_ratio'], 1, ',', '.') }}%</span>
+                        <span>Chờ duyệt {{ number_format($stats['pending_ratio'], 1, ',', '.') }}%</span>
+                    </div>
+                </article>
+
+                <article class="dashboard-ratio-card dashboard-revenue-card">
+                    <div class="dashboard-ratio-head">
+                        <div>
+                            <span class="dashboard-ratio-label">Doanh thu theo nguồn thu</span>
+                            <strong>{{ $currency($stats['total_revenue']) }} tổng ghi nhận</strong>
+                        </div>
+                        <span class="dashboard-ratio-percent">{{ number_format($stats['monthly_enrollments']) }}</span>
+                    </div>
+                    <div class="dashboard-revenue-list">
+                        <div class="dashboard-revenue-item">
+                            <span>Thanh toán bằng ví</span>
+                            <strong>{{ $currency($stats['wallet_revenue']) }}</strong>
+                        </div>
+                        <div class="dashboard-revenue-item">
+                            <span>VNPay</span>
+                            <strong>{{ $currency($stats['vnpay_revenue']) }}</strong>
+                        </div>
+                        <div class="dashboard-revenue-item is-total">
+                            <span>Tổng cộng</span>
+                            <strong>{{ $currency($stats['total_revenue']) }}</strong>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
 
         <div class="charts-section dashboard-main-grid mb-4">
             <section class="chart-card dashboard-trend-card" data-admin-trend-root>
