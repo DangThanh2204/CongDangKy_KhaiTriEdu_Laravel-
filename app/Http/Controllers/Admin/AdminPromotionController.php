@@ -9,6 +9,7 @@ use App\Models\DiscountCode;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class AdminPromotionController extends Controller
@@ -26,10 +27,14 @@ class AdminPromotionController extends Controller
             'promotion_combo_discount_value' => Setting::get('promotion_combo_discount_value', '8'),
         ];
 
-        $discountCodes = DiscountCode::query()
-            ->with(['course:id,title', 'category:id,name'])
-            ->orderByDesc('id')
-            ->get();
+        $discountSchemaReady = $this->hasDiscountSchema();
+
+        $discountCodes = $discountSchemaReady
+            ? DiscountCode::query()
+                ->with(['course:id,title', 'category:id,name'])
+                ->orderByDesc('id')
+                ->get()
+            : collect();
 
         $courses = Course::query()
             ->select('id', 'title', 'series_key')
@@ -41,7 +46,7 @@ class AdminPromotionController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.promotions.index', compact('settings', 'discountCodes', 'courses', 'categories'));
+        return view('admin.promotions.index', compact('settings', 'discountCodes', 'courses', 'categories', 'discountSchemaReady'));
     }
 
     public function updateSettings(Request $request): RedirectResponse
@@ -74,11 +79,15 @@ class AdminPromotionController extends Controller
 
         return redirect()
             ->route('admin.promotions.index')
-            ->with('success', 'ÄÃ£ cáº­p nháº­t cáº¥u hÃ¬nh Æ°u Ä‘Ã£i tá»± Ä‘á»™ng.');
+            ->with('success', 'Đã cập nhật cấu hình ưu đãi tự động.');
     }
 
     public function storeCode(Request $request): RedirectResponse
     {
+        if (! $this->hasDiscountSchema()) {
+            return $this->redirectVoucherSchemaUnavailable();
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:160',
             'code' => 'required|string|max:50|unique:discount_codes,code',
@@ -124,26 +133,49 @@ class AdminPromotionController extends Controller
 
         return redirect()
             ->route('admin.promotions.index')
-            ->with('success', 'ÄÃ£ táº¡o mÃ£ giáº£m giÃ¡ má»›i.');
+            ->with('success', 'Đã tạo mã giảm giá mới.');
     }
 
-    public function toggleCode(DiscountCode $discountCode): RedirectResponse
+    public function toggleCode(string $discountCode): RedirectResponse
     {
+        if (! $this->hasDiscountSchema()) {
+            return $this->redirectVoucherSchemaUnavailable();
+        }
+
+        $discountCode = DiscountCode::query()->findOrFail($discountCode);
+
         $discountCode->update([
             'is_active' => ! $discountCode->is_active,
         ]);
 
         return redirect()
             ->route('admin.promotions.index')
-            ->with('success', 'ÄÃ£ cáº­p nháº­t tráº¡ng thÃ¡i mÃ£ giáº£m giÃ¡.');
+            ->with('success', 'Đã cập nhật trạng thái mã giảm giá.');
     }
 
-    public function destroyCode(DiscountCode $discountCode): RedirectResponse
+    public function destroyCode(string $discountCode): RedirectResponse
     {
+        if (! $this->hasDiscountSchema()) {
+            return $this->redirectVoucherSchemaUnavailable();
+        }
+
+        $discountCode = DiscountCode::query()->findOrFail($discountCode);
         $discountCode->delete();
 
         return redirect()
             ->route('admin.promotions.index')
-            ->with('success', 'ÄÃ£ xÃ³a mÃ£ giáº£m giÃ¡.');
+            ->with('success', 'Đã xóa mã giảm giá.');
+    }
+
+    protected function hasDiscountSchema(): bool
+    {
+        return Schema::hasTable('discount_codes');
+    }
+
+    protected function redirectVoucherSchemaUnavailable(): RedirectResponse
+    {
+        return redirect()
+            ->route('admin.promotions.index')
+            ->with('error', 'Hệ thống voucher chưa sẵn sàng trên môi trường này. Vui lòng chạy cập nhật dữ liệu trước.');
     }
 }

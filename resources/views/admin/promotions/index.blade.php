@@ -32,6 +32,20 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
+    @if (session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+
+    @unless($discountSchemaReady)
+        <div class="alert alert-warning d-flex align-items-start gap-3 mb-4" role="alert">
+            <i class="fas fa-triangle-exclamation mt-1"></i>
+            <div>
+                <div class="fw-semibold mb-1">Bảng voucher chưa sẵn sàng trên môi trường này.</div>
+                <div class="mb-0">Bạn vẫn có thể cấu hình ưu đãi tự động bên dưới, nhưng cần chạy migrate bảng <code>discount_codes</code> để quản lý mã giảm giá.</div>
+            </div>
+        </div>
+    @endunless
+
     <div class="row g-4 align-items-start">
         <div class="col-xl-7">
             <div class="card shadow-sm border-0 mb-4">
@@ -136,76 +150,82 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse ($discountCodes as $discountCode)
+                                @if (! $discountSchemaReady)
                                     <tr>
-                                        <td>
-                                            <div class="fw-semibold">{{ $discountCode->code }}</div>
-                                            <div class="small text-muted">{{ $discountCode->value_label }}</div>
-                                        </td>
-                                        <td>
-                                            <div class="fw-semibold">{{ $discountCode->title }}</div>
-                                            <div class="small text-muted">{{ $discountCode->description ?: 'Không có mô tả thêm.' }}</div>
-                                            <div class="small text-muted mt-1">
-                                                {{ $discountCode->audience_label }}
-                                                @if($discountCode->is_public)
-                                                    <span class="badge text-bg-light border ms-1">Công khai</span>
-                                                @endif
-                                                @if($discountCode->can_stack_with_auto)
-                                                    <span class="badge text-bg-light border ms-1">Cho phép cộng với ưu đãi tự động</span>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div>{{ $discountCode->scope_label }}</div>
-                                            <div class="small text-muted">
-                                                @if($discountCode->course)
-                                                    {{ $discountCode->course->title }}
-                                                @elseif($discountCode->category)
-                                                    {{ $discountCode->category->name }}
-                                                @elseif($discountCode->series_key)
-                                                    {{ $discountCode->series_key }}
-                                                @else
-                                                    Áp dụng toàn hệ thống
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div>{{ $discountCode->usage_count }}{{ $discountCode->usage_limit ? ' / ' . $discountCode->usage_limit : '' }}</div>
-                                            <div class="small text-muted">Mỗi người: {{ $discountCode->per_user_limit ?: 'không giới hạn' }}</div>
-                                        </td>
-                                        <td>
-                                            <span class="badge {{ $discountCode->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $discountCode->status_label }}</span>
-                                            <div class="small text-muted mt-1">
-                                                @if($discountCode->starts_at)
-                                                    Từ {{ $discountCode->starts_at->format('d/m/Y H:i') }}
-                                                @endif
-                                                @if($discountCode->ends_at)
-                                                    <div>Đến {{ $discountCode->ends_at->format('d/m/Y H:i') }}</div>
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
-                                                <form action="{{ route('admin.promotions.codes.toggle', $discountCode) }}" method="POST">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <button type="submit" class="btn btn-sm btn-outline-primary">
-                                                        {{ $discountCode->is_active ? 'Tắt' : 'Bật' }}
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('admin.promotions.codes.destroy', $discountCode) }}" method="POST" onsubmit="return confirm('Xóa mã giảm giá này?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
-                                                </form>
-                                            </div>
-                                        </td>
+                                        <td colspan="6" class="text-center text-muted py-4">Môi trường này chưa có bảng voucher. Hãy chạy migrate rồi tải lại trang.</td>
                                     </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">Chưa có voucher nào được tạo.</td>
-                                    </tr>
-                                @endforelse
+                                @else
+                                    @forelse ($discountCodes as $discountCode)
+                                        <tr>
+                                            <td>
+                                                <div class="fw-semibold">{{ $discountCode->code }}</div>
+                                                <div class="small text-muted">{{ $discountCode->value_label }}</div>
+                                            </td>
+                                            <td>
+                                                <div class="fw-semibold">{{ $discountCode->title }}</div>
+                                                <div class="small text-muted">{{ $discountCode->description ?: 'Không có mô tả thêm.' }}</div>
+                                                <div class="small text-muted mt-1">
+                                                    {{ $discountCode->audience_label }}
+                                                    @if($discountCode->is_public)
+                                                        <span class="badge text-bg-light border ms-1">Công khai</span>
+                                                    @endif
+                                                    @if($discountCode->can_stack_with_auto)
+                                                        <span class="badge text-bg-light border ms-1">Cho phép cộng với ưu đãi tự động</span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>{{ $discountCode->scope_label }}</div>
+                                                <div class="small text-muted">
+                                                    @if($discountCode->course)
+                                                        {{ $discountCode->course->title }}
+                                                    @elseif($discountCode->category)
+                                                        {{ $discountCode->category->name }}
+                                                    @elseif($discountCode->series_key)
+                                                        {{ $discountCode->series_key }}
+                                                    @else
+                                                        Áp dụng toàn hệ thống
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div>{{ $discountCode->usage_count }}{{ $discountCode->usage_limit ? ' / ' . $discountCode->usage_limit : '' }}</div>
+                                                <div class="small text-muted">Mỗi người: {{ $discountCode->per_user_limit ?: 'không giới hạn' }}</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge {{ $discountCode->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $discountCode->status_label }}</span>
+                                                <div class="small text-muted mt-1">
+                                                    @if($discountCode->starts_at)
+                                                        Từ {{ $discountCode->starts_at->format('d/m/Y H:i') }}
+                                                    @endif
+                                                    @if($discountCode->ends_at)
+                                                        <div>Đến {{ $discountCode->ends_at->format('d/m/Y H:i') }}</div>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
+                                                    <form action="{{ route('admin.promotions.codes.toggle', $discountCode->id) }}" method="POST">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                            {{ $discountCode->is_active ? 'Tắt' : 'Bật' }}
+                                                        </button>
+                                                    </form>
+                                                    <form action="{{ route('admin.promotions.codes.destroy', $discountCode->id) }}" method="POST" onsubmit="return confirm('Xóa mã giảm giá này?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted py-4">Chưa có voucher nào được tạo.</td>
+                                        </tr>
+                                    @endforelse
+                                @endif
                             </tbody>
                         </table>
                     </div>
@@ -220,111 +240,117 @@
                     <p class="text-muted small mb-0">Dùng cho học viên mới, chiến dịch tuyển sinh hoặc mã công khai hiển thị trên trang khóa học.</p>
                 </div>
                 <div class="card-body p-4">
-                    <form action="{{ route('admin.promotions.codes.store') }}" method="POST" class="row g-3">
-                        @csrf
+                    @if (! $discountSchemaReady)
+                        <div class="alert alert-warning mb-0">
+                            Chức năng tạo voucher đang tạm khóa vì bảng <code>discount_codes</code> chưa được khởi tạo trên môi trường này.
+                        </div>
+                    @else
+                        <form action="{{ route('admin.promotions.codes.store') }}" method="POST" class="row g-3">
+                            @csrf
 
-                        <div class="col-md-7">
-                            <label class="form-label">Tên voucher</label>
-                            <input type="text" name="title" class="form-control" value="{{ old('title') }}" required>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label">Mã</label>
-                            <input type="text" name="code" class="form-control text-uppercase" value="{{ old('code') }}" placeholder="VD: NEW10" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Mô tả</label>
-                            <textarea name="description" class="form-control" rows="2" placeholder="Mô tả ngắn để admin và học viên hiểu mã này dùng trong trường hợp nào.">{{ old('description') }}</textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Đối tượng</label>
-                            <select name="audience" class="form-select">
-                                <option value="all" {{ old('audience') === 'all' ? 'selected' : '' }}>Tất cả học viên</option>
-                                <option value="new_student" {{ old('audience') === 'new_student' ? 'selected' : '' }}>Chỉ học viên mới</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Phạm vi áp dụng</label>
-                            <select name="scope_type" class="form-select" id="discountScopeType">
-                                <option value="all" {{ old('scope_type') === 'all' ? 'selected' : '' }}>Toàn hệ thống</option>
-                                <option value="course" {{ old('scope_type') === 'course' ? 'selected' : '' }}>Theo khóa học</option>
-                                <option value="category" {{ old('scope_type') === 'category' ? 'selected' : '' }}>Theo nhóm ngành</option>
-                                <option value="series" {{ old('scope_type') === 'series' ? 'selected' : '' }}>Theo lộ trình / series</option>
-                            </select>
-                        </div>
-                        <div class="col-12 d-none" data-scope-target="course">
-                            <label class="form-label">Khóa học áp dụng</label>
-                            <select name="course_id" class="form-select">
-                                <option value="">Chọn khóa học</option>
-                                @foreach($courses as $course)
-                                    <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>{{ $course->title }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12 d-none" data-scope-target="category">
-                            <label class="form-label">Nhóm ngành áp dụng</label>
-                            <select name="category_id" class="form-select">
-                                <option value="">Chọn nhóm ngành</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12 d-none" data-scope-target="series">
-                            <label class="form-label">Series / lộ trình</label>
-                            <input type="text" name="series_key" class="form-control" value="{{ old('series_key') }}" placeholder="Ví dụ: tin-hoc-van-phong">
-                            <div class="form-text">Nếu khóa học có cùng series_key thì voucher sẽ áp dụng được.</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Kiểu giảm</label>
-                            <select name="value_type" class="form-select">
-                                <option value="percent" {{ old('value_type') === 'percent' ? 'selected' : '' }}>Phần trăm</option>
-                                <option value="fixed" {{ old('value_type') === 'fixed' ? 'selected' : '' }}>Số tiền cố định</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Mức giảm</label>
-                            <input type="number" name="value" class="form-control" min="0.01" step="0.01" value="{{ old('value') }}" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Đơn tối thiểu</label>
-                            <input type="number" name="min_order_amount" class="form-control" min="0" step="0.01" value="{{ old('min_order_amount') }}" placeholder="Không bắt buộc">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Giới hạn tổng lượt dùng</label>
-                            <input type="number" name="usage_limit" class="form-control" min="1" value="{{ old('usage_limit') }}" placeholder="Không giới hạn">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Giới hạn mỗi học viên</label>
-                            <input type="number" name="per_user_limit" class="form-control" min="1" value="{{ old('per_user_limit', 1) }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Bắt đầu áp dụng</label>
-                            <input type="datetime-local" name="starts_at" class="form-control" value="{{ old('starts_at') }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Kết thúc áp dụng</label>
-                            <input type="datetime-local" name="ends_at" class="form-control" value="{{ old('ends_at') }}">
-                        </div>
-                        <div class="col-12 d-grid gap-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="1" id="can_stack_with_auto" name="can_stack_with_auto" {{ old('can_stack_with_auto') ? 'checked' : '' }}>
-                                <label class="form-check-label" for="can_stack_with_auto">Cho phép cộng thêm với ưu đãi tự động</label>
+                            <div class="col-md-7">
+                                <label class="form-label">Tên voucher</label>
+                                <input type="text" name="title" class="form-control" value="{{ old('title') }}" required>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="1" id="is_public" name="is_public" {{ old('is_public') ? 'checked' : '' }}>
-                                <label class="form-check-label" for="is_public">Hiển thị công khai để học viên nhìn thấy mã trên trang khóa học</label>
+                            <div class="col-md-5">
+                                <label class="form-label">Mã</label>
+                                <input type="text" name="code" class="form-control text-uppercase" value="{{ old('code') }}" placeholder="VD: NEW10" required>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="1" id="is_active" name="is_active" {{ old('is_active', '1') ? 'checked' : '' }}>
-                                <label class="form-check-label" for="is_active">Bật ngay sau khi tạo</label>
+                            <div class="col-12">
+                                <label class="form-label">Mô tả</label>
+                                <textarea name="description" class="form-control" rows="2" placeholder="Mô tả ngắn để admin và học viên hiểu mã này dùng trong trường hợp nào.">{{ old('description') }}</textarea>
                             </div>
-                        </div>
-                        <div class="col-12 d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-ticket me-2"></i>Tạo voucher
-                            </button>
-                        </div>
-                    </form>
+                            <div class="col-md-6">
+                                <label class="form-label">Đối tượng</label>
+                                <select name="audience" class="form-select">
+                                    <option value="all" {{ old('audience') === 'all' ? 'selected' : '' }}>Tất cả học viên</option>
+                                    <option value="new_student" {{ old('audience') === 'new_student' ? 'selected' : '' }}>Chỉ học viên mới</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phạm vi áp dụng</label>
+                                <select name="scope_type" class="form-select" id="discountScopeType">
+                                    <option value="all" {{ old('scope_type') === 'all' ? 'selected' : '' }}>Toàn hệ thống</option>
+                                    <option value="course" {{ old('scope_type') === 'course' ? 'selected' : '' }}>Theo khóa học</option>
+                                    <option value="category" {{ old('scope_type') === 'category' ? 'selected' : '' }}>Theo nhóm ngành</option>
+                                    <option value="series" {{ old('scope_type') === 'series' ? 'selected' : '' }}>Theo lộ trình / series</option>
+                                </select>
+                            </div>
+                            <div class="col-12 d-none" data-scope-target="course">
+                                <label class="form-label">Khóa học áp dụng</label>
+                                <select name="course_id" class="form-select">
+                                    <option value="">Chọn khóa học</option>
+                                    @foreach($courses as $course)
+                                        <option value="{{ $course->id }}" {{ old('course_id') == $course->id ? 'selected' : '' }}>{{ $course->title }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 d-none" data-scope-target="category">
+                                <label class="form-label">Nhóm ngành áp dụng</label>
+                                <select name="category_id" class="form-select">
+                                    <option value="">Chọn nhóm ngành</option>
+                                    @foreach($categories as $category)
+                                        <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12 d-none" data-scope-target="series">
+                                <label class="form-label">Series / lộ trình</label>
+                                <input type="text" name="series_key" class="form-control" value="{{ old('series_key') }}" placeholder="Ví dụ: tin-hoc-van-phong">
+                                <div class="form-text">Nếu khóa học có cùng series_key thì voucher sẽ áp dụng được.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Kiểu giảm</label>
+                                <select name="value_type" class="form-select">
+                                    <option value="percent" {{ old('value_type') === 'percent' ? 'selected' : '' }}>Phần trăm</option>
+                                    <option value="fixed" {{ old('value_type') === 'fixed' ? 'selected' : '' }}>Số tiền cố định</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Mức giảm</label>
+                                <input type="number" name="value" class="form-control" min="0.01" step="0.01" value="{{ old('value') }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Đơn tối thiểu</label>
+                                <input type="number" name="min_order_amount" class="form-control" min="0" step="0.01" value="{{ old('min_order_amount') }}" placeholder="Không bắt buộc">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Giới hạn tổng lượt dùng</label>
+                                <input type="number" name="usage_limit" class="form-control" min="1" value="{{ old('usage_limit') }}" placeholder="Không giới hạn">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Giới hạn mỗi học viên</label>
+                                <input type="number" name="per_user_limit" class="form-control" min="1" value="{{ old('per_user_limit', 1) }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Bắt đầu áp dụng</label>
+                                <input type="datetime-local" name="starts_at" class="form-control" value="{{ old('starts_at') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Kết thúc áp dụng</label>
+                                <input type="datetime-local" name="ends_at" class="form-control" value="{{ old('ends_at') }}">
+                            </div>
+                            <div class="col-12 d-grid gap-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="1" id="can_stack_with_auto" name="can_stack_with_auto" {{ old('can_stack_with_auto') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="can_stack_with_auto">Cho phép cộng thêm với ưu đãi tự động</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="1" id="is_public" name="is_public" {{ old('is_public') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_public">Hiển thị công khai để học viên nhìn thấy mã trên trang khóa học</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="1" id="is_active" name="is_active" {{ old('is_active', '1') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_active">Bật ngay sau khi tạo</label>
+                                </div>
+                            </div>
+                            <div class="col-12 d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-ticket me-2"></i>Tạo voucher
+                                </button>
+                            </div>
+                        </form>
+                    @endif
                 </div>
             </div>
         </div>
