@@ -66,11 +66,13 @@ class CertificateBlockchainService
     public function verificationSnapshot(CourseCertificate $certificate): array
     {
         $audit = data_get($certificate->meta, 'blockchain_audit', []);
+        $verificationUrl = data_get($certificate->meta, 'verification_url')
+            ?: route('certificates.verify', ['code' => $certificate->certificate_no]);
 
         return [
             'hash' => data_get($certificate->meta, 'verification_hash'),
-            'verification_url' => data_get($certificate->meta, 'verification_url')
-                ?: route('certificates.verify', ['code' => $certificate->certificate_no]),
+            'verification_url' => $verificationUrl,
+            'qr_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' . urlencode($verificationUrl),
             'is_blockchain_verified' => (bool) data_get($audit, 'success', false),
             'audit' => $audit,
             'firefly_message_id' => data_get($audit, 'message_id')

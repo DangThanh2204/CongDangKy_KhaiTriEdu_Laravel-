@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
+use App\Models\CourseCertificate;
 use App\Models\CourseClass;
 use App\Models\CourseEnrollment;
 use App\Models\Payment;
@@ -12,6 +13,7 @@ use App\Models\PostCategory;
 use App\Models\SystemLog;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Services\FireflyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -20,6 +22,10 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
+    public function __construct(protected FireflyService $firefly)
+    {
+    }
+
     /**
      * Hiển thị dashboard admin.
      */
@@ -72,6 +78,7 @@ class AdminController extends Controller
         $monthlyEnrollmentTrend = $this->buildMonthlyTrend(CourseEnrollment::class, 12);
         $monthlyCourseTrend = $this->buildMonthlyTrend(Course::class, 12);
         $securitySnapshot = $this->securityAlertSnapshot();
+        $blockchainSummary = $this->buildBlockchainSummary();
 
         try {
             $userTable = (new User())->getTable();
@@ -272,7 +279,8 @@ class AdminController extends Controller
             'monthlyRegistrations',
             'dashboardTrend',
             'securityAlertsCount',
-            'latestSecurityAlert'
+            'latestSecurityAlert',
+            'blockchainSummary'
         ));
     }
 

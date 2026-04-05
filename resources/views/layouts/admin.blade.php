@@ -229,6 +229,13 @@
             </li>
 
             <li class="nav-item">
+                <a href="{{ route('admin.blockchain.dashboard') }}" class="nav-link {{ request()->routeIs('admin.blockchain.*') ? 'active' : '' }}" title="Blockchain FireFly">
+                    <i class="fas fa-link"></i>
+                    <span class="nav-text">Blockchain FireFly</span>
+                </a>
+            </li>
+
+            <li class="nav-item">
                 <a href="{{ route('admin.system-logs.index') }}" class="nav-link {{ request()->routeIs('admin.system-logs.*') ? 'active' : '' }}" title="Nhật ký hệ thống">
                     <i class="fas fa-clipboard-list"></i>
                     <span class="nav-text">Nhật ký hệ thống</span>

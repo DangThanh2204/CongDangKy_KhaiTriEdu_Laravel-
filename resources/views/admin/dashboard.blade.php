@@ -185,6 +185,40 @@
             </div>
         </section>
 
+
+        <section class="chart-card dashboard-admissions-card mb-4" id="blockchain-insights">
+            <div class="dashboard-card-header">
+                <div>
+                    <h5 class="chart-title">Blockchain FireFly</h5>
+                    <p class="dashboard-card-copy mb-0">Theo d?i nhanh ch?ng ch? v? giao d?ch ?? ???c neo l?n blockchain ?? ph?c v? x?c th?c c?ng khai.</p>
+                </div>
+                <a href="{{ route('admin.blockchain.dashboard') }}" class="btn btn-sm btn-outline-primary">M? dashboard blockchain</a>
+            </div>
+
+            <div class="dashboard-admissions-grid">
+                <article class="dashboard-kpi-card is-blue">
+                    <span class="dashboard-kpi-eyebrow">Ch?ng ch? ?? neo</span>
+                    <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['anchored_certificates']) }}</strong>
+                    <small class="dashboard-kpi-note">C? proof th?nh c?ng tr?n FireFly</small>
+                </article>
+                <article class="dashboard-kpi-card is-orange">
+                    <span class="dashboard-kpi-eyebrow">Ch?ng ch? ch? neo</span>
+                    <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['pending_certificates']) }}</strong>
+                    <small class="dashboard-kpi-note">?? c?p nh?ng ch?a c? proof blockchain</small>
+                </article>
+                <article class="dashboard-kpi-card is-green">
+                    <span class="dashboard-kpi-eyebrow">Giao d?ch ?? neo</span>
+                    <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['anchored_transactions']) }}</strong>
+                    <small class="dashboard-kpi-note">V? v? n?p ti?n ?? ghi nh?n message / tx id</small>
+                </article>
+                <article class="dashboard-kpi-card is-slate">
+                    <span class="dashboard-kpi-eyebrow">FireFly hi?n t?i</span>
+                    <strong class="dashboard-kpi-value">{{ $blockchainSummary['firefly_configured'] ? 'S?n s?ng' : 'Ch?a c?u h?nh' }}</strong>
+                    <small class="dashboard-kpi-note">Namespace {{ $blockchainSummary['namespace'] }}</small>
+                </article>
+            </div>
+        </section>
+
         <div class="charts-section dashboard-main-grid mb-4">
             <section class="chart-card dashboard-trend-card" data-admin-trend-root>
                 <div class="dashboard-card-header dashboard-trend-header">

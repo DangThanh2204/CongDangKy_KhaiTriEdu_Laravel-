@@ -12,7 +12,7 @@
                         <div>
                             <span class="badge rounded-pill text-bg-primary px-3 py-2 mb-3">Hyperledger FireFly</span>
                             <h1 class="fw-bold mb-2">Tra c?u ch?ng ch? blockchain</h1>
-                            <p class="text-muted mb-0">Nh?p m? ch?ng ch? ?? ki?m tra t?nh tr?ng h?p l?, hash x?c th?c v? b?ng ch?ng ?? neo l?n FireFly.</p>
+                            <p class="text-muted mb-0">Nh?p m? ch?ng ch? ?? ki?m tra t?nh h?p l?, hash x?c th?c v? b?ng ch?ng ?? neo l?n FireFly.</p>
                         </div>
                         <div class="text-end">
                             <div class="small text-muted">V? d?</div>
@@ -83,7 +83,7 @@
                             </div>
                             <div class="col-md-3">
                                 <div class="border rounded-4 p-3 h-100 bg-light-subtle">
-                                    <div class="text-muted small mb-1">??t h?c</div>
+                                    <div class="text-muted small mb-1">L?p ?? x?p</div>
                                     <div class="fw-semibold">{{ $certificate->enrollment?->courseClass?->name ?? 'Ch?a g?n l?p' }}</div>
                                 </div>
                             </div>
@@ -98,7 +98,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="text-muted small mb-1">H?nh th?c h?c</div>
-                                        <div class="fw-semibold text-capitalize">{{ $certificate->course->learning_type ?? 'online' }}</div>
+                                        <div class="fw-semibold text-capitalize">{{ $certificate->course->learning_type ?? $certificate->course->delivery_mode ?? 'online' }}</div>
                                     </div>
                                     <div class="col-12">
                                         <div class="text-muted small mb-1">SHA-256 verification hash</div>
@@ -127,6 +127,15 @@
                                     <div class="fw-semibold">{{ $verification['firefly_state'] ?? data_get($verification['audit'], 'message', 'Ch?a ghi nh?n') }}</div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="d-flex justify-content-center gap-2 flex-wrap mt-4">
+                            <a href="{{ route('courses.show', $certificate->course_id) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-book-open me-2"></i>Xem kh?a h?c
+                            </a>
+                            <a href="{{ $verification['verification_url'] }}" class="btn btn-outline-dark">
+                                <i class="fas fa-link me-2"></i>???ng d?n x?c th?c
+                            </a>
                         </div>
                     </div>
                 </div>
