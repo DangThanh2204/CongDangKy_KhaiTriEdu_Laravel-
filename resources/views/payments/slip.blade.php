@@ -3,6 +3,33 @@
 @section('title', 'Phiếu thanh toán')
 
 @section('content')
+@php
+    $badgeClass = match ($payment->status) {
+        'completed' => 'success',
+        'failed' => 'danger',
+        default => 'warning text-dark',
+    };
+
+    $statusLabel = match ($payment->status) {
+        'completed' => 'Đã thanh toán',
+        'failed' => 'Thất bại',
+        default => 'Chờ thanh toán',
+    };
+
+    $methodLabel = match ($payment->method) {
+        'wallet' => 'Ví học tập',
+        'promotion' => 'Ưu đãi / miễn phí',
+        'vnpay' => 'VNPay',
+        'bank_transfer' => 'Chuyển khoản',
+        'cash' => 'Tiền mặt',
+        'counter' => 'Tại quầy',
+        default => ucfirst(str_replace('_', ' ', (string) $payment->method)),
+    };
+
+    $course = $payment->courseClass?->course;
+    $isAdmin = optional(auth()->user())->isAdmin();
+    $receiptReady = $payment->isCompleted() && in_array($payment->method, ['wallet', 'vnpay'], true);
+@endphp
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-8 col-xl-7">
@@ -11,7 +38,7 @@
                     <div class="text-center mb-4">
                         <span class="badge bg-light text-primary border mb-3">Phiếu thanh toán</span>
                         <h2 class="fw-bold mb-2">{{ $payment->reference }}</h2>
-                        <p class="text-muted mb-0">Theo dõi trạng thái và tiếp tục thanh toán cho khóa học của bạn.</p>
+                        <p class="text-muted mb-0">Theo dõi trạng thái giao dịch và tiếp tục hoàn tất thanh toán cho khóa học của bạn.</p>
                     </div>
 
                     @if(session('success'))
@@ -22,32 +49,23 @@
                         <div class="alert alert-danger">{{ session('error') }}</div>
                     @endif
 
-                    @php
-                        $badgeClass = match ($payment->status) {
-                            'completed' => 'success',
-                            'failed' => 'danger',
-                            default => 'warning text-dark',
-                        };
-                        $course = $payment->courseClass?->course;
-                    @endphp
-
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3 h-100 bg-light-subtle">
                                 <div class="small text-muted mb-1">Số tiền</div>
-                                <div class="fs-4 fw-bold text-primary">{{ number_format($payment->amount) }} VND</div>
+                                <div class="fs-4 fw-bold text-primary">{{ number_format((float) $payment->amount, 0, ',', '.') }} VND</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3 h-100 bg-light-subtle">
                                 <div class="small text-muted mb-1">Trạng thái</div>
-                                <div><span class="badge bg-{{ $badgeClass }}">{{ ucfirst($payment->status) }}</span></div>
+                                <div><span class="badge bg-{{ $badgeClass }}">{{ $statusLabel }}</span></div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3 h-100">
                                 <div class="small text-muted mb-1">Phương thức</div>
-                                <div class="fw-semibold">{{ $payment->method_label }}</div>
+                                <div class="fw-semibold">{{ $methodLabel }}</div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -58,7 +76,37 @@
                         </div>
                     </div>
 
-                    @if($payment->isPending() && $payment->isVnpay())
+                    @if($payment->isVnpay() && $vnpaySummary)
+                        <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <strong>Thông tin kết nối VNPay</strong>
+                                <span class="badge {{ $vnpaySummary['environment'] === 'sandbox' ? 'bg-warning text-dark' : 'bg-success' }}">
+                                    {{ $vnpaySummary['environment_label'] }}
+                                </span>
+                            </div>
+                            <div class="small text-muted mb-1">Gateway: <code>{{ $vnpaySummary['gateway_url'] ?: 'Chưa cấu hình' }}</code></div>
+                            <div class="small text-muted mb-1">Return URL: <code>{{ $vnpaySummary['return_url'] }}</code></div>
+                            <div class="small text-muted">IPN URL: <code>{{ $vnpaySummary['ipn_url'] }}</code></div>
+                        </div>
+
+                        @if(! $vnpaySummary['configured'])
+                            <div class="alert alert-warning border mb-4">
+                                <div class="fw-semibold mb-2">VNPay chưa sẵn sàng để thanh toán</div>
+                                <ul class="mb-0 ps-3">
+                                    @foreach($vnpaySummary['issues'] as $issue)
+                                        <li>{{ $issue }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @elseif($isAdmin && $vnpaySummary['environment'] === 'sandbox')
+                            <div class="alert alert-info border mb-4">
+                                <div class="fw-semibold mb-1">Bạn đang ở môi trường Sandbox</div>
+                                <div class="small mb-0">Khi chuyển sang thanh toán thật, hãy thay <code>VNPAY_URL</code>, <code>VNPAY_TMN_CODE</code> và <code>VNPAY_HASH_SECRET</code> production trên server.</div>
+                            </div>
+                        @endif
+                    @endif
+
+                    @if($payment->isPending() && $payment->isVnpay() && ($vnpaySummary['configured'] ?? false))
                         <div class="alert alert-info border mb-4">
                             <div class="fw-semibold mb-1">Sẵn sàng thanh toán qua VNPay</div>
                             <div class="small mb-0">Bạn sẽ được chuyển sang cổng thanh toán VNPay để hoàn tất giao dịch an toàn.</div>
@@ -81,8 +129,10 @@
                                 <p class="mb-2">Vui lòng mang <strong>mã thanh toán {{ $payment->reference }}</strong> đến trung tâm hoặc quầy thu để nhân viên hỗ trợ.</p>
                                 <p class="small text-muted mb-0">Sau khi thu ngân xác nhận, trạng thái thanh toán sẽ được cập nhật trên hệ thống.</p>
                             @elseif($payment->method === 'wallet')
-                                <p class="mb-2">Giao dịch đã được tạo từ ví nội bộ của bạn.</p>
+                                <p class="mb-2">Giao dịch đã được tạo từ ví học tập của bạn.</p>
                                 <p class="small text-muted mb-0">Nếu trạng thái chưa cập nhật, vui lòng liên hệ quản trị viên để được kiểm tra thêm.</p>
+                            @elseif($payment->isVnpay() && ! ($vnpaySummary['configured'] ?? false))
+                                <p class="mb-0">Cổng VNPay hiện chưa được cấu hình đầy đủ nên bạn chưa thể tiếp tục thanh toán. Vui lòng liên hệ quản trị viên.</p>
                             @else
                                 <p class="mb-0">Phiếu thanh toán này đang được xử lý. Vui lòng theo dõi thêm trong ít phút tới.</p>
                             @endif
@@ -96,6 +146,11 @@
                     @endif
 
                     <div class="d-flex flex-wrap gap-2 justify-content-center mt-4">
+                        @if($receiptReady)
+                            <a href="{{ route('documents.payment-receipt', $payment) }}" class="btn btn-success">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>Tải biên nhận PDF
+                            </a>
+                        @endif
                         @if($course)
                             <a href="{{ route('courses.show', $course) }}" class="btn btn-outline-primary">
                                 <i class="fas fa-arrow-left me-2"></i>Quay lại khóa học

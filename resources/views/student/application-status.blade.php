@@ -144,6 +144,14 @@
                             <a href="{{ $primaryAction['url'] }}" class="btn {{ $primaryAction['class'] }}">
                                 <i class="fas fa-arrow-right me-2"></i>{{ $primaryAction['label'] }}
                             </a>
+                            <a href="{{ route('documents.registration-form', $enrollment) }}" class="btn btn-outline-dark">
+                                <i class="fas fa-file-pdf me-2"></i>Tải phiếu đăng ký PDF
+                            </a>
+                            @if($payment && $payment->isCompleted() && in_array($payment->method, ['wallet', 'vnpay'], true))
+                                <a href="{{ route('documents.payment-receipt', $payment) }}" class="btn btn-outline-success">
+                                    <i class="fas fa-file-invoice-dollar me-2"></i>Tải biên nhận thanh toán
+                                </a>
+                            @endif
                             @if($course)
                                 <a href="{{ route('courses.show', $course) }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-book-open me-2"></i>Xem khóa học

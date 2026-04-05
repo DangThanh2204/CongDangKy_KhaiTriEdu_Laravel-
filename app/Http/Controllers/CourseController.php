@@ -10,6 +10,7 @@ use App\Models\CourseEnrollment;
 use App\Models\CourseMaterial;
 use App\Models\CourseMaterialProgress;
 use App\Models\CourseMaterialQuizAttempt;
+use App\Models\Payment;
 use App\Services\PromotionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -236,6 +237,9 @@ class CourseController extends Controller
         $isEnrolled = false;
         $isPending = false;
         $currentEnrollment = null;
+        $currentPayment = null;
+        $registrationDocumentUrl = null;
+        $paymentReceiptUrl = null;
 
         if (Auth::check()) {
             $currentEnrollment = CourseEnrollment::with('class')
@@ -248,6 +252,18 @@ class CourseController extends Controller
             if ($currentEnrollment) {
                 $isEnrolled = in_array($currentEnrollment->status, ['approved', 'completed'], true);
                 $isPending = $currentEnrollment->status === 'pending';
+                $currentPayment = Payment::query()
+                    ->where('user_id', Auth::id())
+                    ->where('class_id', $currentEnrollment->class_id)
+                    ->orderByRaw("CASE WHEN status = 'completed' THEN 0 ELSE 1 END")
+                    ->orderByDesc('paid_at')
+                    ->orderByDesc('created_at')
+                    ->first();
+                $registrationDocumentUrl = route('documents.registration-form', $currentEnrollment);
+
+                if ($currentPayment && $currentPayment->isCompleted() && in_array($currentPayment->method, ['wallet', 'vnpay'], true)) {
+                    $paymentReceiptUrl = route('documents.payment-receipt', $currentPayment);
+                }
             }
         }
 
@@ -338,7 +354,10 @@ class CourseController extends Controller
             'standaloneMaterials',
             'promotionPreview',
             'classPromotionPreviews',
-            'publicVoucherCodes'
+            'publicVoucherCodes',
+            'currentPayment',
+            'registrationDocumentUrl',
+            'paymentReceiptUrl'
         ));
     }
 

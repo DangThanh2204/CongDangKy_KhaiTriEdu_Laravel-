@@ -351,6 +351,25 @@
                                 </div>
                             @endif
 
+                            @if(! empty($registrationDocumentUrl))
+                                <div class="border rounded p-3 bg-light-subtle mb-3">
+                                    <div class="small text-muted mb-2">Tài liệu hồ sơ</div>
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ $registrationDocumentUrl }}" class="btn btn-outline-dark">
+                                            <i class="fas fa-file-pdf me-2"></i>Tải phiếu đăng ký PDF
+                                        </a>
+                                        @if(! empty($paymentReceiptUrl))
+                                            <a href="{{ $paymentReceiptUrl }}" class="btn btn-outline-success">
+                                                <i class="fas fa-file-invoice-dollar me-2"></i>Tải biên nhận thanh toán
+                                            </a>
+                                        @endif
+                                        <a href="{{ route('student.application-status') }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-folder-open me-2"></i>Theo dõi hồ sơ của tôi
+                                        </a>
+                                    </div>
+                                </div>
+                            @endif
+
                             @if($isEnrolled)
                                 <div class="alert alert-success">
                                     <i class="fas fa-check-circle me-2"></i>Bạn đã đăng ký khóa học này.

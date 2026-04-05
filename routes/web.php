@@ -4,6 +4,7 @@ use App\Http\Controllers\AboutController;
 use App\Http\Controllers\AssistantController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseImageController;
 use App\Http\Controllers\EnrollmentController;
@@ -85,6 +86,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/payments/{payment}/vnpay', [PaymentController::class, 'redirectToVnpay'])->name('payments.vnpay.redirect');
     Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::get('/documents/enrollments/{enrollment}/registration-form', [DocumentController::class, 'registrationForm'])->name('documents.registration-form');
+    Route::get('/documents/payments/{payment}/receipt', [DocumentController::class, 'paymentReceipt'])->name('documents.payment-receipt');
 
     Route::prefix('courses')->group(function () {
         Route::post('/{course}/enroll', [EnrollmentController::class, 'enroll'])->name('courses.enroll');
