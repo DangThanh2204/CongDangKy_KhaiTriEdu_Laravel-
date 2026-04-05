@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Storage;
 class AdminController extends Controller
 {
     /**
-     * HiÃ¡Â»Æ’n thÃ¡Â»â€¹ dashboard admin.
+     * Hiển thị dashboard admin.
      */
     public function dashboard()
     {
@@ -277,7 +277,7 @@ class AdminController extends Controller
     }
 
     /**
-     * LÃ¡ÂºÂ¥y dÃ¡Â»Â¯ liÃ¡Â»â€¡u cho biÃ¡Â»Æ’u Ã„â€˜Ã¡Â»â€œ (API).
+     * Lấy dữ liệu cho biểu đồ (API).
      */
     public function getChartData(Request $request)
     {
@@ -334,7 +334,7 @@ class AdminController extends Controller
     }
 
     /**
-     * HiÃ¡Â»Æ’n thÃ¡Â»â€¹ profile admin.
+     * Hiển thị profile admin.
      */
     public function profile()
     {
@@ -344,7 +344,7 @@ class AdminController extends Controller
     }
 
     /**
-     * CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t profile admin.
+     * Cập nhật profile admin.
      */
     public function updateProfile(Request $request)
     {
@@ -365,7 +365,7 @@ class AdminController extends Controller
 
         if ($request->filled('current_password')) {
             if (! Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'MÃ¡ÂºÂ­t khÃ¡ÂºÂ©u hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i khÃƒÂ´ng Ã„â€˜ÃƒÂºng']);
+                return back()->withErrors(['current_password' => 'Mật khẩu hiện tại không đúng']);
             }
 
             $data['password'] = Hash::make($request->new_password);
@@ -383,11 +383,11 @@ class AdminController extends Controller
 
         return redirect()
             ->route('admin.profile')
-            ->with('success', 'CÃ¡ÂºÂ­p nhÃ¡ÂºÂ­t thÃƒÂ´ng tin thÃƒÂ nh cÃƒÂ´ng!');
+            ->with('success', 'Cập nhật thông tin thành công!');
     }
 
     /**
-     * HiÃ¡Â»Æ’n thÃ¡Â»â€¹ hÃ¡Â»â€¡ thÃ¡Â»â€˜ng logs Ã„â€˜Ã†Â¡n giÃ¡ÂºÂ£n.
+     * Hiển thị hệ thống logs đơn giản.
      */
     public function systemLogs()
     {
@@ -516,7 +516,7 @@ class AdminController extends Controller
 
 
     /**
-     * Ã„ÂÃ¡Â»Âc file log.
+     * Đọc file log.
      */
     private function readLogFile($filePath, $lines = 100)
     {
@@ -566,7 +566,7 @@ class AdminController extends Controller
     }
 
     /**
-     * XÃƒÂ³a hÃ¡Â»â€¡ thÃ¡Â»â€˜ng logs.
+     * Xóa hệ thống logs.
      */
     public function clearLogs()
     {
@@ -578,7 +578,7 @@ class AdminController extends Controller
 
         return redirect()
             ->route('admin.system.logs')
-            ->with('success', 'Ã„ÂÃƒÂ£ xÃƒÂ³a tÃ¡ÂºÂ¥t cÃ¡ÂºÂ£ logs!');
+            ->with('success', 'Đã xóa tất cả logs!');
     }
 
     /**
@@ -591,7 +591,7 @@ class AdminController extends Controller
         if (! file_exists($logFile)) {
             return redirect()
                 ->route('admin.system.logs')
-                ->with('error', 'Log file khÃƒÂ´ng tÃ¡Â»â€œn tÃ¡ÂºÂ¡i!');
+                ->with('error', 'Log file không tồn tại!');
         }
 
         return response()->download($logFile, 'laravel-log-' . date('Y-m-d') . '.log');
@@ -609,7 +609,7 @@ class AdminController extends Controller
             'database_driver' => config('database.default'),
             'timezone' => config('app.timezone'),
             'environment' => app()->environment(),
-            'debug_mode' => config('app.debug') ? 'BÃ¡ÂºÂ­t' : 'TÃ¡ÂºÂ¯t',
+            'debug_mode' => config('app.debug') ? 'Bật' : 'Tắt',
             'storage_free' => $this->formatBytes(disk_free_space(storage_path())),
             'storage_total' => $this->formatBytes(disk_total_space(storage_path())),
             'memory_usage' => $this->formatBytes(memory_get_usage(true)),
@@ -636,7 +636,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Quick actions - xÃ¡Â»Â­ lÃƒÂ½ cÃƒÂ¡c hÃƒÂ nh Ã„â€˜Ã¡Â»â„¢ng nhanh.
+     * Quick actions - xử lý các hành động nhanh.
      */
     public function quickAction(Request $request)
     {
@@ -645,28 +645,28 @@ class AdminController extends Controller
         switch ($action) {
             case 'clear_cache':
                 \Artisan::call('cache:clear');
-                $message = 'Ã„ÂÃƒÂ£ xÃƒÂ³a cache hÃ¡Â»â€¡ thÃ¡Â»â€˜ng!';
+                $message = 'Đã xóa cache hệ thống!';
                 break;
 
             case 'clear_view':
                 \Artisan::call('view:clear');
-                $message = 'Ã„ÂÃƒÂ£ xÃƒÂ³a cached views!';
+                $message = 'Đã xóa cached views!';
                 break;
 
             case 'migrate':
                 \Artisan::call('migrate', ['--force' => true]);
-                $message = 'Ã„ÂÃƒÂ£ chÃ¡ÂºÂ¡y migrations!';
+                $message = 'Đã chạy migrations!';
                 break;
 
             default:
-                return back()->with('error', 'HÃƒÂ nh Ã„â€˜Ã¡Â»â„¢ng khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡!');
+                return back()->with('error', 'Hành động không hợp lệ!');
         }
 
         return back()->with('success', $message);
     }
 
     /**
-     * QuÃ¡ÂºÂ£n lÃƒÂ½ tin tÃ¡Â»Â©c.
+     * Quản lý tin tức.
      */
     public function newsIndex(Request $request)
     {

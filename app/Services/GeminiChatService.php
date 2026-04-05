@@ -110,7 +110,7 @@ class GeminiChatService
     protected function buildInstructions(): string
     {
         $siteName = Setting::get('site_name', 'Khai Tri Education');
-        $tagline = Setting::get('site_tagline', 'Ná»n táº£ng há»c táº­p trá»±c tuyáº¿n');
+        $tagline = Setting::get('site_tagline', 'Nền tảng học tập trực tuyến');
         $contactEmail = Setting::get('contact_email', '');
         $contactPhone = Setting::get('contact_phone', '');
         $contactAddress = Setting::get('contact_address', '');
@@ -133,44 +133,44 @@ class GeminiChatService
                 $price = $course->sale_price ?: $course->price;
 
                 return sprintf(
-                    '- %s | nhÃ³m ngÃ nh: %s | hÃ¬nh thá»©c: %s | giÃ¡: %s VND | trÃ¬nh Ä‘á»™: %s | thá»i lÆ°á»£ng: %s',
+                    '- %s | nhóm ngành: %s | hình thức: %s | giá: %s VND | trình độ: %s | thời lượng: %s',
                     $course->title,
-                    $course->category->name ?? 'ChÆ°a phÃ¢n loáº¡i',
+                    $course->category->name ?? 'Chưa phân loại',
                     $course->learning_type ?? 'online',
                     number_format((float) $price, 0, ',', '.'),
-                    $course->level ?: 'ChÆ°a rÃµ',
-                    $course->duration_label ?: 'ChÆ°a rÃµ'
+                    $course->level ?: 'Chưa rõ',
+                    $course->duration_label ?: 'Chưa rõ'
                 );
             })
             ->implode("\n");
 
         $parts = [
-            "Báº¡n lÃ  trá»£ lÃ½ áº£o cá»§a {$siteName}.",
-            'Má»¥c tiÃªu chÃ­nh: há»— trá»£ ngÆ°á»i dÃ¹ng vá» khÃ³a há»c, há»c phÃ­, Ä‘Äƒng kÃ½ há»c, lá»‹ch há»c, module, video, quiz, chá»©ng chá»‰, vÃ­, thanh toÃ¡n vÃ  liÃªn há»‡ há»— trá»£.',
-            'LuÃ´n tráº£ lá»i báº±ng tiáº¿ng Viá»‡t cÃ³ dáº¥u, thÃ¢n thiá»‡n, rÃµ rÃ ng, tá»‘i Ä‘a 6 cÃ¢u ngáº¯n hoáº·c 5 gáº¡ch Ä‘áº§u dÃ²ng.',
-            'Æ¯u tiÃªn tráº£ lá»i Ä‘Ãºng trá»ng tÃ¢m cÃ¢u há»i hiá»‡n táº¡i trÆ°á»›c, sau Ä‘Ã³ má»›i gá»£i Ã½ bÆ°á»›c tiáº¿p theo náº¿u cáº§n.',
-            'KhÃ´ng tá»± Ä‘á»™ng chÃ¨n tÃªn khÃ³a há»c, khÃ´ng quáº£ng bÃ¡ khÃ³a há»c vÃ  khÃ´ng gá»£i Ã½ khÃ³a há»c náº¿u ngÆ°á»i dÃ¹ng khÃ´ng há»i vá» khÃ³a há»c, lá»™ trÃ¬nh há»c, há»c phÃ­, Ä‘Äƒng kÃ½ há»c hoáº·c tÆ° váº¥n chá»n mÃ´n phÃ¹ há»£p.',
-            'Náº¿u ngÆ°á»i dÃ¹ng há»i vá» tÃ i khoáº£n, OTP, vÃ­, náº¡p tiá»n, thanh toÃ¡n, liÃªn há»‡, tin tá»©c hoáº·c thao tÃ¡c trÃªn website, chá»‰ tráº£ lá»i Ä‘Ãºng chá»§ Ä‘á» Ä‘Ã³.',
-            'Náº¿u ngÆ°á»i dÃ¹ng Ä‘ang á»Ÿ trang chi tiáº¿t má»™t khÃ³a há»c vÃ  há»i vá» khÃ³a Ä‘ang xem, hÃ£y Æ°u tiÃªn giáº£i thÃ­ch khÃ³a Ä‘Ã³. KhÃ´ng tá»± kÃ©o thÃªm khÃ³a há»c khÃ¡c náº¿u ngÆ°á»i dÃ¹ng khÃ´ng yÃªu cáº§u.',
-            'Náº¿u thiáº¿u dá»¯ liá»‡u Ä‘á»ƒ tÆ° váº¥n khÃ³a há»c, hÃ£y há»i láº¡i tá»‘i Ä‘a 1 cÃ¢u ngáº¯n Ä‘á»ƒ lÃ m rÃµ má»¥c tiÃªu há»c, trÃ¬nh Ä‘á»™ hiá»‡n táº¡i hoáº·c hÃ¬nh thá»©c há»c mong muá»‘n.',
-            'Chá»‰ dá»±a trÃªn dá»¯ liá»‡u website. Náº¿u thiáº¿u thÃ´ng tin, nÃ³i rÃµ lÃ  chÆ°a cháº¯c vÃ  má»i ngÆ°á»i dÃ¹ng liÃªn há»‡ bá»™ pháº­n tÆ° váº¥n.',
-            'Náº¿u tháº­t sá»± phÃ¹ há»£p, gá»£i Ã½ tá»‘i Ä‘a 3 khÃ³a há»c. KhÃ´ng bá»‹a Ä‘áº·t há»c phÃ­, lá»‹ch khai giáº£ng hay khuyáº¿n mÃ£i.',
-            'ThÃ´ng tin website:',
-            "- TÃªn website: {$siteName}",
-            "- MÃ´ táº£: {$tagline}",
-            '- Email liÃªn há»‡: ' . ($contactEmail ?: 'ChÆ°a cáº­p nháº­t'),
-            '- Sá»‘ Ä‘iá»‡n thoáº¡i: ' . ($contactPhone ?: 'ChÆ°a cáº­p nháº­t'),
-            '- Äá»‹a chá»‰: ' . ($contactAddress ?: 'ChÆ°a cáº­p nháº­t'),
-            '- NhÃ³m ngÃ nh hiá»‡n cÃ³: ' . (! empty($categories) ? implode(', ', $categories) : 'ChÆ°a cáº­p nháº­t'),
-            "- Má»™t sá»‘ khÃ³a há»c Ä‘ang hiá»ƒn thá»‹:\n" . ($courses ?: '- ChÆ°a cÃ³ dá»¯ liá»‡u khÃ³a há»c published.'),
+            "Bạn là trợ lý ảo của {$siteName}.",
+            'Mục tiêu chính: hỗ trợ người dùng về khóa học, học phí, đăng ký học, lịch học, module, video, quiz, chứng chỉ, ví, thanh toán và liên hệ hỗ trợ.',
+            'Luôn trả lời bằng tiếng Việt có dấu, thân thiện, rõ ràng, tối đa 6 câu ngắn hoặc 5 gạch đầu dòng.',
+            'Ưu tiên trả lời đúng trọng tâm câu hỏi hiện tại trước, sau đó mới gợi ý bước tiếp theo nếu cần.',
+            'Không tự động chèn tên khóa học, không quảng bá khóa học và không gợi ý khóa học nếu người dùng không hỏi về khóa học, lộ trình học, học phí, đăng ký học hoặc tư vấn chọn môn phù hợp.',
+            'Nếu người dùng hỏi về tài khoản, OTP, ví, nạp tiền, thanh toán, liên hệ, tin tức hoặc thao tác trên website, chỉ trả lời đúng chủ đề đó.',
+            'Nếu người dùng đang ở trang chi tiết một khóa học và hỏi về khóa đang xem, hãy ưu tiên giải thích khóa đó. Không tự kéo thêm khóa học khác nếu người dùng không yêu cầu.',
+            'Nếu thiếu dữ liệu để tư vấn khóa học, hãy hỏi lại tối đa 1 câu ngắn để làm rõ mục tiêu học, trình độ hiện tại hoặc hình thức học mong muốn.',
+            'Chỉ dựa trên dữ liệu website. Nếu thiếu thông tin, nói rõ là chưa chắc và mời người dùng liên hệ bộ phận tư vấn.',
+            'Nếu thật sự phù hợp, gợi ý tối đa 3 khóa học. Không bịa đặt học phí, lịch khai giảng hay khuyến mãi.',
+            'Thông tin website:',
+            "- Tên website: {$siteName}",
+            "- Mô tả: {$tagline}",
+            '- Email liên hệ: ' . ($contactEmail ?: 'Chưa cập nhật'),
+            '- Số điện thoại: ' . ($contactPhone ?: 'Chưa cập nhật'),
+            '- Địa chỉ: ' . ($contactAddress ?: 'Chưa cập nhật'),
+            '- Nhóm ngành hiện có: ' . (! empty($categories) ? implode(', ', $categories) : 'Chưa cập nhật'),
+            "- Một số khóa học đang hiển thị:\n" . ($courses ?: '- Chưa có dữ liệu khóa học published.'),
         ];
 
         if ($this->adminTrainingPrompt !== '') {
-            $parts[] = "HÆ°á»›ng dáº«n bá»• sung tá»« quáº£n trá»‹ viÃªn:\n{$this->adminTrainingPrompt}";
+            $parts[] = "Hướng dẫn bổ sung từ quản trị viên:\n{$this->adminTrainingPrompt}";
         }
 
         if ($this->extraContext !== '') {
-            $parts[] = "Ngá»¯ cáº£nh bá»• sung tá»« biáº¿n mÃ´i trÆ°á»ng:\n{$this->extraContext}";
+            $parts[] = "Ngữ cảnh bổ sung từ biến môi trường:\n{$this->extraContext}";
         }
 
         return implode("\n\n", $parts);
@@ -181,22 +181,22 @@ class GeminiChatService
         $segments = [];
 
         if (! empty($meta['current_url'])) {
-            $segments[] = 'NgÆ°á»i dÃ¹ng Ä‘ang á»Ÿ trang: ' . $meta['current_url'];
+            $segments[] = 'Người dùng đang ở trang: ' . $meta['current_url'];
         }
 
         if (! empty($meta['page_title'])) {
-            $segments[] = 'TiÃªu Ä‘á» trang hiá»‡n táº¡i: ' . $meta['page_title'];
+            $segments[] = 'Tiêu đề trang hiện tại: ' . $meta['page_title'];
         }
 
         $segments[] = $shouldRecommendCourses
-            ? 'Cháº¿ Ä‘á»™ gá»£i Ã½ khÃ³a há»c: Báº¬T. Chá»‰ nháº¯c Ä‘áº¿n hoáº·c gá»£i Ã½ khÃ³a há»c náº¿u tháº­t sá»± giÃºp tráº£ lá»i Ä‘Ãºng cÃ¢u há»i.'
-            : 'Cháº¿ Ä‘á»™ gá»£i Ã½ khÃ³a há»c: Táº®T. KhÃ´ng gá»£i Ã½ hay liá»‡t kÃª khÃ³a há»c, chá»‰ tráº£ lá»i Ä‘Ãºng váº¥n Ä‘á» ngÆ°á»i dÃ¹ng Ä‘ang há»i.';
+            ? 'Chế độ gợi ý khóa học: BẬT. Chỉ nhắc đến hoặc gợi ý khóa học nếu thật sự giúp trả lời đúng câu hỏi.'
+            : 'Chế độ gợi ý khóa học: TẮT. Không gợi ý hay liệt kê khóa học, chỉ trả lời đúng vấn đề người dùng đang hỏi.';
 
         $history = collect($meta['history'] ?? [])
             ->filter(fn ($item) => filled($item['message'] ?? null))
             ->take(-8)
             ->map(function ($item) {
-                $role = ($item['role'] ?? 'user') === 'assistant' ? 'Trá»£ lÃ½' : 'NgÆ°á»i dÃ¹ng';
+                $role = ($item['role'] ?? 'user') === 'assistant' ? 'Trợ lý' : 'Người dùng';
 
                 return $role . ': ' . trim((string) $item['message']);
             })
@@ -204,16 +204,16 @@ class GeminiChatService
             ->all();
 
         if (! empty($history)) {
-            $segments[] = "Há»™i thoáº¡i gáº§n Ä‘Ã¢y:\n" . implode("\n", $history);
+            $segments[] = "Hội thoại gần đây:\n" . implode("\n", $history);
         }
 
         if (! empty($recommendations)) {
-            $segments[] = "KhÃ³a há»c nÃªn Æ°u tiÃªn gá»£i Ã½ náº¿u phÃ¹ há»£p:\n" . collect($recommendations)
-                ->map(fn ($course) => '- ' . $course['title'] . ' | ' . ($course['category'] ?: 'ChÆ°a phÃ¢n loáº¡i') . ' | ' . $course['price_label'])
+            $segments[] = "Khóa học nên ưu tiên gợi ý nếu phù hợp:\n" . collect($recommendations)
+                ->map(fn ($course) => '- ' . $course['title'] . ' | ' . ($course['category'] ?: 'Chưa phân loại') . ' | ' . $course['price_label'])
                 ->implode("\n");
         }
 
-        $segments[] = 'CÃ¢u há»i cá»§a ngÆ°á»i dÃ¹ng: ' . trim($message);
+        $segments[] = 'Câu hỏi của người dùng: ' . trim($message);
 
         return implode("\n\n", $segments);
     }
@@ -339,16 +339,16 @@ class GeminiChatService
 
             if ($normalizedMessage !== '' && Str::contains($title, $normalizedMessage)) {
                 $score += 8;
-                $matched[] = 'tiÃªu Ä‘á» trÃ¹ng nhu cáº§u';
+                $matched[] = 'tiêu đề trùng nhu cầu';
             }
 
             foreach ($keywords as $keyword) {
                 if (Str::contains($title, $keyword)) {
                     $score += 4;
-                    $matched[] = 'phÃ¹ há»£p tá»« khÃ³a "' . $keyword . '"';
+                    $matched[] = 'phù hợp từ khóa "' . $keyword . '"';
                 } elseif (Str::contains($category, $keyword) || Str::contains($learningType, $keyword) || Str::contains($level, $keyword)) {
                     $score += 3;
-                    $matched[] = 'gáº§n vá»›i chá»§ Ä‘á» "' . $keyword . '"';
+                    $matched[] = 'gần với chủ đề "' . $keyword . '"';
                 } elseif (Str::contains($haystack, $keyword)) {
                     $score += 1;
                 }
@@ -387,13 +387,13 @@ class GeminiChatService
             return [
                 'id' => $course->id,
                 'title' => $course->title,
-                'category' => $course->category->name ?? 'ChÆ°a phÃ¢n loáº¡i',
+                'category' => $course->category->name ?? 'Chưa phân loại',
                 'learning_type' => $course->learning_type ?: 'online',
-                'level' => $course->level ?: 'ChÆ°a rÃµ',
-                'duration' => $course->duration_label ?: 'ChÆ°a cáº­p nháº­t',
-                'price_label' => ((float) $price) > 0 ? number_format((float) $price, 0, ',', '.') . ' VND' : 'LiÃªn há»‡ tÆ° váº¥n',
+                'level' => $course->level ?: 'Chưa rõ',
+                'duration' => $course->duration_label ?: 'Chưa cập nhật',
+                'price_label' => ((float) $price) > 0 ? number_format((float) $price, 0, ',', '.') . ' VND' : 'Liên hệ tư vấn',
                 'url' => route('courses.show', $course),
-                'reason' => $item['reason'] ?: 'phÃ¹ há»£p vá»›i nhu cáº§u hiá»‡n táº¡i',
+                'reason' => $item['reason'] ?: 'phù hợp với nhu cầu hiện tại',
             ];
         })->all();
     }
@@ -405,9 +405,9 @@ class GeminiChatService
         }
 
         $intro = match ($reason) {
-            'missing_api_key' => 'Trá»£ lÃ½ AI chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh Ä‘áº§y Ä‘á»§ nÃªn mÃ¬nh Ä‘ang tÆ° váº¥n theo dá»¯ liá»‡u sáºµn cÃ³ trÃªn website.',
-            'api_error' => 'Trá»£ lÃ½ AI táº¡m thá»i gáº·p lá»—i káº¿t ná»‘i nÃªn mÃ¬nh Ä‘ang gá»£i Ã½ nhanh theo dá»¯ liá»‡u website.',
-            default => 'MÃ¬nh Ä‘ang tráº£ lá»i dá»±a trÃªn dá»¯ liá»‡u khÃ³a há»c hiá»‡n cÃ³ trÃªn website.',
+            'missing_api_key' => 'Trợ lý AI chưa được cấu hình đầy đủ nên mình đang tư vấn theo dữ liệu sẵn có trên website.',
+            'api_error' => 'Trợ lý AI tạm thời gặp lỗi kết nối nên mình đang gợi ý nhanh theo dữ liệu website.',
+            default => 'Mình đang trả lời dựa trên dữ liệu khóa học hiện có trên website.',
         };
 
         $suggestions = collect($recommendations)
@@ -420,12 +420,12 @@ class GeminiChatService
         $parts = [$intro];
 
         if ($suggestions !== '') {
-            $parts[] = "Báº¡n cÃ³ thá»ƒ tham kháº£o:\n" . $suggestions;
+            $parts[] = "Bạn có thể tham khảo:\n" . $suggestions;
         } else {
-            $parts[] = 'Hiá»‡n táº¡i mÃ¬nh chÆ°a tÃ¬m Ä‘Æ°á»£c khÃ³a há»c tháº­t sá»± sÃ¡t nhu cáº§u tá»« ná»™i dung báº¡n vá»«a gá»­i.';
+            $parts[] = 'Hiện tại mình chưa tìm được khóa học thật sự sát nhu cầu từ nội dung bạn vừa gửi.';
         }
 
-        $parts[] = 'Báº¡n cÃ³ thá»ƒ nÃ³i rÃµ hÆ¡n báº¡n muá»‘n há»c mÃ´n gÃ¬, má»¥c tiÃªu há»c lÃ  gÃ¬, trÃ¬nh Ä‘á»™ hiá»‡n táº¡i ra sao hoáº·c muá»‘n há»c online/offline Ä‘á»ƒ mÃ¬nh gá»£i Ã½ sÃ¡t hÆ¡n.';
+        $parts[] = 'Bạn có thể nói rõ hơn bạn muốn học môn gì, mục tiêu học là gì, trình độ hiện tại ra sao hoặc muốn học online/offline để mình gợi ý sát hơn.';
 
         return implode("\n\n", $parts);
     }
@@ -434,28 +434,28 @@ class GeminiChatService
     {
         $normalizedMessage = $this->normalizeText($message);
         $intro = match ($reason) {
-            'missing_api_key' => 'Trá»£ lÃ½ AI chÆ°a Ä‘Æ°á»£c cáº¥u hÃ¬nh Ä‘áº§y Ä‘á»§ nÃªn mÃ¬nh Ä‘ang há»— trá»£ theo dá»¯ liá»‡u sáºµn cÃ³ trÃªn website.',
-            'api_error' => 'Trá»£ lÃ½ AI táº¡m thá»i gáº·p lá»—i káº¿t ná»‘i nÃªn mÃ¬nh Ä‘ang há»— trá»£ theo dá»¯ liá»‡u sáºµn cÃ³ trÃªn website.',
-            default => 'MÃ¬nh Ä‘ang há»— trá»£ báº¡n theo dá»¯ liá»‡u hiá»‡n cÃ³ trÃªn website.',
+            'missing_api_key' => 'Trợ lý AI chưa được cấu hình đầy đủ nên mình đang hỗ trợ theo dữ liệu sẵn có trên website.',
+            'api_error' => 'Trợ lý AI tạm thời gặp lỗi kết nối nên mình đang hỗ trợ theo dữ liệu sẵn có trên website.',
+            default => 'Mình đang hỗ trợ bạn theo dữ liệu hiện có trên website.',
         };
 
         if (Str::contains($normalizedMessage, ['dang nhap', 'dang ky tai khoan', 'quen mat khau', 'otp', 'xac thuc'])) {
-            return $intro . "\n\nNáº¿u báº¡n cáº§n vÃ o tÃ i khoáº£n, hÃ£y dÃ¹ng má»¥c ÄÄƒng nháº­p hoáº·c ÄÄƒng kÃ½ á»Ÿ gÃ³c trÃªn. Náº¿u quÃªn máº­t kháº©u, chá»n QuÃªn máº­t kháº©u Ä‘á»ƒ nháº­n hÆ°á»›ng dáº«n Ä‘áº·t láº¡i.";
+            return $intro . "\n\nNếu bạn cần vào tài khoản, hãy dùng mục Đăng nhập hoặc Đăng ký ở góc trên. Nếu quên mật khẩu, chọn Quên mật khẩu để nhận hướng dẫn đặt lại.";
         }
 
         if (Str::contains($normalizedMessage, ['wallet', 'vi', 'nap tien', 'topup', 'thanh toan', 'hoa don'])) {
-            return $intro . "\n\nNáº¿u báº¡n cáº§n náº¡p vÃ­, xem sá»‘ dÆ° hoáº·c giao dá»‹ch thanh toÃ¡n, hÃ£y vÃ o má»¥c VÃ­ cá»§a tÃ´i sau khi Ä‘Äƒng nháº­p. Náº¿u báº¡n nÃ³i rÃµ Ä‘ang vÆ°á»›ng á»Ÿ bÆ°á»›c nÃ o, mÃ¬nh sáº½ hÆ°á»›ng dáº«n tiáº¿p ngáº¯n gá»n hÆ¡n.";
+            return $intro . "\n\nNếu bạn cần nạp ví, xem số dư hoặc giao dịch thanh toán, hãy vào mục Ví của tôi sau khi đăng nhập. Nếu bạn nói rõ đang vướng ở bước nào, mình sẽ hướng dẫn tiếp ngắn gọn hơn.";
         }
 
         if (Str::contains($normalizedMessage, ['lien he', 'dia chi', 'so dien thoai', 'email'])) {
-            return $intro . "\n\nNáº¿u báº¡n cáº§n liÃªn há»‡ trung tÃ¢m, hÃ£y vÃ o má»¥c LiÃªn há»‡ Ä‘á»ƒ xem sá»‘ Ä‘iá»‡n thoáº¡i, email vÃ  Ä‘á»‹a chá»‰ hiá»‡n cÃ³ trÃªn website. Náº¿u muá»‘n, mÃ¬nh cÃ³ thá»ƒ hÆ°á»›ng dáº«n báº¡n tÃ¬m Ä‘Ãºng má»¥c Ä‘Ã³.";
+            return $intro . "\n\nNếu bạn cần liên hệ trung tâm, hãy vào mục Liên hệ để xem số điện thoại, email và địa chỉ hiện có trên website. Nếu muốn, mình có thể hướng dẫn bạn tìm đúng mục đó.";
         }
 
         if (Str::contains($normalizedMessage, ['tin tuc', 'news'])) {
-            return $intro . "\n\nNáº¿u báº¡n muá»‘n xem bÃ i viáº¿t hoáº·c thÃ´ng bÃ¡o má»›i, hÃ£y vÃ o má»¥c Tin tá»©c trÃªn thanh menu. Náº¿u báº¡n cáº§n tÃ¬m má»™t chá»§ Ä‘á» cá»¥ thá»ƒ, cá»© nÃ³i rÃµ hÆ¡n Ä‘á»ƒ mÃ¬nh hÆ°á»›ng báº¡n nhanh hÆ¡n.";
+            return $intro . "\n\nNếu bạn muốn xem bài viết hoặc thông báo mới, hãy vào mục Tin tức trên thanh menu. Nếu bạn cần tìm một chủ đề cụ thể, cứ nói rõ hơn để mình hướng bạn nhanh hơn.";
         }
 
-        return $intro . "\n\nBáº¡n cÃ³ thá»ƒ nÃ³i rÃµ hÆ¡n báº¡n Ä‘ang cáº§n há»— trá»£ vá» tÃ i khoáº£n, vÃ­, thanh toÃ¡n, liÃªn há»‡ hay thao tÃ¡c nÃ o trÃªn website Ä‘á»ƒ mÃ¬nh hÆ°á»›ng dáº«n Ä‘Ãºng trá»ng tÃ¢m.";
+        return $intro . "\n\nBạn có thể nói rõ hơn bạn đang cần hỗ trợ về tài khoản, ví, thanh toán, liên hệ hay thao tác nào trên website để mình hướng dẫn đúng trọng tâm.";
     }
 
     protected function matchesCatalogTerm(string $normalizedMessage): bool

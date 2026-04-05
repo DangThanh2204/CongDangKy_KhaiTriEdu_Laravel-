@@ -12,7 +12,7 @@
                 <p class="text-muted mb-0">Quản lý tất cả giao dịch học phí trên hệ thống</p>
             </div>
             <a href="{{ route('admin.payments.export', request()->query(), false) }}" class="btn btn-outline-success">
-                <i class="fas fa-file-excel me-2"></i>Xuáº¥t Excel
+                <i class="fas fa-file-excel me-2"></i>Xuất Excel
             </a>
         </div>
     </div>
@@ -22,7 +22,7 @@
     <div class="stat-card users"><div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div><div class="stat-number">{{ $stats['total'] }}</div><div class="stat-label">Tổng giao dịch</div></div>
     <div class="stat-card courses"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-number">{{ $stats['pending'] }}</div><div class="stat-label">Chờ xử lý</div></div>
     <div class="stat-card revenue"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-number">{{ $stats['completed'] }}</div><div class="stat-label">Hoàn thành</div></div>
-    <div class="stat-card orders"><div class="stat-icon"><i class="fas fa-times-circle"></i></div><div class="stat-number">{{ $stats['failed'] }}</div><div class="stat-label">Tháº¥t báº¡i</div></div>
+    <div class="stat-card orders"><div class="stat-icon"><i class="fas fa-times-circle"></i></div><div class="stat-number">{{ $stats['failed'] }}</div><div class="stat-label">Thất bại</div></div>
 </div>
 
 <div class="card mb-4">

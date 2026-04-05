@@ -1,4 +1,4 @@
-/* Admin Layout - Táº­n dá»¥ng tá»‘i Ä‘a tá»« app.css */
+/* Admin Layout - Tận dụng tối đa từ app.css */
 html, body {
   margin: 0;
   padding: 0;
@@ -258,7 +258,7 @@ html.dark, [data-bs-theme="dark"] {
   background-clip: text;
 }
 
-/* User Info - Style má»›i */
+/* User Info - Style mới */
 .user-info {
   display: flex;
   align-items: center;
@@ -319,7 +319,7 @@ html.dark, [data-bs-theme="dark"] {
   min-height: calc(100vh - 80px);
 }
 
-/* Cards & Stats - Style má»›i cho admin */
+/* Cards & Stats - Style mới cho admin */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -472,7 +472,7 @@ html.dark, [data-bs-theme="dark"] {
   margin-bottom: 2rem;
 }
 
-/* Activity List - Style má»›i */
+/* Activity List - Style mới */
 .activity-list {
   list-style: none;
   padding: 0;
@@ -538,7 +538,7 @@ html.dark, [data-bs-theme="dark"] {
   font-weight: 500;
 }
 
-/* Buttons - Táº­n dá»¥ng tá»« app.css, chá»‰ thÃªm style Ä‘áº·c biá»‡t */
+/* Buttons - Tận dụng từ app.css, chỉ thêm style đặc biệt */
 .btn-outline-light, .btn-outline-primary {
   border: 2px solid var(--primary-color);
   color: var(--primary-color);
@@ -677,13 +677,13 @@ html.dark, [data-bs-theme="dark"] {
   }
 }
 
-/* Table Styles - Táº­n dá»¥ng tá»« app.css */
+/* Table Styles - Tận dụng từ app.css */
 .table-responsive {
   border-radius: 15px;
   overflow: hidden;
 }
 
-/* Alert Styles - Táº­n dá»¥ng tá»« app.css */
+/* Alert Styles - Tận dụng từ app.css */
 .alert {
   border: none;
   border-left: 4px solid;
@@ -706,7 +706,7 @@ html.dark, [data-bs-theme="dark"] {
   background: linear-gradient(135deg, #fff3cd, #ffeaa7);
 }
 
-/* Badge Styles - Táº­n dá»¥ng tá»« app.css */
+/* Badge Styles - Tận dụng từ app.css */
 .badge {
   font-weight: 500;
 }

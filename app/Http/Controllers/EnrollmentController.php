@@ -32,23 +32,23 @@ class EnrollmentController extends Controller
     public function enroll(Request $request, Course $course)
     {
         if ($course->status !== 'published') {
-            return back()->with('error', 'KhÃ³a há»c hiá»‡n khÃ´ng kháº£ dá»¥ng.');
+            return back()->with('error', 'Khóa học hiện không khả dụng.');
         }
 
         $class = $this->resolveSelectedClass($request, $course);
 
         if (! $class) {
             $message = $course->isOffline()
-                ? 'Vui lÃ²ng chá»n má»™t Ä‘á»£t há»c Ä‘ang má»Ÿ Ä‘Äƒng kÃ½.'
-                : 'KhÃ³a há»c nÃ y hiá»‡n chÆ°a má»Ÿ Ä‘Äƒng kÃ½.';
+                ? 'Vui lòng chọn một đợt học đang mở đăng ký.'
+                : 'Khóa học này hiện chưa mở đăng ký.';
 
             return back()->withInput()->with('error', $message);
         }
 
         if ($class->status !== 'active') {
             return back()->withInput()->with('error', $course->isOffline()
-                ? 'Äá»£t há»c nÃ y hiá»‡n chÆ°a má»Ÿ Ä‘Äƒng kÃ½.'
-                : 'KhÃ³a há»c nÃ y hiá»‡n chÆ°a má»Ÿ Ä‘Äƒng kÃ½.');
+                ? 'Đợt học này hiện chưa mở đăng ký.'
+                : 'Khóa học này hiện chưa mở đăng ký.');
         }
 
         if ($course->isOffline()) {
@@ -69,29 +69,29 @@ class EnrollmentController extends Controller
                 $deadline = optional($existing->seat_hold_expires_at)->format('d/m/Y H:i');
 
                 return back()->with('error', $currentClassName
-                    ? 'Báº¡n Ä‘ang Ä‘Æ°á»£c giá»¯ chá»— 24h á»Ÿ Ä‘á»£t há»c ' . $currentClassName . ' Ä‘áº¿n ' . $deadline . '. Vui lÃ²ng xÃ¡c nháº­n Ä‘Äƒng kÃ½ trÆ°á»›c khi giá»¯ chá»— háº¿t háº¡n.'
-                    : 'Báº¡n Ä‘ang cÃ³ má»™t chá»— giá»¯ táº¡m 24h. Vui lÃ²ng xÃ¡c nháº­n Ä‘Äƒng kÃ½ trÆ°á»›c khi háº¿t háº¡n.');
+                    ? 'Bạn đang được giữ chỗ 24h ở đợt học ' . $currentClassName . ' đến ' . $deadline . '. Vui lòng xác nhận đăng ký trước khi giữ chỗ hết hạn.'
+                    : 'Bạn đang có một chỗ giữ tạm 24h. Vui lòng xác nhận đăng ký trước khi hết hạn.');
             }
 
             if ($existing->isWaitlisted()) {
                 $position = $existing->waitlist_position;
-                $positionLabel = $position ? ' á»Ÿ vá»‹ trÃ­ ' . $position : '';
+                $positionLabel = $position ? ' ở vị trí ' . $position : '';
 
                 return back()->with('error', $currentClassName
-                    ? 'Báº¡n Ä‘Ã£ á»Ÿ trong hÃ ng chá»' . $positionLabel . ' cho Ä‘á»£t há»c ' . $currentClassName . '.'
-                    : 'Báº¡n Ä‘Ã£ á»Ÿ trong hÃ ng chá» cho khÃ³a há»c nÃ y.');
+                    ? 'Bạn đã ở trong hàng chờ' . $positionLabel . ' cho đợt học ' . $currentClassName . '.'
+                    : 'Bạn đã ở trong hàng chờ cho khóa học này.');
             }
 
             if ($existing->isPending()) {
                 return back()->with('error', $currentClassName
-                    ? 'Báº¡n Ä‘Ã£ cÃ³ yÃªu cáº§u Ä‘Äƒng kÃ½ chá» duyá»‡t á»Ÿ Ä‘á»£t há»c ' . $currentClassName . '.'
-                    : 'Báº¡n Ä‘Ã£ cÃ³ yÃªu cáº§u Ä‘Äƒng kÃ½ khÃ³a há»c nÃ y Ä‘ang chá» duyá»‡t.');
+                    ? 'Bạn đã có yêu cầu đăng ký chờ duyệt ở đợt học ' . $currentClassName . '.'
+                    : 'Bạn đã có yêu cầu đăng ký khóa học này đang chờ duyệt.');
             }
 
             if ($existing->isApproved() || $existing->isCompleted()) {
                 return back()->with('error', $currentClassName
-                    ? 'Báº¡n Ä‘Ã£ Ä‘Äƒng kÃ½ khÃ³a há»c nÃ y á»Ÿ Ä‘á»£t há»c ' . $currentClassName . ' rá»“i.'
-                    : 'Báº¡n Ä‘Ã£ Ä‘Äƒng kÃ½ khÃ³a há»c nÃ y rá»“i.');
+                    ? 'Bạn đã đăng ký khóa học này ở đợt học ' . $currentClassName . ' rồi.'
+                    : 'Bạn đã đăng ký khóa học này rồi.');
             }
         }
 
@@ -99,9 +99,9 @@ class EnrollmentController extends Controller
             $waitlistEnrollment = $this->enrollmentQueue->joinWaitlist(Auth::id(), $class, 'waitlist_joined');
             $this->notificationService->notifyWaitlistJoined($waitlistEnrollment);
             $position = $waitlistEnrollment->waitlist_position;
-            $positionLabel = $position ? ' Vá»‹ trÃ­ hiá»‡n táº¡i cá»§a báº¡n lÃ  #' . $position . '.' : '';
+            $positionLabel = $position ? ' Vị trí hiện tại của bạn là #' . $position . '.' : '';
 
-            return back()->with('success', 'Äá»£t há»c nÃ y Ä‘Ã£ Ä‘áº§y, há»‡ thá»‘ng Ä‘Ã£ Ä‘Æ°a báº¡n vÃ o hÃ ng chá».' . $positionLabel . ' Khi cÃ³ chá»— trá»‘ng, báº¡n sáº½ Ä‘Æ°á»£c giá»¯ chá»— trong 24 giá» Ä‘á»ƒ xÃ¡c nháº­n Ä‘Äƒng kÃ½.');
+            return back()->with('success', 'Đợt học này đã đầy, hệ thống đã đưa bạn vào hàng chờ.' . $positionLabel . ' Khi có chỗ trống, bạn sẽ được giữ chỗ trong 24 giờ để xác nhận đăng ký.');
         }
 
         if ($course->isOnline() && $course->series_key) {
@@ -129,7 +129,7 @@ class EnrollmentController extends Controller
                 $enrollment->approve();
                 $this->sendRegistrationSuccessMail($enrollment);
 
-                return back()->with('success', 'ÄÄƒng kÃ½ thÃ nh cÃ´ng, báº¡n cÃ³ thá»ƒ há»c ngay.');
+                return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
             }
         }
 
@@ -154,7 +154,7 @@ class EnrollmentController extends Controller
             if ($requestedMethod !== 'wallet') {
                 return back()
                     ->withInput()
-                    ->with('error', 'KhÃ³a há»c tráº£ phÃ­ hiá»‡n chá»‰ há»— trá»£ thanh toÃ¡n báº±ng sá»‘ dÆ° vÃ­. Vui lÃ²ng náº¡p tiá»n vÃ o vÃ­ rá»“i Ä‘Äƒng kÃ½ láº¡i.');
+                    ->with('error', 'Khóa học trả phí hiện chỉ hỗ trợ thanh toán bằng số dư ví. Vui lòng nạp tiền vào ví rồi đăng ký lại.');
             }
 
             $purchaseResult = $this->processWalletCoursePurchase(
@@ -163,8 +163,8 @@ class EnrollmentController extends Controller
                 $class,
                 $pricing,
                 $requiresManualApproval,
-                'Thanh toÃ¡n báº±ng vÃ­ ná»™i bá»™, chá» admin duyá»‡t Ä‘Äƒng kÃ½.',
-                'Thanh toÃ¡n báº±ng vÃ­ ná»™i bá»™.'
+                'Thanh toán bằng ví nội bộ, chờ admin duyệt đăng ký.',
+                'Thanh toán bằng ví nội bộ.'
             );
 
             if (isset($purchaseResult['error'])) {
@@ -192,16 +192,16 @@ class EnrollmentController extends Controller
             $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
             return back()->with('success', $walletPaid
-                ? 'Thanh toÃ¡n báº±ng vÃ­ thÃ nh cÃ´ng. YÃªu cáº§u Ä‘Äƒng kÃ½ cá»§a báº¡n Ä‘ang chá» admin duyá»‡t.'
-                : 'ÄÄƒng kÃ½ thÃ nh cÃ´ng, vui lÃ²ng chá» admin duyá»‡t.');
+                ? 'Thanh toán bằng ví thành công. Yêu cầu đăng ký của bạn đang chờ admin duyệt.'
+                : 'Đăng ký thành công, vui lòng chờ admin duyệt.');
         }
 
         $enrollment->approve();
         $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
         return back()->with('success', $walletPaid
-            ? 'Thanh toÃ¡n báº±ng vÃ­ thÃ nh cÃ´ng, báº¡n cÃ³ thá»ƒ há»c ngay.'
-            : 'ÄÄƒng kÃ½ thÃ nh cÃ´ng, báº¡n cÃ³ thá»ƒ há»c ngay.');
+            ? 'Thanh toán bằng ví thành công, bạn có thể học ngay.'
+            : 'Đăng ký thành công, bạn có thể học ngay.');
     }
 
     public function confirmSeatHold(Request $request, Course $course)
@@ -213,20 +213,20 @@ class EnrollmentController extends Controller
             ->first();
 
         if (! $enrollment) {
-            return back()->with('error', 'KhÃ´ng tÃ¬m tháº¥y yÃªu cáº§u giá»¯ chá»— phÃ¹ há»£p.');
+            return back()->with('error', 'Không tìm thấy yêu cầu giữ chỗ phù hợp.');
         }
 
         $class = $enrollment->courseClass;
 
         if (! $course->isOffline() || ! $class) {
-            return back()->with('error', 'YÃªu cáº§u nÃ y khÃ´ng Ã¡p dá»¥ng giá»¯ chá»— 24h.');
+            return back()->with('error', 'Yêu cầu này không áp dụng giữ chỗ 24h.');
         }
 
         $this->enrollmentQueue->syncClassQueue($class);
         $enrollment->refresh();
 
         if (! $enrollment->hasActiveSeatHold()) {
-            return back()->with('error', 'Thá»i gian giá»¯ chá»— Ä‘Ã£ háº¿t hoáº·c chÆ°a tá»›i lÆ°á»£t cá»§a báº¡n.');
+            return back()->with('error', 'Thời gian giữ chỗ đã hết hoặc chưa tới lượt của bạn.');
         }
 
         $class = $enrollment->courseClass?->fresh();
@@ -252,8 +252,8 @@ class EnrollmentController extends Controller
                 $class,
                 $pricing,
                 $requiresManualApproval,
-                'Thanh toÃ¡n báº±ng vÃ­ ná»™i bá»™ sau khi Ä‘Æ°á»£c giá»¯ chá»— 24h, chá» admin duyá»‡t Ä‘Äƒng kÃ½.',
-                'Thanh toÃ¡n báº±ng vÃ­ ná»™i bá»™ sau khi xÃ¡c nháº­n giá»¯ chá»— 24h.'
+                'Thanh toán bằng ví nội bộ sau khi được giữ chỗ 24h, chờ admin duyệt đăng ký.',
+                'Thanh toán bằng ví nội bộ sau khi xác nhận giữ chỗ 24h.'
             );
 
             if (isset($purchaseResult['error'])) {
@@ -282,13 +282,13 @@ class EnrollmentController extends Controller
         if ($requiresManualApproval) {
             $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
-            return back()->with('success', 'Báº¡n Ä‘Ã£ xÃ¡c nháº­n giá»¯ chá»— thÃ nh cÃ´ng. YÃªu cáº§u Ä‘Äƒng kÃ½ Ä‘ang chá» admin duyá»‡t.');
+            return back()->with('success', 'Bạn đã xác nhận giữ chỗ thành công. Yêu cầu đăng ký đang chờ admin duyệt.');
         }
 
         $enrollment->approve();
         $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
-        return back()->with('success', 'Báº¡n Ä‘Ã£ xÃ¡c nháº­n giá»¯ chá»— thÃ nh cÃ´ng vÃ  cÃ³ thá»ƒ báº¯t Ä‘áº§u há»c ngay.');
+        return back()->with('success', 'Bạn đã xác nhận giữ chỗ thành công và có thể bắt đầu học ngay.');
     }
 
     public function unenroll(Course $course)
@@ -300,11 +300,11 @@ class EnrollmentController extends Controller
             ->first();
 
         if (! $enrollment) {
-            return back()->with('error', 'BÃ¡ÂºÂ¡n chÃ†Â°a Ã„â€˜Ã„Æ’ng kÃƒÂ½ khÃƒÂ³a hÃ¡Â»Âc nÃƒÂ y.');
+            return back()->with('error', 'Bạn chưa đăng ký khóa học này.');
         }
 
         if ($enrollment->isCompleted()) {
-            return back()->with('error', 'KhÃƒÂ´ng thÃ¡Â»Æ’ hÃ¡Â»Â§y Ã„â€˜Ã„Æ’ng kÃƒÂ½ Ã„â€˜ÃƒÂ£ hoÃƒÂ n thÃƒÂ nh hoÃ¡ÂºÂ·c bÃ¡Â»â€¹ tÃ¡Â»Â« chÃ¡Â»â€˜i.');
+            return back()->with('error', 'Không thể hủy đăng ký đã hoàn thành hoặc bị từ chối.');
         }
 
         $wasPending = $enrollment->isPending();
@@ -406,16 +406,16 @@ class EnrollmentController extends Controller
         }
 
         if ($hadSeatHold) {
-            return back()->with('success', 'BÃ¡ÂºÂ¡n Ã„â€˜ÃƒÂ£ hÃ¡Â»Â§y giÃ¡Â»Â¯ chÃ¡Â»â€” 24h. HÃ¡Â»â€¡ thÃ¡Â»â€˜ng sÃ¡ÂºÂ½ chuyÃ¡Â»Æ’n chÃ¡Â»â€” cho ngÃ†Â°Ã¡Â»Âi kÃ¡ÂºÂ¿ tiÃ¡ÂºÂ¿p trong hÃƒÂ ng chÃ¡Â»Â.');
+            return back()->with('success', 'Bạn đã hủy giữ chỗ 24h. Hệ thống sẽ chuyển chỗ cho người kế tiếp trong hàng chờ.');
         }
 
         if ($wasWaitlisted) {
-            return back()->with('success', 'BÃ¡ÂºÂ¡n Ã„â€˜ÃƒÂ£ rÃ¡Â»Âi khÃ¡Â»Âi hÃƒÂ ng chÃ¡Â»Â cÃ¡Â»Â§a Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc nÃƒÂ y.');
+            return back()->with('success', 'Bạn đã rời khỏi hàng chờ của đợt học này.');
         }
 
         return back()->with('success', $wasPending
-            ? 'Ã„ÂÃƒÂ£ hÃ¡Â»Â§y yÃƒÂªu cÃ¡ÂºÂ§u Ã„â€˜Ã„Æ’ng kÃƒÂ½.'
-            : 'Ã„ÂÃƒÂ£ hÃ¡Â»Â§y Ã„â€˜Ã„Æ’ng kÃƒÂ½ khÃƒÂ³a hÃ¡Â»Âc.');
+            ? 'Đã hủy yêu cầu đăng ký.'
+            : 'Đã hủy đăng ký khóa học.');
     }
 
     public function changeClass(Request $request, Course $course, CourseEnrollment $enrollment)
@@ -427,19 +427,19 @@ class EnrollmentController extends Controller
         abort_unless((int) optional($enrollment->courseClass)->course_id === (int) $course->id, 404);
 
         if ($enrollment->isCompleted() || $enrollment->isRejected()) {
-            return back()->with('error', 'KhÃƒÂ´ng thÃ¡Â»Æ’ Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc cho Ã„â€˜Ã„Æ’ng kÃƒÂ½ nÃƒÂ y.');
+            return back()->with('error', 'Không thể đổi đợt học cho đăng ký này.');
         }
 
         if ($enrollment->isWaitlisted() || $enrollment->hasActiveSeatHold()) {
-            return back()->with('error', 'Vui lÃƒÂ²ng xÃƒÂ¡c nhÃ¡ÂºÂ­n hoÃ¡ÂºÂ·c hÃ¡Â»Â§y yÃƒÂªu cÃ¡ÂºÂ§u hÃƒÂ ng chÃ¡Â»Â/giÃ¡Â»Â¯ chÃ¡Â»â€” hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i trÃ†Â°Ã¡Â»â€ºc khi Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc.');
+            return back()->with('error', 'Vui lòng xác nhận hoặc hủy yêu cầu hàng chờ/giữ chỗ hiện tại trước khi đổi đợt học.');
         }
 
         if ((string) Setting::get('allow_class_change', '1') === '0') {
-            return back()->with('error', 'ChÃ¡Â»Â©c nÃ„Æ’ng Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc hiÃ¡Â»â€¡n Ã„â€˜ang bÃ¡Â»â€¹ khÃƒÂ³a.');
+            return back()->with('error', 'Chức năng đổi đợt học hiện đang bị khóa.');
         }
 
         if ($course->isOnline()) {
-            return back()->with('error', 'KhÃƒÂ³a hÃ¡Â»Âc trÃ¡Â»Â±c tuyÃ¡ÂºÂ¿n khÃƒÂ´ng ÃƒÂ¡p dÃ¡Â»Â¥ng Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc.');
+            return back()->with('error', 'Khóa học trực tuyến không áp dụng đổi đợt học.');
         }
 
         $validated = $request->validate([
@@ -452,32 +452,32 @@ class EnrollmentController extends Controller
             ->first();
 
         if (! $newClass) {
-            return back()->with('error', 'Ã„ÂÃ¡Â»Â£t hÃ¡Â»Âc mÃ¡Â»â€ºi khÃƒÂ´ng thuÃ¡Â»â„¢c khÃƒÂ³a hÃ¡Â»Âc nÃƒÂ y.');
+            return back()->with('error', 'Đợt học mới không thuộc khóa học này.');
         }
 
         if ($currentClass && (int) $currentClass->id === (int) $newClass->id) {
-            return back()->with('error', 'BÃ¡ÂºÂ¡n Ã„â€˜ang Ã¡Â»Å¸ Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc nÃƒÂ y rÃ¡Â»â€œi.');
+            return back()->with('error', 'Bạn đang ở đợt học này rồi.');
         }
 
         if ($newClass->status !== 'active') {
-            return back()->with('error', 'Ã„ÂÃ¡Â»Â£t hÃ¡Â»Âc mÃ¡Â»â€ºi hiÃ¡Â»â€¡n chÃ†Â°a mÃ¡Â»Å¸ Ã„â€˜Ã„Æ’ng kÃƒÂ½.');
+            return back()->with('error', 'Đợt học mới hiện chưa mở đăng ký.');
         }
 
         $this->enrollmentQueue->syncClassQueue($newClass);
         $newClass = $newClass->fresh();
 
         if ($newClass->is_full) {
-            return back()->with('error', 'Ã„ÂÃ¡Â»Â£t hÃ¡Â»Âc mÃ¡Â»â€ºi Ã„â€˜ÃƒÂ£ Ã„â€˜Ã¡Â»Â§ sÃ¡Â»â€˜ lÃ†Â°Ã¡Â»Â£ng hÃ¡Â»Âc viÃƒÂªn.');
+            return back()->with('error', 'Đợt học mới đã đủ số lượng học viên.');
         }
 
         $now = now();
 
         if ($currentClass?->start_date && $now->greaterThanOrEqualTo($currentClass->start_date->copy()->startOfDay())) {
-            return back()->with('error', 'KhÃƒÂ´ng thÃ¡Â»Æ’ Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc sau khi Ã„â€˜Ã¡Â»Â£t hiÃ¡Â»â€¡n tÃ¡ÂºÂ¡i Ã„â€˜ÃƒÂ£ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u.');
+            return back()->with('error', 'Không thể đổi đợt học sau khi đợt hiện tại đã bắt đầu.');
         }
 
         if ($newClass->start_date && $now->greaterThanOrEqualTo($newClass->start_date->copy()->startOfDay())) {
-            return back()->with('error', 'KhÃƒÂ´ng thÃ¡Â»Æ’ chuyÃ¡Â»Æ’n sang Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc Ã„â€˜ÃƒÂ£ bÃ¡ÂºÂ¯t Ã„â€˜Ã¡ÂºÂ§u.');
+            return back()->with('error', 'Không thể chuyển sang đợt học đã bắt đầu.');
         }
 
         $deadlineDays = (int) Setting::get('class_change_deadline_days', '0');
@@ -485,7 +485,7 @@ class EnrollmentController extends Controller
             $deadline = $newClass->start_date->copy()->startOfDay()->subDays($deadlineDays);
 
             if ($now->greaterThan($deadline)) {
-                return back()->with('error', 'Ã„ÂÃƒÂ£ quÃƒÂ¡ hÃ¡ÂºÂ¡n Ã„â€˜Ã¡Â»â€¢i Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc cho Ã„â€˜Ã¡Â»Â£t bÃ¡ÂºÂ¡n chÃ¡Â»Ân.');
+                return back()->with('error', 'Đã quá hạn đổi đợt học cho đợt bạn chọn.');
             }
         }
 
@@ -509,7 +509,7 @@ class EnrollmentController extends Controller
             $this->enrollmentQueue->syncClassQueue($currentClass);
         }
 
-        return back()->with('success', 'Ã„ÂÃƒÂ£ chuyÃ¡Â»Æ’n sang Ã„â€˜Ã¡Â»Â£t hÃ¡Â»Âc ' . $newClass->name . '.');
+        return back()->with('success', 'Đã chuyển sang đợt học ' . $newClass->name . '.');
     }
 
     private function processWalletCoursePurchase(
@@ -526,7 +526,7 @@ class EnrollmentController extends Controller
 
         if ((float) $wallet->balance < $payableAmount) {
             return [
-                'error' => 'Sá»‘ dÆ° vÃ­ hiá»‡n chÆ°a Ä‘á»§. Vui lÃ²ng náº¡p tiá»n vÃ o vÃ­ Ä‘á»ƒ mua khÃ³a há»c.',
+                'error' => 'Số dư ví hiện chưa đủ. Vui lòng nạp tiền vào ví để mua khóa học.',
                 'required_topup' => true,
             ];
         }
@@ -545,7 +545,7 @@ class EnrollmentController extends Controller
 
         if (! $transaction) {
             return [
-                'error' => 'KhÃ´ng thá»ƒ trá»« tiá»n tá»« vÃ­ vÃ o lÃºc nÃ y. Vui lÃ²ng thá»­ láº¡i sau.',
+                'error' => 'Không thể trừ tiền từ ví vào lúc này. Vui lòng thử lại sau.',
             ];
         }
 
@@ -726,8 +726,8 @@ class EnrollmentController extends Controller
             'paid_at' => now(),
             'reference' => 'PROMO-' . $course->id . '-' . Auth::id() . '-' . now()->format('YmdHis'),
             'notes' => $requiresManualApproval
-                ? 'Miá»…n phÃ­ sau khi Ã¡p dá»¥ng khuyáº¿n mÃ£i, chá» admin duyá»‡t Ä‘Äƒng kÃ½.'
-                : 'Miá»…n phÃ­ sau khi Ã¡p dá»¥ng khuyáº¿n mÃ£i.',
+                ? 'Miễn phí sau khi áp dụng khuyến mãi, chờ admin duyệt đăng ký.'
+                : 'Miễn phí sau khi áp dụng khuyến mãi.',
             'metadata' => $this->promotionService->buildSnapshot($pricing),
         ]);
     }

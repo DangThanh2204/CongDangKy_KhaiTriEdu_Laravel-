@@ -180,7 +180,7 @@ a:hover,
     box-shadow: 0 4px 15px rgba(44, 90, 160, 0.3);
 }
 
-/* Style riÃªng cho nÃºt Ä‘Äƒng kÃ½ Ä‘á»ƒ cÃ³ chÃºt khÃ¡c biá»‡t nháº¹ */
+/* Style riêng cho nút đăng ký để có chút khác biệt nhẹ */
 .navbar-nav .nav-link[href*="register"] {
     background: var(--gradient-accent);
     color: white !important;
@@ -496,7 +496,7 @@ textarea.form-control {
     100% { transform: rotate(360deg); }
 }
 
-/* Social Media Icons - ÄÃƒ Sá»¬A - KHÃ”NG áº¢NH HÆ¯á»žNG Bá»žI BIáº¾N CSS */
+/* Social Media Icons - ĐÃ SỬA - KHÔNG ẢNH HƯỞNG BỞI BIẾN CSS */
 .social-links {
     display: flex;
     gap: 12px;
@@ -534,7 +534,7 @@ textarea.form-control {
     opacity: 1;
 }
 
-/* Sá»¬A: Äáº·t mÃ u cá»‘ Ä‘á»‹nh cho tá»«ng ná»n táº£ng */
+/* SỬA: Đặt màu cố định cho từng nền tảng */
 .social-links a.facebook {
     background: #1877F2 !important; /* Facebook blue */
     color: white !important;

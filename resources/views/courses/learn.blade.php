@@ -329,7 +329,7 @@
                             @foreach($quizAttempts as $attempt)
                                 <div class="border rounded-3 p-3">
                                     <div class="fw-semibold">{{ $attempt->material->title ?? 'Quiz' }}</div>
-                                    <div class="small text-muted">Láº§n {{ $attempt->attempt_number }} â¢ {{ optional($attempt->completed_at)->format('d/m/Y H:i') }}</div>
+                                    <div class="small text-muted">Lần {{ $attempt->attempt_number }} • {{ optional($attempt->completed_at)->format('d/m/Y H:i') }}</div>
                                     <div class="mt-2">
                                         <span class="badge bg-{{ $attempt->is_passed ? 'success' : 'danger' }}">{{ number_format((float) $attempt->score_percent, 0) }}%</span>
                                         <span class="small text-muted ms-2">{{ $attempt->correct_answers }}/{{ $attempt->total_questions }} câu đúng</span>

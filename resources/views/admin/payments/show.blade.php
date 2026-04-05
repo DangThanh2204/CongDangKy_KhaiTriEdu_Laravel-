@@ -58,7 +58,7 @@
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <p class="text-muted mb-1">Số tiền</p>
-                        <h6>{{ number_format($payment->amount, 0, ',', '.') }}â‚«</h6>
+                        <h6>{{ number_format($payment->amount, 0, ',', '.') }}₫</h6>
                     </div>
                     <div class="col-md-6">
                         <p class="text-muted mb-1">Ngày thanh toán</p>
@@ -86,7 +86,7 @@
                             </button>
                         </form>
                         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#failModal">
-                            <i class="fas fa-times me-2"></i>Tháº¥t báº¡i
+                            <i class="fas fa-times me-2"></i>Thất bại
                         </button>
                     </div>
                     @endif
