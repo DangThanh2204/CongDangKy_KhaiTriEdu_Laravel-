@@ -1,4 +1,4 @@
-﻿# Migration Baseline
+# Migration Baseline
 
 Các migration lịch sử đã được archive vào:
 - `database/migrations_archive/2026-03-28_mysql_baseline`

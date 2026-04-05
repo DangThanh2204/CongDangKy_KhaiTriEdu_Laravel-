@@ -1,4 +1,4 @@
-﻿@php
+@php
     $browserSessionGuardSkipOnce = session()->pull('browser_session_guard_skip_once', false);
 @endphp
 <script>
