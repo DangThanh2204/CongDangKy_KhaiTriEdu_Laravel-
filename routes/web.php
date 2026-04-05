@@ -64,6 +64,7 @@ Route::get('/courses', [CourseController::class, 'index'])->name('courses.index'
 Route::get('/lich-khai-giang', [CourseController::class, 'intakes'])->name('courses.intakes');
 Route::get('/courses/{course}/image/{type}', [CourseImageController::class, 'show'])->name('courses.image');
 Route::get('/courses/{course}', [CourseController::class, 'show'])->name('courses.show');
+Route::get('/xac-thuc-chung-chi', [CourseController::class, 'verifyCertificate'])->name('certificates.verify');
 Route::get('/payments/vnpay/return', [PaymentController::class, 'vnpayReturn'])->name('payments.vnpay.return');
 Route::get('/payments/vnpay/ipn', [PaymentController::class, 'vnpayIpn'])->name('payments.vnpay.ipn');
 

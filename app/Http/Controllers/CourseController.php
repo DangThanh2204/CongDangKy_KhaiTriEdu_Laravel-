@@ -11,6 +11,7 @@ use App\Models\CourseMaterial;
 use App\Models\CourseMaterialProgress;
 use App\Models\CourseMaterialQuizAttempt;
 use App\Models\Payment;
+use App\Services\CertificateBlockchainService;
 use App\Services\PromotionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,10 @@ use Illuminate\Support\Str;
 
 class CourseController extends Controller
 {
+    public function __construct(
+        protected CertificateBlockchainService $certificateBlockchain,
+    ) {
+    }
     public function index(Request $request)
     {
         $query = Course::with(['category'])->withCount('modules')->published();
@@ -691,7 +696,32 @@ class CourseController extends Controller
             return redirect()->route('courses.learn', $course)->with('error', 'Ban can hoan thanh toan bo noi dung truoc khi nhan chung chi.');
         }
 
-        return view('courses.certificate', compact('course', 'enrollment', 'certificate'));
+        $verification = $this->certificateBlockchain->verificationSnapshot($certificate);
+
+        return view('courses.certificate', compact('course', 'enrollment', 'certificate', 'verification'));
+    }
+
+    public function verifyCertificate(Request $request)
+    {
+        $code = Str::upper(trim((string) $request->query('code', '')));
+        $certificate = null;
+        $verification = null;
+
+        if ($code !== '') {
+            $certificate = CourseCertificate::with([
+                'course:id,title,learning_type',
+                'user:id,fullname,username,email',
+                'enrollment:id,class_id,completed_at',
+                'enrollment.courseClass:id,name,start_date',
+            ])->whereRaw('UPPER(certificate_no) = ?', [$code])->first();
+
+            if ($certificate) {
+                $certificate = $this->certificateBlockchain->ensureAnchored($certificate);
+                $verification = $this->certificateBlockchain->verificationSnapshot($certificate);
+            }
+        }
+
+        return view('courses.verify-certificate', compact('code', 'certificate', 'verification'));
     }
 
     protected function findEnrollment(Course $course): ?CourseEnrollment
@@ -727,7 +757,7 @@ class CourseController extends Controller
             $enrollment->complete();
         }
 
-        return CourseCertificate::firstOrCreate(
+        $certificate = CourseCertificate::firstOrCreate(
             [
                 'course_id' => $course->id,
                 'enrollment_id' => $enrollment->id,
@@ -742,6 +772,8 @@ class CourseController extends Controller
                 ],
             ]
         );
+
+        return $this->certificateBlockchain->ensureAnchored($certificate);
     }
 
     protected function normalizeQuizAnswer($value): string
