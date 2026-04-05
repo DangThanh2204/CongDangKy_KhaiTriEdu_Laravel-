@@ -57,10 +57,65 @@ class FireflyService
         return $this->platformIdentity ?: 'platform';
     }
 
+    public function status(): array
+    {
+        if (! $this->isConfigured()) {
+            return [
+                'success' => false,
+                'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh Äáº§y Äá»§.',
+                'token_ready' => false,
+                'namespace' => $this->namespace,
+                'platform_identity' => $this->getPlatformIdentity(),
+            ];
+        }
+
+        $attempts = [
+            ['/api/v1/status', 'status'],
+            ['/status', 'status'],
+            ["/api/v1/namespaces/{$this->namespace}", 'namespace'],
+        ];
+
+        $lastError = null;
+
+        foreach ($attempts as [$endpoint, $label]) {
+            try {
+                $response = $this->client()->get($endpoint);
+
+                if ($response->successful()) {
+                    return [
+                        'success' => true,
+                        'endpoint' => $endpoint,
+                        'source' => $label,
+                        'status' => $response->status(),
+                        'data' => $response->json() ?? $response->body(),
+                        'token_ready' => $this->canManageTokens(),
+                        'namespace' => $this->namespace,
+                        'platform_identity' => $this->getPlatformIdentity(),
+                    ];
+                }
+
+                $body = $response->json();
+                $lastError = is_array($body)
+                    ? ($body['error'] ?? $body['message'] ?? json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))
+                    : $response->body();
+            } catch (\Throwable $exception) {
+                $lastError = $exception->getMessage();
+            }
+        }
+
+        return [
+            'success' => false,
+            'message' => $lastError ?: 'KhÃ´ng thá» káº¿t ná»i tá»i FireFly.',
+            'token_ready' => $this->canManageTokens(),
+            'namespace' => $this->namespace,
+            'platform_identity' => $this->getPlatformIdentity(),
+        ];
+    }
+
     public function mint(string $toIdentity, float $amount, array $context = []): array
     {
         if (! $this->canManageTokens()) {
-            return ['success' => false, 'message' => 'FireFly token integration not configured'];
+            return ['success' => false, 'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh tÃ­ch há»£p token.'];
         }
 
         $requestId = (string) ($context['request_id'] ?? $context['reference'] ?? Str::uuid());
@@ -86,7 +141,7 @@ class FireflyService
     public function transfer(string $fromIdentity, string $toIdentity, float $amount, array $context = []): array
     {
         if (! $this->canManageTokens()) {
-            return ['success' => false, 'message' => 'FireFly token integration not configured'];
+            return ['success' => false, 'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh tÃ­ch há»£p token.'];
         }
 
         $requestId = (string) ($context['request_id'] ?? $context['reference'] ?? Str::uuid());
@@ -114,7 +169,7 @@ class FireflyService
     public function getBalance(string $identity): array
     {
         if (! $this->canManageTokens()) {
-            return ['success' => false, 'message' => 'FireFly token integration not configured'];
+            return ['success' => false, 'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh tÃ­ch há»£p token.'];
         }
 
         $response = $this->client()->get("/api/v1/namespaces/{$this->namespace}/tokens/balances", $this->cleanArray([
@@ -134,7 +189,7 @@ class FireflyService
     public function broadcastAuditEvent(string $eventType, array $payload, array $context = []): array
     {
         if (! $this->isConfigured()) {
-            return ['success' => false, 'message' => 'FireFly not configured'];
+            return ['success' => false, 'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh.'];
         }
 
         $requestId = (string) ($context['request_id'] ?? Str::uuid());

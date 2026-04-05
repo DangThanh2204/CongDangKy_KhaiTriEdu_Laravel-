@@ -48,7 +48,7 @@ class CertificateBlockchainService
         } elseif (! isset($meta['blockchain_audit']) && ! $this->firefly->isConfigured()) {
             $meta['blockchain_audit'] = [
                 'success' => false,
-                'message' => 'FireFly ch?a ???c c?u h?nh.',
+                'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh.',
             ];
         }
 

@@ -190,30 +190,30 @@
             <div class="dashboard-card-header">
                 <div>
                     <h5 class="chart-title">Blockchain FireFly</h5>
-                    <p class="dashboard-card-copy mb-0">Theo d?i nhanh ch?ng ch? v? giao d?ch ?? ???c neo l?n blockchain ?? ph?c v? x?c th?c c?ng khai.</p>
+                    <p class="dashboard-card-copy mb-0">Theo dÃµi nhanh chá»©ng chá» vÃ  giao dá»ch ÄÃ£ ÄÆ°á»£c neo lÃªn blockchain Äá» phá»¥c vá»¥ xÃ¡c thá»±c cÃ´ng khai.</p>
                 </div>
-                <a href="{{ route('admin.blockchain.dashboard') }}" class="btn btn-sm btn-outline-primary">M? dashboard blockchain</a>
+                <a href="{{ route('admin.blockchain.dashboard') }}" class="btn btn-sm btn-outline-primary">Má» dashboard blockchain</a>
             </div>
 
             <div class="dashboard-admissions-grid">
                 <article class="dashboard-kpi-card is-blue">
-                    <span class="dashboard-kpi-eyebrow">Ch?ng ch? ?? neo</span>
+                    <span class="dashboard-kpi-eyebrow">Chá»©ng chá» ÄÃ£ neo</span>
                     <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['anchored_certificates']) }}</strong>
-                    <small class="dashboard-kpi-note">C? proof th?nh c?ng tr?n FireFly</small>
+                    <small class="dashboard-kpi-note">CÃ³ proof thÃ nh cÃ´ng trÃªn FireFly</small>
                 </article>
                 <article class="dashboard-kpi-card is-orange">
-                    <span class="dashboard-kpi-eyebrow">Ch?ng ch? ch? neo</span>
+                    <span class="dashboard-kpi-eyebrow">Chá»©ng chá» chá» neo</span>
                     <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['pending_certificates']) }}</strong>
-                    <small class="dashboard-kpi-note">?? c?p nh?ng ch?a c? proof blockchain</small>
+                    <small class="dashboard-kpi-note">ÄÃ£ cáº¥p nhÆ°ng chÆ°a cÃ³ proof blockchain</small>
                 </article>
                 <article class="dashboard-kpi-card is-green">
-                    <span class="dashboard-kpi-eyebrow">Giao d?ch ?? neo</span>
+                    <span class="dashboard-kpi-eyebrow">Giao dá»ch ÄÃ£ neo</span>
                     <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['anchored_transactions']) }}</strong>
-                    <small class="dashboard-kpi-note">V? v? n?p ti?n ?? ghi nh?n message / tx id</small>
+                    <small class="dashboard-kpi-note">VÃ­ vÃ  náº¡p tiá»n ÄÃ£ ghi nháº­n message / tx id</small>
                 </article>
                 <article class="dashboard-kpi-card is-slate">
-                    <span class="dashboard-kpi-eyebrow">FireFly hi?n t?i</span>
-                    <strong class="dashboard-kpi-value">{{ $blockchainSummary['firefly_configured'] ? 'S?n s?ng' : 'Ch?a c?u h?nh' }}</strong>
+                    <span class="dashboard-kpi-eyebrow">FireFly hiá»n táº¡i</span>
+                    <strong class="dashboard-kpi-value">{{ $blockchainSummary['firefly_connected'] ? 'Äang káº¿t ná»i' : 'ChÆ°a káº¿t ná»i' }}</strong>
                     <small class="dashboard-kpi-note">Namespace {{ $blockchainSummary['namespace'] }}</small>
                 </article>
             </div>
