@@ -13,6 +13,8 @@ services:
         value: false
       - key: APP_URL
         value: https://khai-tri-edu.onrender.com
+      - key: APP_KEY
+        sync: false
       - key: DB_CONNECTION
         sync: false
       - key: DB_HOST
@@ -46,7 +48,7 @@ services:
       - key: FILESYSTEM_DISK
         value: public
       - key: RENDER_FALLBACK_SQLITE
-        value: false
+        value: true
       - key: RENDER_SQLITE_PATH
         value: /tmp/render.sqlite
       - key: RENDER_IMPORT_SQL_DUMP
