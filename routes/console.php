@@ -12,12 +12,16 @@ Artisan::command('inspire', function () {
 Artisan::command('portal:dispatch-reminders', function (PortalNotificationService $notificationService) {
     $summary = $notificationService->dispatchReminderNotifications();
 
-    $this->info('Đã gửi nhắc việc hệ thống.');
-    $this->line('Lớp sắp khai giảng: ' . ($summary['upcoming_classes'] ?? 0));
-    $this->line('Giữ chỗ sắp hết hạn: ' . ($summary['seat_hold_expiring'] ?? 0));
-    $this->line('Nạp tiền sắp hết hạn: ' . ($summary['topup_expiring'] ?? 0));
+    $this->info('?? g?i nh?c vi?c h? th?ng.');
+    $this->line('L?p s?p khai gi?ng: ' . ($summary['upcoming_classes'] ?? 0));
+    $this->line('Gi? ch? s?p h?t h?n: ' . ($summary['seat_hold_expiring'] ?? 0));
+    $this->line('N?p ti?n s?p h?t h?n: ' . ($summary['topup_expiring'] ?? 0));
 })->purpose('Dispatch automated portal reminders');
 
 Schedule::command('portal:dispatch-reminders')
     ->everyFifteenMinutes()
+    ->withoutOverlapping();
+
+Schedule::command('blockchain:sync-pending --limit=20')
+    ->everyThirtyMinutes()
     ->withoutOverlapping();

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -16,6 +17,9 @@ class FireflyService
     protected ?string $platformIdentity;
     protected ?string $signer;
     protected ?string $auditTopic;
+    protected string $authMode;
+    protected ?string $username;
+    protected ?string $password;
 
     public function __construct()
     {
@@ -27,15 +31,20 @@ class FireflyService
         $this->platformIdentity = config('services.firefly.platform_identity');
         $this->signer = config('services.firefly.signer');
         $this->auditTopic = config('services.firefly.audit_topic');
+        $this->authMode = strtolower((string) config('services.firefly.auth_mode', 'bearer'));
+        $this->username = config('services.firefly.username');
+        $this->password = config('services.firefly.password');
     }
 
-    protected function client()
+    protected function client(): PendingRequest
     {
         $client = Http::baseUrl(rtrim($this->baseUrl, '/'))
             ->acceptJson()
             ->asJson();
 
-        if ($this->apiKey) {
+        if ($this->authMode === 'basic' && $this->username && $this->password) {
+            $client = $client->withBasicAuth($this->username, $this->password);
+        } elseif ($this->authMode !== 'none' && $this->apiKey) {
             $client = $client->withToken($this->apiKey);
         }
 

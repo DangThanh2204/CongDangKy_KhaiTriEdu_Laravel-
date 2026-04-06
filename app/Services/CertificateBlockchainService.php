@@ -8,7 +8,7 @@ class CertificateBlockchainService
 {
     public function __construct(
         protected BlockchainAuditService $blockchainAudit,
-        protected FireflyService $firefly,
+        protected FireflyConsortiumService $consortium,
     ) {
     }
 
@@ -28,7 +28,7 @@ class CertificateBlockchainService
         $meta['verification_hash'] = $verificationHash;
         $meta['verification_url'] = route('certificates.verify', ['code' => $certificate->certificate_no]);
 
-        if (! data_get($meta, 'blockchain_audit.success') && $this->firefly->isConfigured()) {
+        if (! data_get($meta, 'blockchain_audit.success') && $this->consortium->isConfigured()) {
             $audit = $this->blockchainAudit->record(
                 'certificate.issued',
                 [
@@ -45,10 +45,10 @@ class CertificateBlockchainService
             );
 
             $meta['blockchain_audit'] = $audit;
-        } elseif (! isset($meta['blockchain_audit']) && ! $this->firefly->isConfigured()) {
+        } elseif (! isset($meta['blockchain_audit']) && ! $this->consortium->isConfigured()) {
             $meta['blockchain_audit'] = [
                 'success' => false,
-                'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh.',
+                'message' => 'FireFly chưa được cấu hình.',
             ];
         }
 
@@ -68,6 +68,24 @@ class CertificateBlockchainService
         $audit = data_get($certificate->meta, 'blockchain_audit', []);
         $verificationUrl = data_get($certificate->meta, 'verification_url')
             ?: route('certificates.verify', ['code' => $certificate->certificate_no]);
+        $memberResults = collect(data_get($audit, 'member_results', []))
+            ->map(function (array $result, string $key) {
+                return [
+                    'key' => $result['member_key'] ?? $key,
+                    'label' => $result['member_label'] ?? ucwords(str_replace('-', ' ', $key)),
+                    'role' => $result['member_role'] ?? 'validator',
+                    'success' => (bool) ($result['success'] ?? false),
+                    'message_id' => $result['message_id'] ?? data_get($result, 'data.header.id') ?? data_get($result, 'data.id'),
+                    'tx_id' => $result['tx_id'] ?? data_get($result, 'data.tx.id') ?? data_get($result, 'data.tx') ?? data_get($result, 'data.blockchain.transactionHash'),
+                    'state' => $result['state'] ?? data_get($result, 'data.state') ?? ($result['message'] ?? null),
+                    'endpoint' => $result['endpoint'] ?? null,
+                ];
+            })
+            ->values()
+            ->all();
+        $successCount = (int) data_get($audit, 'success_count', (data_get($audit, 'success') ? 1 : 0));
+        $requiredQuorum = max((int) data_get($audit, 'required_quorum', ($memberResults !== [] ? 1 : 0)), 1);
+        $membersTotal = (int) data_get($audit, 'members_total', count($memberResults));
 
         return [
             'hash' => data_get($certificate->meta, 'verification_hash'),
@@ -85,6 +103,10 @@ class CertificateBlockchainService
             'firefly_state' => data_get($audit, 'state')
                 ?? data_get($audit, 'data.state')
                 ?? data_get($audit, 'status'),
+            'consortium_success_count' => $successCount,
+            'consortium_required_quorum' => $requiredQuorum,
+            'consortium_members_total' => $membersTotal,
+            'consortium_member_results' => $memberResults,
         ];
     }
 

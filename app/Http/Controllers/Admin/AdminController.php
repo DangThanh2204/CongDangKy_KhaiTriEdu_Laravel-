@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Services\BlockchainSyncService;
 use App\Services\FireflyService;
+use App\Services\FireflyConsortiumService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -23,8 +24,10 @@ use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
-    public function __construct(protected FireflyService $firefly)
-    {
+    public function __construct(
+        protected FireflyService $firefly,
+        protected FireflyConsortiumService $consortium,
+    ) {
     }
 
     /**
@@ -427,111 +430,160 @@ class AdminController extends Controller
         return view('admin.blockchain.index', compact('blockchainSummary'));
     }
 
-    public function syncBlockchain(BlockchainSyncService $syncService)
-    {
-        $summary = $syncService->syncPendingRecords(20);
-        $message = trim(($summary['message'] ?? 'ÄÃ£ xá»­ lÃ½ Äá»ng bá» blockchain.') . ' Ch?ng ch?: ' . ($summary['certificates_synced'] ?? 0) . ', giao d?ch: ' . ($summary['transactions_synced'] ?? 0) . ', l?i: ' . ($summary['failed'] ?? 0) . '.');
 
-        return redirect()
-            ->route('admin.blockchain.dashboard')
-            ->with(($summary['success'] ?? false) ? 'success' : 'error', $message);
-    }
+public function syncBlockchain(BlockchainSyncService $syncService)
+{
+    $summary = $syncService->syncPendingRecords(20);
+    $message = trim(($summary['message'] ?? 'Đã xử lý đồng bộ blockchain.') . ' Chứng chỉ: ' . ($summary['certificates_synced'] ?? 0) . ', giao dịch: ' . ($summary['transactions_synced'] ?? 0) . ', lỗi: ' . ($summary['failed'] ?? 0) . '.');
 
-    private function buildBlockchainSummary(): array
-    {
-        $health = $this->firefly->status();
-        $summary = [
-            'firefly_configured' => $this->firefly->isConfigured(),
-            'firefly_health' => $health,
-            'firefly_connected' => (bool) data_get($health, 'success', false),
-            'token_ready' => (bool) data_get($health, 'token_ready', $this->firefly->canManageTokens()),
-            'platform_identity' => (string) data_get($health, 'platform_identity', $this->firefly->getPlatformIdentity()),
-            'namespace' => (string) data_get($health, 'namespace', config('services.firefly.namespace', '-')),
-            'audit_topic' => (string) config('services.firefly.audit_topic', 'audit'),
-            'anchored_certificates' => 0,
-            'pending_certificates' => 0,
-            'anchored_transactions' => 0,
-            'pending_transactions' => 0,
-            'recent_certificates' => [],
-            'recent_transactions' => [],
-        ];
+    return redirect()
+        ->route('admin.blockchain.dashboard')
+        ->with(($summary['success'] ?? false) ? 'success' : 'error', $message);
+}
 
-        try {
-            $certificateTable = (new CourseCertificate())->getTable();
-            if (Schema::hasTable($certificateTable)) {
-                $certificates = CourseCertificate::query()->with(['course:id,title','user:id,fullname,username','enrollment.courseClass:id,name'])->latest('issued_at')->get();
-                $summary['anchored_certificates'] = $certificates->filter(fn (CourseCertificate $certificate) => $this->isBlockchainAnchored($certificate->meta ?? []))->count();
-                $summary['pending_certificates'] = max($certificates->count() - $summary['anchored_certificates'], 0);
-                $summary['recent_certificates'] = $certificates->take(8)->map(function (CourseCertificate $certificate) {
-                    return [
-                        'code' => $certificate->certificate_no,
-                        'user' => $certificate->user?->fullname ?: $certificate->user?->username ?: 'KhÃ´ng rÃµ',
-                        'course' => $certificate->course?->title ?? 'KhÃ´ng xÃ¡c Äá»nh',
-                        'issued_at' => $certificate->issued_at,
-                        'anchored' => $this->isBlockchainAnchored($certificate->meta ?? []),
-                        'message_id' => $this->extractBlockchainMessageId($certificate->meta ?? []),
-                        'tx_id' => $this->extractBlockchainTxId($certificate->meta ?? []),
-                        'state' => $this->extractBlockchainState($certificate->meta ?? []),
-                    ];
-                })->values()->all();
-            }
-        } catch (\Throwable $exception) {
-            report($exception);
+private function buildBlockchainSummary(): array
+{
+    $health = $this->consortium->summary();
+    $summary = [
+        'firefly_configured' => $this->consortium->isConfigured(),
+        'firefly_health' => $health,
+        'firefly_connected' => (bool) data_get($health, 'success', false),
+        'consortium_enabled' => (bool) data_get($health, 'consortium_enabled', false),
+        'consortium_quorum' => (int) data_get($health, 'required_quorum', 1),
+        'healthy_members' => (int) data_get($health, 'healthy_members', 0),
+        'configured_members' => (int) data_get($health, 'configured_members', 0),
+        'members_total' => (int) data_get($health, 'members_total', 0),
+        'member_statuses' => data_get($health, 'members', []),
+        'token_ready' => (bool) data_get($health, 'token_ready', $this->firefly->canManageTokens()),
+        'platform_identity' => (string) data_get($health, 'platform_identity', $this->firefly->getPlatformIdentity()),
+        'namespace' => (string) data_get($health, 'namespace', config('services.firefly.namespace', '-')),
+        'audit_topic' => (string) config('services.firefly.audit_topic', 'audit'),
+        'primary_endpoint' => (string) data_get($health, 'endpoint', ''),
+        'anchored_certificates' => 0,
+        'pending_certificates' => 0,
+        'anchored_transactions' => 0,
+        'pending_transactions' => 0,
+        'recent_certificates' => [],
+        'recent_transactions' => [],
+    ];
+
+    try {
+        $certificateTable = (new CourseCertificate())->getTable();
+        if (Schema::hasTable($certificateTable)) {
+            $certificates = CourseCertificate::query()->with(['course:id,title', 'user:id,fullname,username', 'enrollment.courseClass:id,name'])->latest('issued_at')->get();
+            $summary['anchored_certificates'] = $certificates->filter(fn (CourseCertificate $certificate) => $this->isBlockchainAnchored($certificate->meta ?? []))->count();
+            $summary['pending_certificates'] = max($certificates->count() - $summary['anchored_certificates'], 0);
+            $summary['recent_certificates'] = $certificates->take(8)->map(function (CourseCertificate $certificate) {
+                return [
+                    'code' => $certificate->certificate_no,
+                    'user' => $certificate->user?->fullname ?: $certificate->user?->username ?: 'Không rõ',
+                    'course' => $certificate->course?->title ?? 'Không xác định',
+                    'issued_at' => $certificate->issued_at,
+                    'anchored' => $this->isBlockchainAnchored($certificate->meta ?? []),
+                    'message_id' => $this->extractBlockchainMessageId($certificate->meta ?? []),
+                    'tx_id' => $this->extractBlockchainTxId($certificate->meta ?? []),
+                    'state' => $this->extractBlockchainState($certificate->meta ?? []),
+                    'member_success_count' => $this->extractBlockchainSuccessCount($certificate->meta ?? []),
+                    'required_quorum' => $this->extractBlockchainRequiredQuorum($certificate->meta ?? []),
+                    'proof_ratio' => $this->buildProofRatio($certificate->meta ?? []),
+                ];
+            })->values()->all();
         }
+    } catch (\Throwable $exception) {
+        report($exception);
+    }
 
-        try {
-            $walletTransactionTable = (new WalletTransaction())->getTable();
-            if (Schema::hasTable($walletTransactionTable)) {
-                $transactions = WalletTransaction::query()->with('wallet.user:id,fullname,username')->where('status', 'completed')->latest('created_at')->get();
-                $summary['anchored_transactions'] = $transactions->filter(fn (WalletTransaction $transaction) => $this->isBlockchainAnchored($transaction->metadata ?? []))->count();
-                $summary['pending_transactions'] = max($transactions->count() - $summary['anchored_transactions'], 0);
-                $summary['recent_transactions'] = $transactions->take(8)->map(function (WalletTransaction $transaction) {
-                    return [
-                        'reference' => $transaction->reference ?: ('WTX-' . $transaction->id),
-                        'user' => $transaction->wallet?->user?->fullname ?: $transaction->wallet?->user?->username ?: 'KhÃ´ng rÃµ',
-                        'method' => $transaction->method_label,
-                        'amount' => (float) $transaction->amount,
-                        'created_at' => $transaction->created_at,
-                        'anchored' => $this->isBlockchainAnchored($transaction->metadata ?? []),
-                        'message_id' => $this->extractBlockchainMessageId($transaction->metadata ?? []),
-                        'tx_id' => $this->extractBlockchainTxId($transaction->metadata ?? []),
-                        'state' => $this->extractBlockchainState($transaction->metadata ?? []),
-                    ];
-                })->values()->all();
-            }
-        } catch (\Throwable $exception) {
-            report($exception);
+    try {
+        $walletTransactionTable = (new WalletTransaction())->getTable();
+        if (Schema::hasTable($walletTransactionTable)) {
+            $transactions = WalletTransaction::query()->with('wallet.user:id,fullname,username')->where('status', 'completed')->latest('created_at')->get();
+            $summary['anchored_transactions'] = $transactions->filter(fn (WalletTransaction $transaction) => $this->isBlockchainAnchored($transaction->metadata ?? []))->count();
+            $summary['pending_transactions'] = max($transactions->count() - $summary['anchored_transactions'], 0);
+            $summary['recent_transactions'] = $transactions->take(8)->map(function (WalletTransaction $transaction) {
+                return [
+                    'reference' => $transaction->reference ?: ('WTX-' . $transaction->id),
+                    'user' => $transaction->wallet?->user?->fullname ?: $transaction->wallet?->user?->username ?: 'Không rõ',
+                    'method' => $transaction->method_label,
+                    'amount' => (float) $transaction->amount,
+                    'created_at' => $transaction->created_at,
+                    'anchored' => $this->isBlockchainAnchored($transaction->metadata ?? []),
+                    'message_id' => $this->extractBlockchainMessageId($transaction->metadata ?? []),
+                    'tx_id' => $this->extractBlockchainTxId($transaction->metadata ?? []),
+                    'state' => $this->extractBlockchainState($transaction->metadata ?? []),
+                    'member_success_count' => $this->extractBlockchainSuccessCount($transaction->metadata ?? []),
+                    'required_quorum' => $this->extractBlockchainRequiredQuorum($transaction->metadata ?? []),
+                    'proof_ratio' => $this->buildProofRatio($transaction->metadata ?? []),
+                ];
+            })->values()->all();
         }
-
-        return $summary;
+    } catch (\Throwable $exception) {
+        report($exception);
     }
 
-    private function isBlockchainAnchored(array $payload): bool
-    {
-        $audit = is_array(data_get($payload, 'blockchain_audit')) ? data_get($payload, 'blockchain_audit') : $payload;
-        return (bool) data_get($audit, 'success', false);
-    }
+    return $summary;
+}
 
-    private function extractBlockchainMessageId(array $payload): ?string
-    {
-        $audit = is_array(data_get($payload, 'blockchain_audit')) ? data_get($payload, 'blockchain_audit') : $payload;
-        return data_get($audit, 'message_id') ?? data_get($audit, 'data.header.id') ?? data_get($audit, 'data.id');
-    }
+private function isBlockchainAnchored(array $payload): bool
+{
+    $audit = $this->extractBlockchainAudit($payload);
+    $successCount = (int) data_get($audit, 'success_count', data_get($audit, 'success') ? 1 : 0);
+    $requiredQuorum = max((int) data_get($audit, 'required_quorum', $successCount > 0 ? 1 : 0), 1);
 
-    private function extractBlockchainTxId(array $payload): ?string
-    {
-        $audit = is_array(data_get($payload, 'blockchain_audit')) ? data_get($payload, 'blockchain_audit') : $payload;
-        return data_get($audit, 'tx_id') ?? data_get($audit, 'data.tx.id') ?? data_get($audit, 'data.tx') ?? data_get($audit, 'data.blockchain.id') ?? data_get($audit, 'data.blockchain.transactionHash');
-    }
+    return (bool) data_get($audit, 'success', false) || $successCount >= $requiredQuorum;
+}
 
-    private function extractBlockchainState(array $payload): ?string
-    {
-        $audit = is_array(data_get($payload, 'blockchain_audit')) ? data_get($payload, 'blockchain_audit') : $payload;
-        return data_get($audit, 'state') ?? data_get($audit, 'data.state') ?? data_get($audit, 'status') ?? data_get($audit, 'message');
-    }
+private function extractBlockchainAudit(array $payload): array
+{
+    return is_array(data_get($payload, 'blockchain_audit')) ? data_get($payload, 'blockchain_audit') : $payload;
+}
 
-    private function securityAlertSnapshot(): array
-    {
+private function extractBlockchainSuccessCount(array $payload): int
+{
+    $audit = $this->extractBlockchainAudit($payload);
+
+    return (int) data_get($audit, 'success_count', data_get($audit, 'success') ? 1 : 0);
+}
+
+private function extractBlockchainRequiredQuorum(array $payload): int
+{
+    $audit = $this->extractBlockchainAudit($payload);
+
+    return max((int) data_get($audit, 'required_quorum', $this->extractBlockchainSuccessCount($payload) > 0 ? 1 : 0), 1);
+}
+
+private function buildProofRatio(array $payload): string
+{
+    $audit = $this->extractBlockchainAudit($payload);
+    $successCount = $this->extractBlockchainSuccessCount($payload);
+    $membersTotal = max((int) data_get($audit, 'members_total', $successCount), 1);
+
+    return $successCount . '/' . $membersTotal;
+}
+
+private function extractBlockchainMessageId(array $payload): ?string
+{
+    $audit = $this->extractBlockchainAudit($payload);
+
+    return data_get($audit, 'message_id') ?? data_get($audit, 'data.header.id') ?? data_get($audit, 'data.id');
+}
+
+private function extractBlockchainTxId(array $payload): ?string
+{
+    $audit = $this->extractBlockchainAudit($payload);
+
+    return data_get($audit, 'tx_id') ?? data_get($audit, 'data.tx.id') ?? data_get($audit, 'data.tx') ?? data_get($audit, 'data.blockchain.id') ?? data_get($audit, 'data.blockchain.transactionHash');
+}
+
+private function extractBlockchainState(array $payload): ?string
+{
+    $audit = $this->extractBlockchainAudit($payload);
+
+    return data_get($audit, 'state') ?? data_get($audit, 'data.state') ?? data_get($audit, 'status') ?? data_get($audit, 'message');
+}
+
+private function securityAlertSnapshot(): array
+{
+
         try {
             if (! Schema::hasTable((new SystemLog())->getTable())) {
                 return [

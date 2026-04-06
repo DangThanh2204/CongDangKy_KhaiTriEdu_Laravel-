@@ -9,6 +9,7 @@ class BlockchainSyncService
 {
     public function __construct(
         protected FireflyService $firefly,
+        protected FireflyConsortiumService $consortium,
         protected BlockchainAuditService $blockchainAudit,
         protected CertificateBlockchainService $certificateBlockchain,
     ) {
@@ -16,10 +17,10 @@ class BlockchainSyncService
 
     public function syncPendingRecords(int $limit = 50): array
     {
-        if (! $this->firefly->isConfigured()) {
+        if (! $this->consortium->isConfigured()) {
             return [
                 'success' => false,
-                'message' => 'FireFly ÄÃ£ ÄÆ°á»£c cáº¥u hÃ¬nh, chÆ°a thá» Äá»ng bá» blockchain.',
+                'message' => 'FireFly chưa được cấu hình, chưa thể đồng bộ blockchain.',
                 'certificates_synced' => 0,
                 'transactions_synced' => 0,
                 'failed' => 0,
@@ -28,7 +29,7 @@ class BlockchainSyncService
 
         $summary = [
             'success' => true,
-            'message' => 'ÄÃ£ Äá»ng bá» blockchain thÃ nh cÃ´ng.',
+            'message' => 'Đã đồng bộ blockchain thành công.',
             'certificates_synced' => 0,
             'transactions_synced' => 0,
             'failed' => 0,
@@ -80,10 +81,10 @@ class BlockchainSyncService
         }
 
         if ($summary['certificates_synced'] === 0 && $summary['transactions_synced'] === 0 && $summary['failed'] === 0) {
-            $summary['message'] = 'KhÃ´ng cÃ³ báº£n ghi nÃ o cáº§n Äá»ng bá» thÃªm vá»i FireFly.';
+            $summary['message'] = 'Không có bản ghi nào cần đồng bộ thêm với FireFly.';
         } elseif ($summary['failed'] > 0) {
             $summary['success'] = false;
-            $summary['message'] = 'Má»t pháº§n báº£n ghi chÆ°a Äá»ng bá» ÄÆ°á»£c vá»i FireFly. Vui lÃ²ng kiá»m tra láº¡i cáº¥u hÃ¬nh hoáº·c log.';
+            $summary['message'] = 'Một phần bản ghi chưa đồng bộ được với FireFly. Vui lòng kiểm tra lại cấu hình hoặc log.';
         }
 
         return $summary;
@@ -96,7 +97,7 @@ class BlockchainSyncService
         if (! $transaction->wallet || ! $transaction->wallet->firefly_identity) {
             return [
                 'success' => false,
-                'message' => 'VÃ­ chÆ°a cÃ³ FireFly identity.',
+                'message' => 'Ví chưa có FireFly identity.',
             ];
         }
 

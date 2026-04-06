@@ -113,9 +113,23 @@ services:
         value: https://khai-tri-edu.onrender.com/payments/vnpay/ipn
       - key: FIREFLY_URL
         sync: false
+      - key: FIREFLY_AUTH_MODE
+        value: bearer
       - key: FIREFLY_API_KEY
         sync: false
+      - key: FIREFLY_USERNAME
+        sync: false
+      - key: FIREFLY_PASSWORD
+        sync: false
       - key: FIREFLY_NAMESPACE
+        sync: false
+      - key: FIREFLY_MEMBER_LABEL
+        value: Khai Tri Edu
+      - key: FIREFLY_MEMBER_ROLE
+        value: issuer
+      - key: FIREFLY_CONSORTIUM_QUORUM
+        value: 2
+      - key: FIREFLY_CONSORTIUM_MEMBERS
         sync: false
       - key: FIREFLY_TOKEN_POOL
         sync: false
