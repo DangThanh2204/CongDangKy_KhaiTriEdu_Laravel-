@@ -7,9 +7,9 @@ use Illuminate\Console\Command;
 
 class SyncBlockchainRecords extends Command
 {
-    protected $signature = 'blockchain:sync-pending {--limit=50 : Maximum number of certificates and transactions to process per batch}';
+    protected $signature = 'blockchain:sync-pending {--limit=50 : Maximum number of certificates, transactions, and lifecycle milestones to process per batch}';
 
-    protected $description = 'Sync pending certificates and wallet transactions to Hyperledger FireFly';
+    protected $description = 'Sync pending certificates, wallet transactions, and application lifecycle milestones to Hyperledger FireFly';
 
     public function handle(BlockchainSyncService $syncService): int
     {
@@ -20,6 +20,8 @@ class SyncBlockchainRecords extends Command
 
         $this->line('Certificates synced: ' . ($summary['certificates_synced'] ?? 0));
         $this->line('Transactions synced: ' . ($summary['transactions_synced'] ?? 0));
+        $this->line('Enrollment milestones synced: ' . ($summary['enrollment_milestones_synced'] ?? 0));
+        $this->line('Payment milestones synced: ' . ($summary['payment_milestones_synced'] ?? 0));
         $this->line('Failed: ' . ($summary['failed'] ?? 0));
 
         if (! empty($summary['message'])) {
@@ -50,14 +52,16 @@ class SyncBlockchainRecords extends Command
 
         $certificatesSynced = (int) ($summary['certificates_synced'] ?? 0);
         $transactionsSynced = (int) ($summary['transactions_synced'] ?? 0);
+        $enrollmentMilestonesSynced = (int) ($summary['enrollment_milestones_synced'] ?? 0);
+        $paymentMilestonesSynced = (int) ($summary['payment_milestones_synced'] ?? 0);
         $failed = (int) ($summary['failed'] ?? 0);
         $success = (bool) ($summary['success'] ?? false);
 
-        if (! $success && $certificatesSynced === 0 && $transactionsSynced === 0 && $failed === 0) {
+        if (! $success && $certificatesSynced === 0 && $transactionsSynced === 0 && $enrollmentMilestonesSynced === 0 && $paymentMilestonesSynced === 0 && $failed === 0) {
             return 'FireFly chua duoc cau hinh, chua the dong bo blockchain.';
         }
 
-        if ($success && $certificatesSynced === 0 && $transactionsSynced === 0 && $failed === 0) {
+        if ($success && $certificatesSynced === 0 && $transactionsSynced === 0 && $enrollmentMilestonesSynced === 0 && $paymentMilestonesSynced === 0 && $failed === 0) {
             return 'Khong co ban ghi nao can dong bo them voi FireFly.';
         }
 

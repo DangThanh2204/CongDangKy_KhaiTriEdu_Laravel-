@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseEnrollment;
 use App\Models\Payment;
+use App\Services\ApplicationLifecycleBlockchainService;
 use App\Models\WalletTransaction;
 use App\Services\BlockchainAuditService;
 use App\Services\FireflyService;
@@ -19,6 +20,7 @@ class PaymentController extends Controller
         protected VnpayService $vnpay,
         protected FireflyService $firefly,
         protected BlockchainAuditService $blockchainAudit,
+        protected ApplicationLifecycleBlockchainService $lifecycleBlockchain,
     ) {
     }
 
@@ -394,7 +396,9 @@ class PaymentController extends Controller
 
     private function processSuccessfulPayment(Payment $payment, array $payload, Request $request): void
     {
-        DB::transaction(function () use ($payment, $payload) {
+        $lifecycle = null;
+
+        DB::transaction(function () use ($payment, $payload, &$lifecycle) {
             $payment->refresh();
 
             if (! $payment->isPending()) {
@@ -402,8 +406,39 @@ class PaymentController extends Controller
             }
 
             $payment->markCompleted($this->vnpay->gatewaySummary($payload));
-            $this->ensureEnrollmentForPayment($payment);
+            $lifecycle = $this->ensureEnrollmentForPayment($payment);
         });
+
+        if ($lifecycle && isset($lifecycle['enrollment'])) {
+            $enrollment = $lifecycle['enrollment'];
+            $context = $this->paymentLifecycleContext($request, $payment);
+
+            if (! empty($lifecycle['created'])) {
+                $this->lifecycleBlockchain->applicationCreated($enrollment, $context, [
+                    'source' => 'vnpay_return',
+                    'trigger' => 'course_payment_vnpay',
+                ]);
+                $this->lifecycleBlockchain->classAssigned($enrollment, $enrollment->courseClass, $context, [
+                    'source' => 'vnpay_return',
+                    'trigger' => 'course_payment_vnpay',
+                    'assignment_type' => 'initial',
+                ]);
+            }
+
+            $this->lifecycleBlockchain->paymentRecorded($payment->fresh(['user', 'courseClass.course']), $enrollment, $context, [
+                'source' => 'vnpay_return',
+                'trigger' => 'course_payment_vnpay',
+                'gateway' => 'vnpay',
+                'gateway_summary' => $this->vnpay->gatewaySummary($payload),
+            ]);
+
+            if (! empty($lifecycle['approved'])) {
+                $this->lifecycleBlockchain->approved($enrollment, $context, [
+                    'source' => 'vnpay_return',
+                    'trigger' => 'course_payment_vnpay',
+                ]);
+            }
+        }
 
         SystemLogService::record(
             'transaction',
@@ -555,7 +590,7 @@ class PaymentController extends Controller
         );
     }
 
-    private function ensureEnrollmentForPayment(Payment $payment): CourseEnrollment
+    private function ensureEnrollmentForPayment(Payment $payment): array
     {
         $payment->loadMissing('courseClass.course');
         $course = $payment->courseClass?->course;
@@ -573,6 +608,9 @@ class PaymentController extends Controller
             ]);
         }
 
+        $created = false;
+        $approved = false;
+
         if (! $enrollment->exists || $enrollment->isRejected() || $enrollment->isCancelled()) {
             $enrollment->forceFill([
                 'status' => 'pending',
@@ -583,6 +621,7 @@ class PaymentController extends Controller
                 'completed_at' => null,
                 'notes' => 'Thanh toán qua VNPay: ' . $payment->reference,
             ])->save();
+            $created = true;
         } elseif (! $enrollment->enrolled_at) {
             $enrollment->forceFill([
                 'enrolled_at' => now(),
@@ -591,9 +630,14 @@ class PaymentController extends Controller
 
         if ($course?->isOnline() && ! $enrollment->isApproved() && ! $enrollment->isCompleted()) {
             $enrollment->approve();
+            $approved = true;
         }
 
-        return $enrollment->fresh();
+        return [
+            'enrollment' => $enrollment->fresh(['user', 'courseClass.course']),
+            'created' => $created,
+            'approved' => $approved,
+        ];
     }
 
     private function successMessageForPayment(Payment $payment): string
@@ -646,6 +690,20 @@ class PaymentController extends Controller
         $walletTransaction->metadata = array_merge($walletTransaction->metadata ?? [], $payload);
         $walletTransaction->save();
     }
+
+    private function paymentLifecycleContext(Request $request, Payment $payment): array
+    {
+        $payment->loadMissing('user');
+
+        return [
+            'reference' => $payment->reference ?: ('PAYMENT-' . $payment->id),
+            'user_id' => $payment->user_id,
+            'username' => $payment->user?->username,
+            'role' => $payment->user?->role,
+            'ip' => $request->ip(),
+        ];
+    }
+
     private function markBrowserSessionGuardBypass(Request $request): void
     {
         $request->session()->put('browser_session_guard_skip_once', true);

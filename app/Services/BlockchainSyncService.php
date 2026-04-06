@@ -12,6 +12,7 @@ class BlockchainSyncService
         protected FireflyConsortiumService $consortium,
         protected BlockchainAuditService $blockchainAudit,
         protected CertificateBlockchainService $certificateBlockchain,
+        protected ApplicationLifecycleBlockchainService $lifecycleBlockchain,
     ) {
     }
 
@@ -23,6 +24,8 @@ class BlockchainSyncService
                 'message' => 'FireFly chưa được cấu hình, chưa thể đồng bộ blockchain.',
                 'certificates_synced' => 0,
                 'transactions_synced' => 0,
+                'enrollment_milestones_synced' => 0,
+                'payment_milestones_synced' => 0,
                 'failed' => 0,
             ];
         }
@@ -32,6 +35,8 @@ class BlockchainSyncService
             'message' => 'Đã đồng bộ blockchain thành công.',
             'certificates_synced' => 0,
             'transactions_synced' => 0,
+            'enrollment_milestones_synced' => 0,
+            'payment_milestones_synced' => 0,
             'failed' => 0,
         ];
 
@@ -80,7 +85,14 @@ class BlockchainSyncService
             }
         }
 
-        if ($summary['certificates_synced'] === 0 && $summary['transactions_synced'] === 0 && $summary['failed'] === 0) {
+        $enrollmentLifecycle = $this->lifecycleBlockchain->syncPendingEnrollmentMilestones($limit);
+        $paymentLifecycle = $this->lifecycleBlockchain->syncPendingPaymentMilestones($limit);
+
+        $summary['enrollment_milestones_synced'] += $enrollmentLifecycle['synced'] ?? 0;
+        $summary['payment_milestones_synced'] += $paymentLifecycle['synced'] ?? 0;
+        $summary['failed'] += ($enrollmentLifecycle['failed'] ?? 0) + ($paymentLifecycle['failed'] ?? 0);
+
+        if ($summary['certificates_synced'] === 0 && $summary['transactions_synced'] === 0 && $summary['enrollment_milestones_synced'] === 0 && $summary['payment_milestones_synced'] === 0 && $summary['failed'] === 0) {
             $summary['message'] = 'Không có bản ghi nào cần đồng bộ thêm với FireFly.';
         } elseif ($summary['failed'] > 0) {
             $summary['success'] = false;

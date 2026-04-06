@@ -10,6 +10,7 @@ class EnrollmentQueueService
 {
     public function __construct(
         protected PortalNotificationService $notificationService,
+        protected ApplicationLifecycleBlockchainService $lifecycleBlockchain,
     ) {
     }
 
@@ -41,7 +42,7 @@ class EnrollmentQueueService
         }
     }
 
-    public function joinWaitlist(int $userId, CourseClass $class, ?string $notes = null): CourseEnrollment
+    public function joinWaitlist(int $userId, CourseClass $class, ?string $notes = null, array $context = [], array $extra = []): CourseEnrollment
     {
         $enrollment = CourseEnrollment::firstOrNew([
             'user_id' => $userId,
@@ -61,7 +62,12 @@ class EnrollmentQueueService
             'seat_hold_expires_at' => null,
         ])->save();
 
-        return $enrollment->fresh();
+        $enrollment = $enrollment->fresh();
+        $this->lifecycleBlockchain->applicationCreated($enrollment, $context, array_merge(['source' => $extra['source'] ?? 'waitlist'], $extra));
+        $this->lifecycleBlockchain->classAssigned($enrollment, $enrollment->courseClass, $context, array_merge(['assignment_type' => 'waitlist_target'], $extra));
+        $this->lifecycleBlockchain->waitlistJoined($enrollment, $context, $extra);
+
+        return $enrollment;
     }
 
     public function currentWaitlistPosition(CourseEnrollment $enrollment): ?int
@@ -116,6 +122,13 @@ class EnrollmentQueueService
                 'waitlist_promoted_at' => null,
                 'seat_hold_expires_at' => null,
             ])->save();
+
+            $this->lifecycleBlockchain->seatHoldExpired($enrollment->fresh(), [
+                'role' => 'system',
+                'username' => 'system',
+            ], [
+                'trigger' => 'queue_expiration',
+            ]);
         }
 
         foreach (collect($classIds)->unique() as $classId) {
@@ -141,6 +154,13 @@ class EnrollmentQueueService
 
         $enrollment = $enrollment->fresh();
         $this->notificationService->notifySeatHoldGranted($enrollment);
+        $this->lifecycleBlockchain->seatHoldGranted($enrollment, [
+            'role' => 'system',
+            'username' => 'system',
+        ], [
+            'trigger' => 'queue_sync',
+            'seat_hold_hours' => $this->seatHoldHours(),
+        ]);
 
         return $enrollment;
     }

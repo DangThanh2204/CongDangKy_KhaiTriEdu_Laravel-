@@ -25,6 +25,7 @@ class CourseEnrollment extends Model
         'final_price',
         'discount_code_id',
         'discount_snapshot',
+        'blockchain_meta',
         'completed_at',
         'notes',
     ];
@@ -41,6 +42,7 @@ class CourseEnrollment extends Model
         'discount_amount' => 'decimal:2',
         'final_price' => 'decimal:2',
         'discount_snapshot' => 'array',
+        'blockchain_meta' => 'array',
         'completed_at' => 'datetime',
     ];
 
