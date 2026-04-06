@@ -13,7 +13,7 @@
             <div class="application-hero-copy">
                 <span class="application-eyebrow">Cổng đăng ký khóa học trực tuyến</span>
                 <h1>Tra cứu trạng thái hồ sơ</h1>
-                <p>Theo dõi nhanh hồ sơ đã nộp, tình trạng duyệt, thanh toán và đợt học đã được ghi nhận trên hệ thống.</p>
+                <p>Theo dõi nhanh hồ sơ đã nộp, tình trạng duyệt, thanh toán, lớp học đã được ghi nhận và timeline blockchain của từng mốc nghiệp vụ.</p>
             </div>
             <div class="application-hero-actions">
                 <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
@@ -57,6 +57,8 @@
                         $class = $application['class'];
                         $payment = $application['payment'];
                         $primaryAction = $application['primary_action'];
+                        $blockchainSummary = $application['blockchain_summary'];
+                        $certificate = $enrollment->certificate;
                     @endphp
                     <article class="application-card {{ $application['needs_attention'] ? 'needs-attention' : '' }}">
                         <div class="application-card-header">
@@ -97,10 +99,10 @@
                         <div class="application-detail-grid">
                             <div class="application-detail-card">
                                 <span>Học phí hồ sơ</span>
-                                <strong>{{ number_format((float) ($enrollment->final_price ?? 0), 0) }}đ</strong>
+                                <strong>{{ number_format((float) ($enrollment->final_price ?? 0), 0, ',', '.') }}đ</strong>
                                 <small>
                                     @if((float) ($enrollment->discount_amount ?? 0) > 0)
-                                        Gốc {{ number_format((float) ($enrollment->base_price ?? 0), 0) }}đ, giảm {{ number_format((float) ($enrollment->discount_amount ?? 0), 0) }}đ.
+                                        Gốc {{ number_format((float) ($enrollment->base_price ?? 0), 0, ',', '.') }}đ, giảm {{ number_format((float) ($enrollment->discount_amount ?? 0), 0, ',', '.') }}đ.
                                     @else
                                         {{ (float) ($enrollment->final_price ?? 0) > 0 ? 'Đây là số tiền cần thanh toán cho hồ sơ này.' : 'Hồ sơ này hiện không yêu cầu thanh toán.' }}
                                     @endif
@@ -140,6 +142,72 @@
                             </div>
                         @endif
 
+                        <section class="application-blockchain-card">
+                            <div class="application-blockchain-header">
+                                <div>
+                                    <span class="application-blockchain-kicker">Blockchain FireFly</span>
+                                    <h3>Timeline blockchain của hồ sơ</h3>
+                                    <p>Theo dõi các mốc như tạo hồ sơ, thanh toán, duyệt, xếp lớp và cấp chứng chỉ đã được ghi nhận hoặc đang chờ đồng bộ lên consortium.</p>
+                                </div>
+                                <div class="application-blockchain-stats">
+                                    <span class="badge text-bg-success-subtle border border-success-subtle">{{ $blockchainSummary['anchored'] }} mốc đã neo</span>
+                                    <span class="badge text-bg-warning-subtle border border-warning-subtle">{{ $blockchainSummary['pending'] }} mốc chờ đồng bộ</span>
+                                </div>
+                            </div>
+
+                            @if($application['blockchain_timeline']->isNotEmpty())
+                                <div class="application-blockchain-timeline">
+                                    @foreach($application['blockchain_timeline'] as $event)
+                                        <article class="application-blockchain-item is-{{ $event['variant'] }}">
+                                            <div class="application-blockchain-marker">
+                                                <i class="{{ $event['icon'] }}"></i>
+                                            </div>
+                                            <div class="application-blockchain-body">
+                                                <div class="application-blockchain-row">
+                                                    <div>
+                                                        <div class="application-blockchain-title">{{ $event['title'] }}</div>
+                                                        <div class="application-blockchain-copy">{{ $event['description'] }}</div>
+                                                    </div>
+                                                    <span class="badge text-bg-{{ $event['success'] ? 'success' : 'warning' }}">{{ $event['status_label'] }}</span>
+                                                </div>
+
+                                                <div class="application-blockchain-meta">
+                                                    <span><i class="fas fa-diagram-project"></i>Nguồn: {{ $event['source_label'] }}</span>
+                                                    @if($event['occurred_at_label'])
+                                                        <span><i class="fas fa-clock"></i>{{ $event['occurred_at_label'] }}</span>
+                                                    @endif
+                                                    @if($event['state'])
+                                                        <span><i class="fas fa-wave-square"></i>State: {{ $event['state'] }}</span>
+                                                    @endif
+                                                </div>
+
+                                                @if($event['message'])
+                                                    <div class="application-blockchain-note">{{ $event['message'] }}</div>
+                                                @endif
+
+                                                <div class="application-blockchain-proof">
+                                                    @if($event['message_id'])
+                                                        <span class="application-proof-chip"><strong>Message ID</strong>{{ $event['message_id'] }}</span>
+                                                    @endif
+                                                    @if($event['tx_id'])
+                                                        <span class="application-proof-chip"><strong>TX ID</strong>{{ $event['tx_id'] }}</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </article>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="application-blockchain-empty">
+                                    <i class="fas fa-link-slash"></i>
+                                    <div>
+                                        <strong>Hồ sơ này chưa có mốc blockchain nào.</strong>
+                                        <p class="mb-0">Khi bạn đi qua các bước như duyệt hồ sơ, thanh toán hoặc cấp chứng chỉ, timeline sẽ hiện ngay tại đây.</p>
+                                    </div>
+                                </div>
+                            @endif
+                        </section>
+
                         <div class="application-card-footer">
                             <a href="{{ $primaryAction['url'] }}" class="btn {{ $primaryAction['class'] }}">
                                 <i class="fas fa-arrow-right me-2"></i>{{ $primaryAction['label'] }}
@@ -150,6 +218,11 @@
                             @if($payment && $payment->isCompleted() && in_array($payment->method, ['wallet', 'vnpay'], true))
                                 <a href="{{ route('documents.payment-receipt', $payment) }}" class="btn btn-outline-success">
                                     <i class="fas fa-file-invoice-dollar me-2"></i>Tải biên nhận thanh toán
+                                </a>
+                            @endif
+                            @if($certificate?->certificate_no)
+                                <a href="{{ route('certificates.verify', ['code' => $certificate->certificate_no]) }}" class="btn btn-outline-info">
+                                    <i class="fas fa-link me-2"></i>Xác thực chứng chỉ
                                 </a>
                             @endif
                             @if($course)
@@ -172,7 +245,7 @@
                     <i class="fas fa-folder-open"></i>
                 </div>
                 <h2>Bạn chưa có hồ sơ đăng ký nào</h2>
-                <p>Hãy chọn khóa học hoặc lịch khai giảng phù hợp để gửi hồ sơ đầu tiên. Sau khi nộp, bạn có thể quay lại đây để theo dõi toàn bộ trạng thái.</p>
+                <p>Hãy chọn khóa học hoặc lịch khai giảng phù hợp để gửi hồ sơ đầu tiên. Sau khi nộp, bạn có thể quay lại đây để theo dõi toàn bộ trạng thái và timeline blockchain của hồ sơ.</p>
                 <div class="d-flex flex-wrap justify-content-center gap-3">
                     <a href="{{ route('courses.index') }}" class="btn btn-primary btn-lg">
                         <i class="fas fa-search me-2"></i>Khám phá khóa học

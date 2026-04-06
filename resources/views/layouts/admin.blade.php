@@ -12,26 +12,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <script>
-        // Apply saved theme early to avoid flash on admin pages
-        (function() {
+        (function () {
             try {
                 const saved = localStorage.getItem('theme');
-                if (saved === 'dark') {
-                    document.documentElement.classList.add('dark');
-                    if (document.body) document.body.classList.add('dark');
-                    document.documentElement.setAttribute('data-bs-theme', 'dark');
-                    if (document.body) document.body.setAttribute('data-bs-theme', 'dark');
-                } else if (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    document.documentElement.classList.add('dark');
-                    if (document.body) document.body.classList.add('dark');
-                    document.documentElement.setAttribute('data-bs-theme', 'dark');
-                    if (document.body) document.body.setAttribute('data-bs-theme', 'dark');
-                } else {
-                    document.documentElement.setAttribute('data-bs-theme', 'light');
-                    if (document.body) document.body.setAttribute('data-bs-theme', 'light');
-                }
-            } catch (e) {
-                // ignore
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const isDark = saved === 'dark' || (!saved && prefersDark);
+
+                document.documentElement.classList.toggle('dark', isDark);
+                document.documentElement.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+            } catch (error) {
+                document.documentElement.setAttribute('data-bs-theme', 'light');
             }
         })();
     </script>
@@ -51,7 +41,193 @@
         $adminPaymentAttentionCount = data_get($adminAttentionSummary ?? [], 'payment_attention_count', 0);
         $adminTotalAttentionCount = data_get($adminAttentionSummary ?? [], 'total_attention_count', 0);
         $adminHasAttentionItems = (bool) data_get($adminAttentionSummary ?? [], 'has_attention_items', false);
+
+        $adminMenuGroups = [
+            [
+                'title' => 'Người dùng',
+                'icon' => 'fas fa-users',
+                'attention' => false,
+                'attention_title' => null,
+                'items' => [
+                    [
+                        'route' => 'admin.users.index',
+                        'patterns' => ['admin.users.*'],
+                        'label' => 'Tài khoản & vai trò',
+                        'icon' => 'fas fa-user-shield',
+                        'title' => 'Quản lý tài khoản người dùng',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Nội dung',
+                'icon' => 'fas fa-newspaper',
+                'attention' => false,
+                'attention_title' => null,
+                'items' => [
+                    [
+                        'route' => 'admin.news-categories.index',
+                        'patterns' => ['admin.news-categories.*'],
+                        'label' => 'Danh mục tin tức',
+                        'icon' => 'fas fa-folder-open',
+                        'title' => 'Quản lý danh mục tin tức',
+                    ],
+                    [
+                        'route' => 'admin.news.index',
+                        'patterns' => ['admin.news.*'],
+                        'label' => 'Tin tức',
+                        'icon' => 'fas fa-newspaper',
+                        'title' => 'Quản lý tin tức',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Đào tạo',
+                'icon' => 'fas fa-book-open',
+                'attention' => $adminNewReviewCount > 0,
+                'attention_title' => $adminNewReviewCount > 0 ? 'Có đánh giá mới cần xem' : null,
+                'items' => [
+                    [
+                        'route' => 'admin.course-categories.index',
+                        'patterns' => ['admin.course-categories.*'],
+                        'label' => 'Nhóm ngành',
+                        'icon' => 'fas fa-folder-tree',
+                        'title' => 'Quản lý nhóm ngành',
+                    ],
+                    [
+                        'route' => 'admin.courses.index',
+                        'patterns' => ['admin.courses.*'],
+                        'label' => 'Khóa học',
+                        'icon' => 'fas fa-book-open',
+                        'title' => 'Quản lý khóa học',
+                    ],
+                    [
+                        'route' => 'admin.classes.index',
+                        'patterns' => ['admin.classes.*'],
+                        'label' => 'Đợt học & lớp',
+                        'icon' => 'fas fa-chalkboard-teacher',
+                        'title' => 'Quản lý đợt học và lớp học',
+                    ],
+                    [
+                        'route' => 'admin.reviews.index',
+                        'patterns' => ['admin.reviews.*'],
+                        'label' => 'Đánh giá',
+                        'icon' => 'fas fa-star',
+                        'title' => 'Quản lý đánh giá khóa học',
+                        'badge' => $adminNewReviewCount,
+                        'badge_title' => $adminNewReviewCount > 0 ? $adminNewReviewCount . ' đánh giá mới' : null,
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Tuyển sinh & doanh thu',
+                'icon' => 'fas fa-money-bill-wave',
+                'attention' => ($adminPendingEnrollmentCount + $adminPaymentAttentionCount) > 0,
+                'attention_title' => ($adminPendingEnrollmentCount + $adminPaymentAttentionCount) > 0 ? 'Có yêu cầu tuyển sinh hoặc thanh toán cần xử lý' : null,
+                'items' => [
+                    [
+                        'route' => 'admin.enrollments.pending',
+                        'patterns' => ['admin.enrollments.*'],
+                        'label' => 'Đăng ký học',
+                        'icon' => 'fas fa-user-graduate',
+                        'title' => 'Quản lý đăng ký học',
+                        'badge' => $adminPendingEnrollmentCount,
+                        'badge_title' => $adminPendingEnrollmentCount > 0 ? $adminPendingEnrollmentCount . ' đăng ký chờ duyệt' : null,
+                    ],
+                    [
+                        'route' => 'admin.payments.index',
+                        'route_params' => ['status' => 'pending'],
+                        'patterns' => ['admin.payments.*'],
+                        'label' => 'Thanh toán khóa học',
+                        'icon' => 'fas fa-file-invoice-dollar',
+                        'title' => 'Quản lý thanh toán khóa học',
+                        'badge' => $adminPendingPaymentCount,
+                        'badge_title' => $adminPendingPaymentCount > 0 ? $adminPendingPaymentCount . ' thanh toán chờ xử lý' : null,
+                    ],
+                    [
+                        'route' => 'admin.wallet-transactions.index',
+                        'route_params' => ['status' => 'pending'],
+                        'patterns' => ['admin.wallet-transactions.*'],
+                        'label' => 'Nạp ví thủ công',
+                        'icon' => 'fas fa-wallet',
+                        'title' => 'Duyệt nạp ví thủ công',
+                        'badge' => $adminPendingWalletTopupCount,
+                        'badge_title' => $adminPendingWalletTopupCount > 0 ? $adminPendingWalletTopupCount . ' yêu cầu nạp ví chờ duyệt' : null,
+                    ],
+                    [
+                        'route' => 'admin.promotions.index',
+                        'patterns' => ['admin.promotions.*'],
+                        'label' => 'Khuyến mãi & voucher',
+                        'icon' => 'fas fa-tags',
+                        'title' => 'Quản lý khuyến mãi và voucher',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Hệ thống & tích hợp',
+                'icon' => 'fas fa-sliders',
+                'attention' => false,
+                'attention_title' => null,
+                'items' => [
+                    [
+                        'route' => 'admin.blockchain.dashboard',
+                        'patterns' => ['admin.blockchain.*'],
+                        'label' => 'Blockchain FireFly',
+                        'icon' => 'fas fa-link',
+                        'title' => 'Dashboard blockchain FireFly',
+                    ],
+                    [
+                        'route' => 'admin.system-logs.index',
+                        'patterns' => ['admin.system-logs.*'],
+                        'label' => 'Nhật ký hệ thống',
+                        'icon' => 'fas fa-clipboard-list',
+                        'title' => 'Nhật ký hệ thống',
+                    ],
+                    [
+                        'route' => 'admin.backups.index',
+                        'patterns' => ['admin.backups.*'],
+                        'label' => 'Sao lưu dữ liệu',
+                        'icon' => 'fas fa-shield-halved',
+                        'title' => 'Sao lưu dữ liệu',
+                    ],
+                    [
+                        'route' => 'admin.settings.index',
+                        'patterns' => ['admin.settings.*'],
+                        'label' => 'Cài đặt hệ thống',
+                        'icon' => 'fas fa-cog',
+                        'title' => 'Cài đặt hệ thống',
+                    ],
+                ],
+            ],
+        ];
+
+        $adminAlertItems = [
+            [
+                'route' => route('admin.enrollments.pending'),
+                'title' => 'Đăng ký chờ duyệt',
+                'description' => 'Yêu cầu ghi danh offline mới',
+                'count' => $adminPendingEnrollmentCount,
+            ],
+            [
+                'route' => route('admin.reviews.index'),
+                'title' => 'Đánh giá mới',
+                'description' => 'Ý kiến mới từ học viên',
+                'count' => $adminNewReviewCount,
+            ],
+            [
+                'route' => route('admin.payments.index', ['status' => 'pending']),
+                'title' => 'Thanh toán khóa học',
+                'description' => 'Giao dịch đang chờ xử lý',
+                'count' => $adminPendingPaymentCount,
+            ],
+            [
+                'route' => route('admin.wallet-transactions.index', ['status' => 'pending']),
+                'title' => 'Nạp ví thủ công',
+                'description' => 'Yêu cầu topup direct và bank cần duyệt',
+                'count' => $adminPendingWalletTopupCount,
+            ],
+        ];
     @endphp
+
     <nav class="admin-sidebar">
         <div class="sidebar-header">
             <a href="{{ route('admin.dashboard') }}" class="brand">
@@ -73,188 +249,46 @@
                 </a>
             </li>
 
-            <li class="sidebar-group">
-                <div class="sidebar-group-header">
-                    <span>
-                        <i class="fas fa-users"></i>
-                        <span class="nav-text">Quản lý người dùng</span>
-                    </span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý người dùng">
-                    <li class="nav-item">
-                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" title="Quản lý Users">
-                            <i class="fas fa-user"></i>
-                            <span class="nav-text">Users</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <li class="sidebar-group">
-                <div class="sidebar-group-header">
-                    <span>
-                        <i class="fas fa-newspaper"></i>
-                        <span class="nav-text">Quản lý tin tức</span>
-                    </span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý tin tức">
-                    <li class="nav-item">
-                        <a href="{{ route('admin.news-categories.index') }}" class="nav-link {{ request()->routeIs('admin.news-categories.*') ? 'active' : '' }}" title="Danh mục Tin tức">
-                            <i class="fas fa-folder"></i>
-                            <span class="nav-text">Danh mục</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.news.index') }}" class="nav-link {{ request()->routeIs('admin.news.*') ? 'active' : '' }}" title="Quản lý Tin tức">
-                            <i class="fas fa-newspaper"></i>
-                            <span class="nav-text">Tin tức</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <li class="sidebar-group">
-                <div class="sidebar-group-header">
-                    <span class="sidebar-group-title">
-                        <i class="fas fa-book-open"></i>
-                        <span class="nav-text">Quản lý khóa học</span>
-                        @if($adminNewReviewCount > 0)
-                            <span class="admin-attention-dot" title="Có đánh giá mới cần xem"></span>
-                        @endif
-                    </span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý khóa học">
-                    <li class="nav-item">
-                        <a href="{{ route('admin.course-categories.index') }}" class="nav-link {{ request()->routeIs('admin.course-categories.*') ? 'active' : '' }}" title="Nhóm ngành">
-                            <i class="fas fa-folder-tree"></i>
-                            <span class="nav-text">Nhóm ngành</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.courses.index') }}" class="nav-link {{ request()->routeIs('admin.courses.*') ? 'active' : '' }}" title="Quản lý khóa học">
-                            <i class="fas fa-book-open"></i>
-                            <span class="nav-text">Khóa học</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.reviews.index') }}" class="nav-link {{ request()->routeIs('admin.reviews.*') ? 'active' : '' }}" title="Quản lý đánh giá">
-                            <i class="fas fa-star"></i>
-                            <span class="nav-link-label">
-                                <span class="nav-text">Đánh giá</span>
-                                @if($adminNewReviewCount > 0)
-                                    <span class="admin-attention-dot" title="{{ $adminNewReviewCount }} đánh giá mới"></span>
-                                @endif
-                            </span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <li class="sidebar-group">
-                <div class="sidebar-group-header">
-                    <span class="sidebar-group-title">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <span class="nav-text">Quản lý đợt học</span>
-                        @if($adminPendingEnrollmentCount > 0)
-                            <span class="admin-attention-dot" title="Có đăng ký mới cần duyệt"></span>
-                        @endif
-                    </span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý đợt học">
-                    <li class="nav-item">
-                        <a href="{{ route('admin.classes.index') }}" class="nav-link {{ request()->routeIs('admin.classes.*') ? 'active' : '' }}" title="Quản lý đợt học">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                            <span class="nav-text">Đợt học</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.enrollments.pending') }}" class="nav-link {{ request()->routeIs('admin.enrollments.*') ? 'active' : '' }}" title="Quản lý đăng ký">
-                            <i class="fas fa-user-graduate"></i>
-                            <span class="nav-link-label">
-                                <span class="nav-text">Đăng ký</span>
-                                @if($adminPendingEnrollmentCount > 0)
-                                    <span class="admin-attention-dot" title="{{ $adminPendingEnrollmentCount }} đăng ký chờ duyệt"></span>
-                                @endif
-                            </span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <li class="sidebar-group">
-                <div class="sidebar-group-header">
-                    <span class="sidebar-group-title">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <span class="nav-text">Quản lý thanh toán</span>
-                        @if($adminPaymentAttentionCount > 0)
-                            <span class="admin-attention-dot" title="Có thanh toán mới cần xử lý"></span>
-                        @endif
-                    </span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <ul class="sidebar-subnav" data-group-title="Quản lý thanh toán">
-                    <li class="nav-item">
-                        <a href="{{ route('admin.payments.index', ['status' => 'pending']) }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" title="Quản lý thanh toán khóa học">
-                            <i class="fas fa-file-invoice-dollar"></i>
-                            <span class="nav-link-label">
-                                <span class="nav-text">Thanh toán khóa học</span>
-                                @if($adminPendingPaymentCount > 0)
-                                    <span class="admin-attention-dot" title="{{ $adminPendingPaymentCount }} thanh toán chờ xử lý"></span>
-                                @endif
-                            </span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.wallet-transactions.index', ['status' => 'pending']) }}" class="nav-link {{ request()->routeIs('admin.wallet-transactions.*') ? 'active' : '' }}" title="Duyệt nạp ví thủ công">
-                            <i class="fas fa-wallet"></i>
-                            <span class="nav-link-label">
-                                <span class="nav-text">Nạp ví thủ công</span>
-                                @if($adminPendingWalletTopupCount > 0)
-                                    <span class="admin-attention-dot" title="{{ $adminPendingWalletTopupCount }} yêu cầu nạp ví chờ duyệt"></span>
-                                @endif
-                            </span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.promotions.index') }}" class="nav-link {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}" title="Khuyến mãi & voucher">
-                            <i class="fas fa-tags"></i>
-                            <span class="nav-text">Khuyến mãi & voucher</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
-            <li class="nav-item">
-                <a href="{{ route('admin.blockchain.dashboard') }}" class="nav-link {{ request()->routeIs('admin.blockchain.*') ? 'active' : '' }}" title="Blockchain FireFly">
-                    <i class="fas fa-link"></i>
-                    <span class="nav-text">Blockchain FireFly</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a href="{{ route('admin.system-logs.index') }}" class="nav-link {{ request()->routeIs('admin.system-logs.*') ? 'active' : '' }}" title="Nhật ký hệ thống">
-                    <i class="fas fa-clipboard-list"></i>
-                    <span class="nav-text">Nhật ký hệ thống</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a href="{{ route('admin.backups.index') }}" class="nav-link {{ request()->routeIs('admin.backups.*') ? 'active' : '' }}" title="Sao lưu dữ liệu">
-                    <i class="fas fa-shield-halved"></i>
-                    <span class="nav-text">Sao lưu dữ liệu</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a href="{{ route('admin.settings.index') }}" class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}" title="Cài đặt hệ thống">
-                    <i class="fas fa-cog"></i>
-                    <span class="nav-text">Cài đặt hệ thống</span>
-                </a>
-            </li>
+            @foreach($adminMenuGroups as $group)
+                @php
+                    $groupHasActiveItem = collect($group['items'])->contains(function (array $item) {
+                        return collect($item['patterns'])->contains(fn (string $pattern) => request()->routeIs($pattern));
+                    });
+                @endphp
+                <li class="sidebar-group">
+                    <div class="sidebar-group-header {{ $groupHasActiveItem ? 'open' : '' }}">
+                        <span class="sidebar-group-title">
+                            <i class="{{ $group['icon'] }}"></i>
+                            <span class="nav-text">{{ $group['title'] }}</span>
+                            @if($group['attention'])
+                                <span class="admin-attention-dot" title="{{ $group['attention_title'] }}"></span>
+                            @endif
+                        </span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <ul class="sidebar-subnav {{ $groupHasActiveItem ? 'open' : '' }}" data-group-title="{{ $group['title'] }}">
+                        @foreach($group['items'] as $item)
+                            @php
+                                $itemIsActive = collect($item['patterns'])->contains(fn (string $pattern) => request()->routeIs($pattern));
+                                $itemBadge = (int) ($item['badge'] ?? 0);
+                            @endphp
+                            <li class="nav-item">
+                                <a href="{{ route($item['route'], $item['route_params'] ?? []) }}" class="nav-link {{ $itemIsActive ? 'active' : '' }}" title="{{ $item['title'] }}">
+                                    <i class="{{ $item['icon'] }}"></i>
+                                    @if($itemBadge > 0)
+                                        <span class="nav-link-label">
+                                            <span class="nav-text">{{ $item['label'] }}</span>
+                                            <span class="admin-attention-dot" title="{{ $item['badge_title'] ?? ($itemBadge . ' mục cần xử lý') }}"></span>
+                                        </span>
+                                    @else
+                                        <span class="nav-text">{{ $item['label'] }}</span>
+                                    @endif
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </li>
+            @endforeach
         </ul>
 
         <div class="sidebar-footer">
@@ -282,7 +316,7 @@
             </div>
 
             <div class="topbar-right d-flex align-items-center">
-                <button id="themeToggle" class="btn btn-sm btn-outline-secondary" title="Toggle theme">
+                <button id="themeToggle" class="btn btn-sm btn-outline-secondary" title="Đổi giao diện sáng tối">
                     <i id="themeIcon" class="fas fa-moon"></i>
                 </button>
 
@@ -304,34 +338,15 @@
                             @endif
                         </div>
                         <div class="admin-alert-menu-list">
-                            <a href="{{ route('admin.enrollments.pending') }}" class="dropdown-item admin-alert-item">
-                                <span class="item-copy">
-                                    <strong>Đăng ký chờ duyệt</strong>
-                                    <small>Yêu cầu ghi danh offline mới</small>
-                                </span>
-                                <span class="badge {{ $adminPendingEnrollmentCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminPendingEnrollmentCount }}</span>
-                            </a>
-                            <a href="{{ route('admin.reviews.index') }}" class="dropdown-item admin-alert-item">
-                                <span class="item-copy">
-                                    <strong>Đánh giá mới</strong>
-                                    <small>Ý kiến mới từ học viên</small>
-                                </span>
-                                <span class="badge {{ $adminNewReviewCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminNewReviewCount }}</span>
-                            </a>
-                            <a href="{{ route('admin.payments.index', ['status' => 'pending']) }}" class="dropdown-item admin-alert-item">
-                                <span class="item-copy">
-                                    <strong>Thanh toán khóa học</strong>
-                                    <small>Giao dịch đang chờ xử lý</small>
-                                </span>
-                                <span class="badge {{ $adminPendingPaymentCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminPendingPaymentCount }}</span>
-                            </a>
-                            <a href="{{ route('admin.wallet-transactions.index', ['status' => 'pending']) }}" class="dropdown-item admin-alert-item">
-                                <span class="item-copy">
-                                    <strong>Nạp ví thủ công</strong>
-                                    <small>Yêu cầu topup direct và bank cần duyệt</small>
-                                </span>
-                                <span class="badge {{ $adminPendingWalletTopupCount > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $adminPendingWalletTopupCount }}</span>
-                            </a>
+                            @foreach($adminAlertItems as $item)
+                                <a href="{{ $item['route'] }}" class="dropdown-item admin-alert-item">
+                                    <span class="item-copy">
+                                        <strong>{{ $item['title'] }}</strong>
+                                        <small>{{ $item['description'] }}</small>
+                                    </span>
+                                    <span class="badge {{ $item['count'] > 0 ? 'text-bg-danger' : 'text-bg-light' }}">{{ $item['count'] }}</span>
+                                </a>
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -370,75 +385,77 @@
     </main>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const sidebarToggle = document.getElementById('sidebarToggle');
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const savedSidebarState = localStorage.getItem('sidebarCollapsed');
 
-        const savedSidebarState = localStorage.getItem('sidebarCollapsed');
-        if (savedSidebarState === 'true') {
-            document.body.classList.add('sidebar-collapsed');
-        } else if (savedSidebarState === 'false') {
-            document.body.classList.remove('sidebar-collapsed');
-        }
-
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function() {
-                const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-                localStorage.setItem('sidebarCollapsed', isCollapsed);
-            });
-        }
-
-        function autoCloseAlerts() {
-            document.querySelectorAll('.alert').forEach(alert => {
-                setTimeout(() => {
-                    alert.style.opacity = '0';
-                    alert.style.transform = 'translateY(-100%)';
-                    setTimeout(() => {
-                        if (window.bootstrap && bootstrap.Alert) {
-                            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                            bsAlert.close();
-                        } else {
-                            alert.classList.remove('show');
-                            alert.style.display = 'none';
-                        }
-                    }, 800);
-                }, 4200);
-            });
-        }
-        autoCloseAlerts();
-
-        function handleMobileSidebar() {
-            if (window.innerWidth < 768) {
+            if (savedSidebarState === 'true') {
                 document.body.classList.add('sidebar-collapsed');
-                localStorage.setItem('sidebarCollapsed', 'true');
-            } else {
-                const savedState = localStorage.getItem('sidebarCollapsed');
-                if (savedState === null) {
+            } else if (savedSidebarState === 'false') {
+                document.body.classList.remove('sidebar-collapsed');
+            }
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function () {
+                    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem('sidebarCollapsed', isCollapsed);
+                });
+            }
+
+            function autoCloseAlerts() {
+                document.querySelectorAll('.alert').forEach((alert) => {
+                    setTimeout(() => {
+                        alert.style.opacity = '0';
+                        alert.style.transform = 'translateY(-100%)';
+                        setTimeout(() => {
+                            if (window.bootstrap && bootstrap.Alert) {
+                                const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                                bsAlert.close();
+                            } else {
+                                alert.classList.remove('show');
+                                alert.style.display = 'none';
+                            }
+                        }, 800);
+                    }, 4200);
+                });
+            }
+
+            function handleMobileSidebar() {
+                if (window.innerWidth < 768) {
+                    document.body.classList.add('sidebar-collapsed');
+                    localStorage.setItem('sidebarCollapsed', 'true');
+                } else if (savedSidebarState === null) {
                     document.body.classList.remove('sidebar-collapsed');
                 }
             }
-        }
-        handleMobileSidebar();
-        window.addEventListener('resize', handleMobileSidebar);
 
-        const groups = Array.from(document.querySelectorAll('.sidebar-group'));
+            autoCloseAlerts();
+            handleMobileSidebar();
+            window.addEventListener('resize', handleMobileSidebar);
 
-        groups.forEach(group => {
-            const header = group.querySelector('.sidebar-group-header');
-            const subnav = group.querySelector('.sidebar-subnav');
+            const groups = Array.from(document.querySelectorAll('.sidebar-group'));
+            groups.forEach((group) => {
+                const header = group.querySelector('.sidebar-group-header');
+                const subnav = group.querySelector('.sidebar-subnav');
 
-            if (!header || !subnav) return;
+                if (!header || !subnav) {
+                    return;
+                }
 
-            group.addEventListener('mouseenter', () => {
-                header.classList.add('open');
-                subnav.classList.add('open');
-            });
+                group.addEventListener('mouseenter', () => {
+                    header.classList.add('open');
+                    subnav.classList.add('open');
+                });
 
-            group.addEventListener('mouseleave', () => {
-                header.classList.remove('open');
-                subnav.classList.remove('open');
+                group.addEventListener('mouseleave', () => {
+                    const isActiveGroup = subnav.querySelector('.nav-link.active');
+                    if (document.body.classList.contains('sidebar-collapsed') || !isActiveGroup) {
+                        header.classList.remove('open');
+                        subnav.classList.remove('open');
+                    }
+                });
             });
         });
-    });
     </script>
     @stack('scripts')
 </body>

@@ -193,13 +193,37 @@
     font-size: 1rem;
 }
 
-.tone-success .application-step-icon { background: linear-gradient(135deg, #16a34a, #15803d); }
-.tone-warning .application-step-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.tone-danger .application-step-icon { background: linear-gradient(135deg, #ef4444, #dc2626); }
-.tone-primary .application-step-icon { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
-.tone-info .application-step-icon { background: linear-gradient(135deg, #0891b2, #0e7490); }
+.tone-success .application-step-icon,
+.is-success .application-blockchain-marker {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.tone-warning .application-step-icon,
+.is-warning .application-blockchain-marker {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.tone-danger .application-step-icon,
+.is-danger .application-blockchain-marker {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.tone-primary .application-step-icon,
+.is-primary .application-blockchain-marker {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.tone-info .application-step-icon,
+.is-info .application-blockchain-marker {
+    background: linear-gradient(135deg, #0891b2, #0e7490);
+}
+
 .tone-secondary .application-step-icon,
-.tone-dark .application-step-icon { background: linear-gradient(135deg, #475569, #334155); }
+.tone-dark .application-step-icon,
+.is-secondary .application-blockchain-marker,
+.is-dark .application-blockchain-marker {
+    background: linear-gradient(135deg, #475569, #334155);
+}
 
 .application-step-title {
     color: #64748b;
@@ -274,6 +298,178 @@
     margin-bottom: 0.35rem;
 }
 
+.application-blockchain-card {
+    margin-bottom: 1rem;
+    padding: 1.25rem;
+    border-radius: 24px;
+    border: 1px solid rgba(37, 99, 235, 0.14);
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 26%),
+        linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.application-blockchain-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.application-blockchain-kicker {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.1);
+    color: #1d4ed8;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 0.65rem;
+}
+
+.application-blockchain-header h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.application-blockchain-header p {
+    margin: 0.45rem 0 0;
+    color: #475569;
+    line-height: 1.7;
+    max-width: 760px;
+}
+
+.application-blockchain-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: end;
+}
+
+.application-blockchain-timeline {
+    display: grid;
+    gap: 0.95rem;
+}
+
+.application-blockchain-item {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    gap: 0.95rem;
+    align-items: start;
+}
+
+.application-blockchain-marker {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 1rem;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+}
+
+.application-blockchain-body {
+    padding: 1rem 1.05rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #dbeafe;
+    box-shadow: 0 16px 30px rgba(15, 23, 42, 0.05);
+}
+
+.application-blockchain-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: start;
+}
+
+.application-blockchain-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 0.3rem;
+}
+
+.application-blockchain-copy {
+    color: #334155;
+    line-height: 1.65;
+}
+
+.application-blockchain-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    margin-top: 0.75rem;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+
+.application-blockchain-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.application-blockchain-note {
+    margin-top: 0.75rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.application-blockchain-proof {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.8rem;
+}
+
+.application-proof-chip {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    padding: 0.65rem 0.8rem;
+    border-radius: 14px;
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 0.82rem;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.application-proof-chip strong {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.application-blockchain-empty {
+    display: flex;
+    gap: 0.85rem;
+    align-items: start;
+    padding: 1rem 1.05rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px dashed #bfdbfe;
+    color: #475569;
+}
+
+.application-blockchain-empty i {
+    color: #2563eb;
+    font-size: 1.25rem;
+    margin-top: 0.15rem;
+}
+
 .application-card-footer {
     display: flex;
     flex-wrap: wrap;
@@ -332,7 +528,9 @@
     }
 
     .application-hero,
-    .application-card-header {
+    .application-card-header,
+    .application-blockchain-header,
+    .application-blockchain-row {
         flex-direction: column;
         align-items: stretch;
     }
@@ -346,7 +544,12 @@
         padding: 1.2rem;
     }
 
-    .application-card-badges {
+    .application-card-badges,
+    .application-blockchain-stats {
         justify-content: start;
+    }
+
+    .application-blockchain-item {
+        grid-template-columns: 1fr;
     }
 }
