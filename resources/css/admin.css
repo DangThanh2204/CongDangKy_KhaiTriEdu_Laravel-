@@ -1014,3 +1014,20 @@ body.dark .admin-alert-item strong,
 .sidebar-group:focus-within .sidebar-group-header i {
   transform: rotate(180deg);
 }
+
+/* Keep dropdown cards visible outside the sidebar scroll area */
+.admin-sidebar {
+  overflow: visible;
+}
+
+.sidebar-nav {
+  overflow-x: visible;
+}
+
+.sidebar-group {
+  position: relative;
+}
+
+.sidebar-subnav {
+  pointer-events: auto;
+}
