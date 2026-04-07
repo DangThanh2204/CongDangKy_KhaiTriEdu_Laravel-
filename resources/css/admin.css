@@ -1001,3 +1001,16 @@ body.dark .admin-alert-item strong,
   width: 100%;
   justify-content: space-between;
 }
+
+/* Ensure dropdown cards appear on hover/focus as before */
+.sidebar-group:hover .sidebar-subnav,
+.sidebar-group:focus-within .sidebar-subnav {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.sidebar-group:hover .sidebar-group-header i,
+.sidebar-group:focus-within .sidebar-group-header i {
+  transform: rotate(180deg);
+}
