@@ -1031,3 +1031,17 @@ body.dark .admin-alert-item strong,
 .sidebar-subnav {
   pointer-events: auto;
 }
+
+/* Allow dropdown cards to render outside the sidebar scroll area */
+.admin-sidebar {
+  overflow-y: auto;
+  overflow-x: visible;
+}
+
+.sidebar-nav {
+  overflow: visible;
+}
+
+.sidebar-subnav {
+  z-index: 1400;
+}
