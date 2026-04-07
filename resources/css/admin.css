@@ -1012,13 +1012,34 @@ body.dark .admin-alert-item strong,
   z-index: 1400;
 }
 
+.admin-layout.sidebar-collapsed .sidebar-subnav.open::before {
+  display: none;
+  content: none;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-subnav .nav-text {
+  display: inline;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-subnav .nav-link {
+  justify-content: flex-start;
+  text-align: left;
+  padding: 0.75rem 1.25rem;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-subnav .nav-link i {
+  margin-right: 0.75rem;
+  font-size: 1rem;
+}
+
 .sidebar-subnav.fixed {
   position: fixed;
   left: var(--sidebar-subnav-left, 96px);
   top: var(--sidebar-subnav-top, 100px);
   margin-left: 0;
-  min-width: 250px;
-  max-width: min(280px, calc(100vw - 2rem));
+  width: 220px;
+  max-width: min(220px, calc(100vw - 2rem));
   max-height: var(--sidebar-subnav-max-height, min(70vh, 420px));
   overflow-y: auto;
+  overflow-x: hidden;
 }
