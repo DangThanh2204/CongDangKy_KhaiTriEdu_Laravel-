@@ -1,4 +1,4 @@
-/* Admin Layout - Tận dụng tối đa từ app.css */
+/* Admin Layout */
 html, body {
   margin: 0;
   padding: 0;
@@ -258,7 +258,7 @@ html.dark, [data-bs-theme="dark"] {
   background-clip: text;
 }
 
-/* User Info - Style mới */
+/* User Info */
 .user-info {
   display: flex;
   align-items: center;
@@ -319,7 +319,7 @@ html.dark, [data-bs-theme="dark"] {
   min-height: calc(100vh - 80px);
 }
 
-/* Cards & Stats - Style mới cho admin */
+/* Cards and Stats */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -472,7 +472,7 @@ html.dark, [data-bs-theme="dark"] {
   margin-bottom: 2rem;
 }
 
-/* Activity List - Style mới */
+/* Activity List */
 .activity-list {
   list-style: none;
   padding: 0;
@@ -538,7 +538,7 @@ html.dark, [data-bs-theme="dark"] {
   font-weight: 500;
 }
 
-/* Buttons - Tận dụng từ app.css, chỉ thêm style đặc biệt */
+/* Buttons */
 .btn-outline-light, .btn-outline-primary {
   border: 2px solid var(--primary-color);
   color: var(--primary-color);
@@ -677,13 +677,13 @@ html.dark, [data-bs-theme="dark"] {
   }
 }
 
-/* Table Styles - Tận dụng từ app.css */
+/* Table Styles */
 .table-responsive {
   border-radius: 15px;
   overflow: hidden;
 }
 
-/* Alert Styles - Tận dụng từ app.css */
+/* Alert Styles */
 .alert {
   border: none;
   border-left: 4px solid;
@@ -706,7 +706,7 @@ html.dark, [data-bs-theme="dark"] {
   background: linear-gradient(135deg, #fff3cd, #ffeaa7);
 }
 
-/* Badge Styles - Tận dụng từ app.css */
+/* Badge Styles */
 .badge {
   font-weight: 500;
 }
@@ -985,8 +985,7 @@ body.dark .admin-alert-item strong,
 }
 
 .sidebar-nav {
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
   padding-bottom: 1.5rem;
 }
 
@@ -1002,7 +1001,6 @@ body.dark .admin-alert-item strong,
   justify-content: space-between;
 }
 
-/* Ensure dropdown cards appear on hover/focus as before */
 .sidebar-group:hover .sidebar-subnav,
 .sidebar-group:focus-within .sidebar-subnav {
   opacity: 1;
@@ -1015,40 +1013,23 @@ body.dark .admin-alert-item strong,
   transform: rotate(180deg);
 }
 
-/* Keep dropdown cards visible outside the sidebar scroll area */
-.admin-sidebar {
-  overflow: visible;
-}
-
-.sidebar-nav {
-  overflow-x: visible;
-}
-
-.sidebar-group {
-  position: relative;
-}
-
-.sidebar-subnav {
-  pointer-events: auto;
-}
-
-/* Allow dropdown cards to render outside the sidebar scroll area */
 .admin-sidebar {
   overflow-y: auto;
   overflow-x: visible;
 }
 
-.sidebar-nav {
-  overflow: visible;
-}
-
 .sidebar-subnav {
+  pointer-events: auto;
   z-index: 1400;
 }
 
-/* When sidebar is collapsed, render subnav as fixed so it can escape the sidebar */
 .sidebar-subnav.fixed {
   position: fixed;
-  left: 84px;
+  left: var(--sidebar-subnav-left, 96px);
   top: var(--sidebar-subnav-top, 100px);
+  margin-left: 0;
+  min-width: 250px;
+  max-width: min(280px, calc(100vw - 2rem));
+  max-height: var(--sidebar-subnav-max-height, min(70vh, 420px));
+  overflow-y: auto;
 }
