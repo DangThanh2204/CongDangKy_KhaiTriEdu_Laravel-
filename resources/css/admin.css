@@ -1045,3 +1045,10 @@ body.dark .admin-alert-item strong,
 .sidebar-subnav {
   z-index: 1400;
 }
+
+/* When sidebar is collapsed, render subnav as fixed so it can escape the sidebar */
+.sidebar-subnav.fixed {
+  position: fixed;
+  left: 84px;
+  top: var(--sidebar-subnav-top, 100px);
+}

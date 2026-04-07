@@ -44,7 +44,7 @@
 
         $adminMenuGroups = [
             [
-                'title' => 'Người dùng',
+                'title' => 'NgÆ°á»i dÃ¹ng',
                 'icon' => 'fas fa-users',
                 'attention' => false,
                 'attention_title' => null,
@@ -52,14 +52,14 @@
                     [
                         'route' => 'admin.users.index',
                         'patterns' => ['admin.users.*'],
-                        'label' => 'Tài khoản & vai trò',
+                        'label' => 'TÃ i khoáº£n & vai trÃ²',
                         'icon' => 'fas fa-user-shield',
-                        'title' => 'Quản lý tài khoản người dùng',
+                        'title' => 'Quáº£n lÃ½ tÃ i khoáº£n ngÆ°á»i dÃ¹ng',
                     ],
                 ],
             ],
             [
-                'title' => 'Nội dung',
+                'title' => 'Ná»™i dung',
                 'icon' => 'fas fa-newspaper',
                 'attention' => false,
                 'attention_title' => null,
@@ -67,103 +67,103 @@
                     [
                         'route' => 'admin.news-categories.index',
                         'patterns' => ['admin.news-categories.*'],
-                        'label' => 'Danh mục tin tức',
+                        'label' => 'Danh má»¥c tin tá»©c',
                         'icon' => 'fas fa-folder-open',
-                        'title' => 'Quản lý danh mục tin tức',
+                        'title' => 'Quáº£n lÃ½ danh má»¥c tin tá»©c',
                     ],
                     [
                         'route' => 'admin.news.index',
                         'patterns' => ['admin.news.*'],
-                        'label' => 'Tin tức',
+                        'label' => 'Tin tá»©c',
                         'icon' => 'fas fa-newspaper',
-                        'title' => 'Quản lý tin tức',
+                        'title' => 'Quáº£n lÃ½ tin tá»©c',
                     ],
                 ],
             ],
             [
-                'title' => 'Đào tạo',
+                'title' => 'ÄÃ o táº¡o',
                 'icon' => 'fas fa-book-open',
                 'attention' => $adminNewReviewCount > 0,
-                'attention_title' => $adminNewReviewCount > 0 ? 'Có đánh giá mới cần xem' : null,
+                'attention_title' => $adminNewReviewCount > 0 ? 'CÃ³ Ä‘Ã¡nh giÃ¡ má»›i cáº§n xem' : null,
                 'items' => [
                     [
                         'route' => 'admin.course-categories.index',
                         'patterns' => ['admin.course-categories.*'],
-                        'label' => 'Nhóm ngành',
+                        'label' => 'NhÃ³m ngÃ nh',
                         'icon' => 'fas fa-folder-tree',
-                        'title' => 'Quản lý nhóm ngành',
+                        'title' => 'Quáº£n lÃ½ nhÃ³m ngÃ nh',
                     ],
                     [
                         'route' => 'admin.courses.index',
                         'patterns' => ['admin.courses.*'],
-                        'label' => 'Khóa học',
+                        'label' => 'KhÃ³a há»c',
                         'icon' => 'fas fa-book-open',
-                        'title' => 'Quản lý khóa học',
+                        'title' => 'Quáº£n lÃ½ khÃ³a há»c',
                     ],
                     [
                         'route' => 'admin.classes.index',
                         'patterns' => ['admin.classes.*'],
-                        'label' => 'Đợt học & lớp',
+                        'label' => 'Äá»£t há»c & lá»›p',
                         'icon' => 'fas fa-chalkboard-teacher',
-                        'title' => 'Quản lý đợt học và lớp học',
+                        'title' => 'Quáº£n lÃ½ Ä‘á»£t há»c vÃ  lá»›p há»c',
                     ],
                     [
                         'route' => 'admin.reviews.index',
                         'patterns' => ['admin.reviews.*'],
-                        'label' => 'Đánh giá',
+                        'label' => 'ÄÃ¡nh giÃ¡',
                         'icon' => 'fas fa-star',
-                        'title' => 'Quản lý đánh giá khóa học',
+                        'title' => 'Quáº£n lÃ½ Ä‘Ã¡nh giÃ¡ khÃ³a há»c',
                         'badge' => $adminNewReviewCount,
-                        'badge_title' => $adminNewReviewCount > 0 ? $adminNewReviewCount . ' đánh giá mới' : null,
+                        'badge_title' => $adminNewReviewCount > 0 ? $adminNewReviewCount . ' Ä‘Ã¡nh giÃ¡ má»›i' : null,
                     ],
                 ],
             ],
             [
-                'title' => 'Tuyển sinh & doanh thu',
+                'title' => 'Tuyá»ƒn sinh & doanh thu',
                 'icon' => 'fas fa-money-bill-wave',
                 'attention' => ($adminPendingEnrollmentCount + $adminPaymentAttentionCount) > 0,
-                'attention_title' => ($adminPendingEnrollmentCount + $adminPaymentAttentionCount) > 0 ? 'Có yêu cầu tuyển sinh hoặc thanh toán cần xử lý' : null,
+                'attention_title' => ($adminPendingEnrollmentCount + $adminPaymentAttentionCount) > 0 ? 'CÃ³ yÃªu cáº§u tuyá»ƒn sinh hoáº·c thanh toÃ¡n cáº§n xá»­ lÃ½' : null,
                 'items' => [
                     [
                         'route' => 'admin.enrollments.pending',
                         'patterns' => ['admin.enrollments.*'],
-                        'label' => 'Đăng ký học',
+                        'label' => 'ÄÄƒng kÃ½ há»c',
                         'icon' => 'fas fa-user-graduate',
-                        'title' => 'Quản lý đăng ký học',
+                        'title' => 'Quáº£n lÃ½ Ä‘Äƒng kÃ½ há»c',
                         'badge' => $adminPendingEnrollmentCount,
-                        'badge_title' => $adminPendingEnrollmentCount > 0 ? $adminPendingEnrollmentCount . ' đăng ký chờ duyệt' : null,
+                        'badge_title' => $adminPendingEnrollmentCount > 0 ? $adminPendingEnrollmentCount . ' Ä‘Äƒng kÃ½ chá» duyá»‡t' : null,
                     ],
                     [
                         'route' => 'admin.payments.index',
                         'route_params' => ['status' => 'pending'],
                         'patterns' => ['admin.payments.*'],
-                        'label' => 'Thanh toán khóa học',
+                        'label' => 'Thanh toÃ¡n khÃ³a há»c',
                         'icon' => 'fas fa-file-invoice-dollar',
-                        'title' => 'Quản lý thanh toán khóa học',
+                        'title' => 'Quáº£n lÃ½ thanh toÃ¡n khÃ³a há»c',
                         'badge' => $adminPendingPaymentCount,
-                        'badge_title' => $adminPendingPaymentCount > 0 ? $adminPendingPaymentCount . ' thanh toán chờ xử lý' : null,
+                        'badge_title' => $adminPendingPaymentCount > 0 ? $adminPendingPaymentCount . ' thanh toÃ¡n chá» xá»­ lÃ½' : null,
                     ],
                     [
                         'route' => 'admin.wallet-transactions.index',
                         'route_params' => ['status' => 'pending'],
                         'patterns' => ['admin.wallet-transactions.*'],
-                        'label' => 'Nạp ví thủ công',
+                        'label' => 'Náº¡p vÃ­ thá»§ cÃ´ng',
                         'icon' => 'fas fa-wallet',
-                        'title' => 'Duyệt nạp ví thủ công',
+                        'title' => 'Duyá»‡t náº¡p vÃ­ thá»§ cÃ´ng',
                         'badge' => $adminPendingWalletTopupCount,
-                        'badge_title' => $adminPendingWalletTopupCount > 0 ? $adminPendingWalletTopupCount . ' yêu cầu nạp ví chờ duyệt' : null,
+                        'badge_title' => $adminPendingWalletTopupCount > 0 ? $adminPendingWalletTopupCount . ' yÃªu cáº§u náº¡p vÃ­ chá» duyá»‡t' : null,
                     ],
                     [
                         'route' => 'admin.promotions.index',
                         'patterns' => ['admin.promotions.*'],
-                        'label' => 'Khuyến mãi & voucher',
+                        'label' => 'Khuyáº¿n mÃ£i & voucher',
                         'icon' => 'fas fa-tags',
-                        'title' => 'Quản lý khuyến mãi và voucher',
+                        'title' => 'Quáº£n lÃ½ khuyáº¿n mÃ£i vÃ  voucher',
                     ],
                 ],
             ],
             [
-                'title' => 'Hệ thống & tích hợp',
+                'title' => 'Há»‡ thá»‘ng & tÃ­ch há»£p',
                 'icon' => 'fas fa-sliders',
                 'attention' => false,
                 'attention_title' => null,
@@ -178,23 +178,23 @@
                     [
                         'route' => 'admin.system-logs.index',
                         'patterns' => ['admin.system-logs.*'],
-                        'label' => 'Nhật ký hệ thống',
+                        'label' => 'Nháº­t kÃ½ há»‡ thá»‘ng',
                         'icon' => 'fas fa-clipboard-list',
-                        'title' => 'Nhật ký hệ thống',
+                        'title' => 'Nháº­t kÃ½ há»‡ thá»‘ng',
                     ],
                     [
                         'route' => 'admin.backups.index',
                         'patterns' => ['admin.backups.*'],
-                        'label' => 'Sao lưu dữ liệu',
+                        'label' => 'Sao lÆ°u dá»¯ liá»‡u',
                         'icon' => 'fas fa-shield-halved',
-                        'title' => 'Sao lưu dữ liệu',
+                        'title' => 'Sao lÆ°u dá»¯ liá»‡u',
                     ],
                     [
                         'route' => 'admin.settings.index',
                         'patterns' => ['admin.settings.*'],
-                        'label' => 'Cài đặt hệ thống',
+                        'label' => 'CÃ i Ä‘áº·t há»‡ thá»‘ng',
                         'icon' => 'fas fa-cog',
-                        'title' => 'Cài đặt hệ thống',
+                        'title' => 'CÃ i Ä‘áº·t há»‡ thá»‘ng',
                     ],
                 ],
             ],
@@ -203,26 +203,26 @@
         $adminAlertItems = [
             [
                 'route' => route('admin.enrollments.pending'),
-                'title' => 'Đăng ký chờ duyệt',
-                'description' => 'Yêu cầu ghi danh offline mới',
+                'title' => 'ÄÄƒng kÃ½ chá» duyá»‡t',
+                'description' => 'YÃªu cáº§u ghi danh offline má»›i',
                 'count' => $adminPendingEnrollmentCount,
             ],
             [
                 'route' => route('admin.reviews.index'),
-                'title' => 'Đánh giá mới',
-                'description' => 'Ý kiến mới từ học viên',
+                'title' => 'ÄÃ¡nh giÃ¡ má»›i',
+                'description' => 'Ã kiáº¿n má»›i tá»« há»c viÃªn',
                 'count' => $adminNewReviewCount,
             ],
             [
                 'route' => route('admin.payments.index', ['status' => 'pending']),
-                'title' => 'Thanh toán khóa học',
-                'description' => 'Giao dịch đang chờ xử lý',
+                'title' => 'Thanh toÃ¡n khÃ³a há»c',
+                'description' => 'Giao dá»‹ch Ä‘ang chá» xá»­ lÃ½',
                 'count' => $adminPendingPaymentCount,
             ],
             [
                 'route' => route('admin.wallet-transactions.index', ['status' => 'pending']),
-                'title' => 'Nạp ví thủ công',
-                'description' => 'Yêu cầu topup direct và bank cần duyệt',
+                'title' => 'Náº¡p vÃ­ thá»§ cÃ´ng',
+                'description' => 'YÃªu cáº§u topup direct vÃ  bank cáº§n duyá»‡t',
                 'count' => $adminPendingWalletTopupCount,
             ],
         ];
@@ -278,7 +278,7 @@
                                     @if($itemBadge > 0)
                                         <span class="nav-link-label">
                                             <span class="nav-text">{{ $item['label'] }}</span>
-                                            <span class="admin-attention-dot" title="{{ $item['badge_title'] ?? ($itemBadge . ' mục cần xử lý') }}"></span>
+                                            <span class="admin-attention-dot" title="{{ $item['badge_title'] ?? ($itemBadge . ' má»¥c cáº§n xá»­ lÃ½') }}"></span>
                                         </span>
                                     @else
                                         <span class="nav-text">{{ $item['label'] }}</span>
@@ -292,15 +292,15 @@
         </ul>
 
         <div class="sidebar-footer">
-            <a href="{{ route('home') }}" class="btn btn-outline-light btn-sm mb-2 sidebar-btn" title="Về trang chủ">
+            <a href="{{ route('home') }}" class="btn btn-outline-light btn-sm mb-2 sidebar-btn" title="Vá» trang chá»§">
                 <i class="fas fa-home"></i>
-                <span class="btn-text">Về trang chủ</span>
+                <span class="btn-text">Vá» trang chá»§</span>
             </a>
             <form method="POST" action="{{ route('logout') }}" class="w-100" data-browser-session-logout="manual">
                 @csrf
-                <button type="submit" class="btn btn-danger btn-sm w-100 sidebar-btn" title="Đăng xuất">
+                <button type="submit" class="btn btn-danger btn-sm w-100 sidebar-btn" title="ÄÄƒng xuáº¥t">
                     <i class="fas fa-sign-out-alt"></i>
-                    <span class="btn-text">Đăng xuất</span>
+                    <span class="btn-text">ÄÄƒng xuáº¥t</span>
                 </button>
             </form>
         </div>
@@ -316,12 +316,12 @@
             </div>
 
             <div class="topbar-right d-flex align-items-center">
-                <button id="themeToggle" class="btn btn-sm btn-outline-secondary" title="Đổi giao diện sáng tối">
+                <button id="themeToggle" class="btn btn-sm btn-outline-secondary" title="Äá»•i giao diá»‡n sÃ¡ng tá»‘i">
                     <i id="themeIcon" class="fas fa-moon"></i>
                 </button>
 
                 <div class="dropdown admin-alert-dropdown">
-                    <button class="btn btn-sm admin-alert-bell dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo quản trị">
+                    <button class="btn btn-sm admin-alert-bell dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="ThÃ´ng bÃ¡o quáº£n trá»‹">
                         <i class="fas fa-bell"></i>
                         @if($adminHasAttentionItems)
                             <span class="admin-alert-bell-dot"></span>
@@ -330,8 +330,8 @@
                     <div class="dropdown-menu dropdown-menu-end admin-alert-menu">
                         <div class="admin-alert-menu-header">
                             <div>
-                                <strong>Thông báo quản trị</strong>
-                                <div class="small text-muted">Các mục mới cần admin kiểm tra</div>
+                                <strong>ThÃ´ng bÃ¡o quáº£n trá»‹</strong>
+                                <div class="small text-muted">CÃ¡c má»¥c má»›i cáº§n admin kiá»ƒm tra</div>
                             </div>
                             @if($adminHasAttentionItems)
                                 <span class="badge text-bg-danger">{{ $adminTotalAttentionCount > 99 ? '99+' : $adminTotalAttentionCount }}</span>
@@ -442,8 +442,21 @@
                     return;
                 }
 
+                const positionSubnav = () => {
+                    if (!document.body.classList.contains('sidebar-collapsed')) {
+                        subnav.classList.remove('fixed');
+                        subnav.style.removeProperty('--sidebar-subnav-top');
+                        return;
+                    }
+
+                    const rect = header.getBoundingClientRect();
+                    subnav.classList.add('fixed');
+                    subnav.style.setProperty('--sidebar-subnav-top', rect.top + 'px');
+                };
+
                 group.addEventListener('mouseenter', () => {
                     header.classList.add('open');
+                    positionSubnav();
                     subnav.classList.add('open');
                 });
 
@@ -452,6 +465,12 @@
                     if (document.body.classList.contains('sidebar-collapsed') || !isActiveGroup) {
                         header.classList.remove('open');
                         subnav.classList.remove('open');
+                    }
+                });
+
+                window.addEventListener('resize', () => {
+                    if (subnav.classList.contains('open')) {
+                        positionSubnav();
                     }
                 });
             });
