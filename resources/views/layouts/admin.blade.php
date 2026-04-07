@@ -266,7 +266,7 @@
                         </span>
                         <i class="fas fa-chevron-down"></i>
                     </div>
-                    <ul class="sidebar-subnav {{ $groupHasActiveItem ? 'open' : '' }}" data-group-title="{{ $group['title'] }}">
+                    <ul class="sidebar-subnav" data-group-title="{{ $group['title'] }}">
                         @foreach($group['items'] as $item)
                             @php
                                 $itemIsActive = collect($item['patterns'])->contains(fn (string $pattern) => request()->routeIs($pattern));
@@ -460,11 +460,6 @@
                     subnav.style.removeProperty('--sidebar-subnav-left');
                     subnav.style.removeProperty('--sidebar-subnav-max-height');
 
-                    if (!document.body.classList.contains('sidebar-collapsed')) {
-                        subnav.classList.remove('fixed');
-                        return;
-                    }
-
                     const sidebar = document.querySelector('.admin-sidebar');
                     const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : null;
                     const headerRect = header.getBoundingClientRect();
@@ -489,9 +484,10 @@
 
                 group.addEventListener('mouseleave', () => {
                     const isActiveGroup = subnav.querySelector('.nav-link.active');
-                    if (document.body.classList.contains('sidebar-collapsed') || !isActiveGroup) {
+                    subnav.classList.remove('open');
+
+                    if (!isActiveGroup) {
                         header.classList.remove('open');
-                        subnav.classList.remove('open');
                     }
                 });
 

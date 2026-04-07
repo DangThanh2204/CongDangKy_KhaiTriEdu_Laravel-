@@ -985,7 +985,8 @@ body.dark .admin-alert-item strong,
 }
 
 .sidebar-nav {
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding-bottom: 1.5rem;
 }
 
@@ -1001,21 +1002,9 @@ body.dark .admin-alert-item strong,
   justify-content: space-between;
 }
 
-.sidebar-group:hover .sidebar-subnav,
-.sidebar-group:focus-within .sidebar-subnav {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0);
-}
-
-.sidebar-group:hover .sidebar-group-header i,
-.sidebar-group:focus-within .sidebar-group-header i {
-  transform: rotate(180deg);
-}
-
 .admin-sidebar {
   overflow-y: auto;
-  overflow-x: visible;
+  overflow-x: hidden;
 }
 
 .sidebar-subnav {
