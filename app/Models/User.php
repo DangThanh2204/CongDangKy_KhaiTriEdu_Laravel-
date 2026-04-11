@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Support\StudentLevel;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Models\MongoAuthenticatable as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
@@ -108,6 +108,16 @@ class User extends Authenticatable
     public function materialProgress()
     {
         return $this->hasMany(CourseMaterialProgress::class);
+    }
+
+    public function portalNotifications()
+    {
+        return $this->morphMany(AppNotification::class, 'notifiable');
+    }
+
+    public function unreadPortalNotifications()
+    {
+        return $this->portalNotifications()->unread();
     }
 
     public function getBalanceAttribute()

@@ -11,11 +11,13 @@ use App\Models\CourseMaterial;
 use App\Models\CourseMaterialProgress;
 use App\Models\CourseMaterialQuizAttempt;
 use App\Models\Payment;
+use App\Support\CollectionPaginator;
 use App\Services\CertificateBlockchainService;
 use App\Services\PromotionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class CourseController extends Controller
@@ -100,137 +102,63 @@ class CourseController extends Controller
     public function intakes(Request $request)
     {
         $categories = CourseCategory::query()->orderBy('name')->get();
-        $statsBaseQuery = $this->openIntakesBaseQuery();
+        $baseIntakes = $this->openIntakesBaseCollection();
 
         $stats = [
-            'open_intakes' => (clone $statsBaseQuery)->count('classes.id'),
-            'opening_this_month' => (clone $statsBaseQuery)
-                ->whereBetween('classes.start_date', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])
-                ->count('classes.id'),
-            'online_count' => (clone $statsBaseQuery)
-                ->where(function ($query) {
-                    $query->where('courses.learning_type', 'online')
-                        ->orWhereNull('courses.learning_type');
-                })
-                ->count('classes.id'),
-            'offline_count' => (clone $statsBaseQuery)
-                ->whereIn('courses.learning_type', ['offline', 'hybrid'])
-                ->count('classes.id'),
+            'open_intakes' => $baseIntakes->count(),
+            'opening_this_month' => $baseIntakes->filter(function (CourseClass $intake) {
+                return $this->dateFallsBetween(
+                    $intake->start_date,
+                    now()->startOfMonth(),
+                    now()->endOfMonth(),
+                );
+            })->count(),
+            'online_count' => $baseIntakes->filter(function (CourseClass $intake) {
+                return ($intake->course?->delivery_mode ?? 'online') === 'online';
+            })->count(),
+            'offline_count' => $baseIntakes->filter(function (CourseClass $intake) {
+                return ($intake->course?->delivery_mode ?? 'online') === 'offline';
+            })->count(),
         ];
 
-        $query = $this->openIntakesBaseQuery()
-            ->with([
-                'course.category',
-                'instructor',
-                'schedules',
-            ])
-            ->withCount([
-                'enrollments as active_enrollments_count' => function ($query) {
-                    $query->whereIn('status', ['approved', 'completed']);
-                },
-            ]);
+        $intakes = $this->applyIntakeFilters($baseIntakes, $request);
+        $intakes = $this->sortClassesForDisplay($intakes);
 
-        if ($request->filled('q')) {
-            $keyword = trim((string) $request->input('q'));
-
-            $query->where(function ($searchQuery) use ($keyword) {
-                $searchQuery->where('classes.name', 'like', '%' . $keyword . '%')
-                    ->orWhere('classes.schedule', 'like', '%' . $keyword . '%')
-                    ->orWhere('classes.meeting_info', 'like', '%' . $keyword . '%')
-                    ->orWhere('courses.title', 'like', '%' . $keyword . '%')
-                    ->orWhere('course_categories.name', 'like', '%' . $keyword . '%');
-            });
-        }
-
-        if ($request->filled('category')) {
-            $query->where('courses.category_id', $request->integer('category'));
-        }
-
-        if ($request->filled('delivery_mode')) {
-            if ($request->input('delivery_mode') === 'online') {
-                $query->where(function ($deliveryQuery) {
-                    $deliveryQuery->where('courses.learning_type', 'online')
-                        ->orWhereNull('courses.learning_type');
-                });
-            }
-
-            if ($request->input('delivery_mode') === 'offline') {
-                $query->whereIn('courses.learning_type', ['offline', 'hybrid']);
-            }
-        }
-
-        if ($request->filled('month')) {
-            try {
-                $month = Carbon::createFromFormat('Y-m', (string) $request->input('month'))->startOfMonth();
-                $monthEnd = $month->copy()->endOfMonth();
-
-                $query->where(function ($dateQuery) use ($month, $monthEnd) {
-                    $dateQuery->whereBetween('classes.start_date', [$month->toDateString(), $monthEnd->toDateString()])
-                        ->orWhereBetween('classes.end_date', [$month->toDateString(), $monthEnd->toDateString()])
-                        ->orWhere(function ($rangeQuery) use ($month, $monthEnd) {
-                            $rangeQuery->whereDate('classes.start_date', '<', $month->toDateString())
-                                ->whereDate('classes.end_date', '>', $monthEnd->toDateString());
-                        });
-                });
-            } catch (\Throwable $exception) {
-            }
-        }
-
-        $dateFrom = $request->filled('date_from') ? Carbon::parse((string) $request->input('date_from'))->startOfDay() : null;
-        $dateTo = $request->filled('date_to') ? Carbon::parse((string) $request->input('date_to'))->endOfDay() : null;
-
-        if ($dateFrom && $dateTo && $dateFrom->gt($dateTo)) {
-            [$dateFrom, $dateTo] = [$dateTo->copy()->startOfDay(), $dateFrom->copy()->endOfDay()];
-        }
-
-        if ($dateFrom) {
-            $query->whereDate('classes.start_date', '>=', $dateFrom->toDateString());
-        }
-
-        if ($dateTo) {
-            $query->whereDate('classes.start_date', '<=', $dateTo->toDateString());
-        }
-
-        $minPrice = $request->filled('min_price') ? (float) $request->input('min_price') : null;
-        $maxPrice = $request->filled('max_price') ? (float) $request->input('max_price') : null;
-
-        if ($minPrice !== null) {
-            $query->whereRaw('COALESCE(classes.price_override, courses.sale_price, courses.price, 0) >= ?', [$minPrice]);
-        }
-
-        if ($maxPrice !== null) {
-            $query->whereRaw('COALESCE(classes.price_override, courses.sale_price, courses.price, 0) <= ?', [$maxPrice]);
-        }
-
-        if ($request->boolean('has_slots')) {
-            $query->havingRaw('(classes.max_students IS NULL OR classes.max_students = 0 OR classes.max_students > active_enrollments_count)');
-        }
-
-        $intakes = $query
-            ->orderByRaw('CASE WHEN classes.start_date IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('classes.start_date')
-            ->orderBy('classes.id')
-            ->paginate(12)
-            ->withQueryString();
+        $intakes = CollectionPaginator::paginate(
+            $intakes,
+            12,
+            max((int) $request->integer('page', 1), 1),
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ],
+        );
 
         return view('courses.intakes', compact('intakes', 'categories', 'stats'));
     }
 
-    private function openIntakesBaseQuery()
+    private function openIntakesBaseCollection(): Collection
     {
-        $today = now()->startOfDay()->toDateString();
+        $today = now()->startOfDay();
 
         return CourseClass::query()
-            ->select('classes.*')
-            ->selectRaw('COALESCE(classes.price_override, courses.sale_price, courses.price, 0) as listing_price')
-            ->join('courses', 'courses.id', '=', 'classes.course_id')
-            ->leftJoin('course_categories', 'course_categories.id', '=', 'courses.category_id')
-            ->where('classes.status', 'active')
-            ->where('courses.status', 'published')
-            ->where(function ($query) use ($today) {
-                $query->whereNull('classes.end_date')
-                    ->orWhereDate('classes.end_date', '>=', $today);
-            });
+            ->with(['course.category', 'instructor', 'schedules'])
+            ->where('status', 'active')
+            ->get()
+            ->filter(function (CourseClass $intake) use ($today) {
+                $course = $intake->course;
+
+                if (! $course || $course->status !== 'published') {
+                    return false;
+                }
+
+                if ($intake->end_date && $intake->end_date->copy()->endOfDay()->lt($today)) {
+                    return false;
+                }
+
+                return true;
+            })
+            ->values();
     }
 
     public function show(Course $course, PromotionService $promotionService)
@@ -257,13 +185,13 @@ class CourseController extends Controller
             if ($currentEnrollment) {
                 $isEnrolled = in_array($currentEnrollment->status, ['approved', 'completed'], true);
                 $isPending = $currentEnrollment->status === 'pending';
-                $currentPayment = Payment::query()
+                $currentPayment = $this->sortPaymentsForDisplay(
+                    Payment::query()
+                    ->with(['user', 'courseClass.course.category', 'discountCode'])
                     ->where('user_id', Auth::id())
                     ->where('class_id', $currentEnrollment->class_id)
-                    ->orderByRaw("CASE WHEN status = 'completed' THEN 0 ELSE 1 END")
-                    ->orderByDesc('paid_at')
-                    ->orderByDesc('created_at')
-                    ->first();
+                    ->get()
+                )->first();
                 $registrationDocumentUrl = route('documents.registration-form', $currentEnrollment);
 
                 if ($currentPayment && $currentPayment->isCompleted() && in_array($currentPayment->method, ['wallet', 'vnpay'], true)) {
@@ -272,12 +200,11 @@ class CourseController extends Controller
             }
         }
 
-        $classes = $course->classes()
-            ->with('schedules')
-            ->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
-            ->orderBy('start_date')
-            ->orderBy('id')
-            ->get();
+        $classes = $this->sortClassesForDisplay(
+            $course->classes()
+                ->with('schedules')
+                ->get()
+        );
 
         $similarCourses = Course::published()
             ->where('id', '!=', $course->id)
@@ -713,7 +640,9 @@ class CourseController extends Controller
                 'user:id,fullname,username,email',
                 'enrollment:id,class_id,completed_at',
                 'enrollment.courseClass:id,name,start_date',
-            ])->whereRaw('UPPER(certificate_no) = ?', [$code])->first();
+            ])->get()->first(function (CourseCertificate $item) use ($code) {
+                return Str::upper((string) $item->certificate_no) === $code;
+            });
 
             if ($certificate) {
                 $certificate = $this->certificateBlockchain->ensureAnchored($certificate);
@@ -731,6 +660,197 @@ class CourseController extends Controller
             ->whereIn('status', ['approved', 'completed'])
             ->latest('id')
             ->first();
+    }
+
+    private function applyIntakeFilters(Collection $intakes, Request $request): Collection
+    {
+        $filtered = $intakes;
+
+        if ($request->filled('q')) {
+            $keyword = Str::lower(trim((string) $request->input('q')));
+
+            $filtered = $filtered->filter(function (CourseClass $intake) use ($keyword) {
+                $haystacks = [
+                    $intake->name,
+                    $intake->schedule,
+                    $intake->meeting_info,
+                    $intake->course?->title,
+                    $intake->course?->category?->name,
+                ];
+
+                foreach ($haystacks as $value) {
+                    if ($value !== null && Str::contains(Str::lower((string) $value), $keyword)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })->values();
+        }
+
+        if ($request->filled('category')) {
+            $categoryId = (int) $request->input('category');
+
+            $filtered = $filtered->filter(function (CourseClass $intake) use ($categoryId) {
+                return (int) ($intake->course?->category_id ?? 0) === $categoryId;
+            })->values();
+        }
+
+        if ($request->filled('delivery_mode')) {
+            $deliveryMode = (string) $request->input('delivery_mode');
+
+            $filtered = $filtered->filter(function (CourseClass $intake) use ($deliveryMode) {
+                return ($intake->course?->delivery_mode ?? 'online') === $deliveryMode;
+            })->values();
+        }
+
+        if ($request->filled('month')) {
+            try {
+                $monthStart = Carbon::createFromFormat('Y-m', (string) $request->input('month'))->startOfMonth();
+                $monthEnd = $monthStart->copy()->endOfMonth();
+
+                $filtered = $filtered->filter(function (CourseClass $intake) use ($monthStart, $monthEnd) {
+                    $start = $intake->start_date?->copy()->startOfDay();
+                    $end = $intake->end_date?->copy()->endOfDay();
+
+                    return ($start && $start->between($monthStart, $monthEnd))
+                        || ($end && $end->between($monthStart, $monthEnd))
+                        || ($start && $end && $start->lt($monthStart) && $end->gt($monthEnd));
+                })->values();
+            } catch (\Throwable $exception) {
+            }
+        }
+
+        $dateFrom = $request->filled('date_from') ? Carbon::parse((string) $request->input('date_from'))->startOfDay() : null;
+        $dateTo = $request->filled('date_to') ? Carbon::parse((string) $request->input('date_to'))->endOfDay() : null;
+
+        if ($dateFrom && $dateTo && $dateFrom->gt($dateTo)) {
+            [$dateFrom, $dateTo] = [$dateTo->copy()->startOfDay(), $dateFrom->copy()->endOfDay()];
+        }
+
+        if ($dateFrom) {
+            $filtered = $filtered->filter(function (CourseClass $intake) use ($dateFrom) {
+                return $this->dateFallsBetween($intake->start_date, $dateFrom, null);
+            })->values();
+        }
+
+        if ($dateTo) {
+            $filtered = $filtered->filter(function (CourseClass $intake) use ($dateTo) {
+                return $this->dateFallsBetween($intake->start_date, null, $dateTo);
+            })->values();
+        }
+
+        $minPrice = $request->filled('min_price') ? (float) $request->input('min_price') : null;
+        $maxPrice = $request->filled('max_price') ? (float) $request->input('max_price') : null;
+
+        if ($minPrice !== null) {
+            $filtered = $filtered->filter(function (CourseClass $intake) use ($minPrice) {
+                return (float) $intake->listing_price >= $minPrice;
+            })->values();
+        }
+
+        if ($maxPrice !== null) {
+            $filtered = $filtered->filter(function (CourseClass $intake) use ($maxPrice) {
+                return (float) $intake->listing_price <= $maxPrice;
+            })->values();
+        }
+
+        if ($request->boolean('has_slots')) {
+            $filtered = $filtered->filter(function (CourseClass $intake) {
+                return ! $intake->is_full;
+            })->values();
+        }
+
+        return $filtered->values();
+    }
+
+    private function sortClassesForDisplay(Collection $classes): Collection
+    {
+        return $classes->sort(function (CourseClass $left, CourseClass $right): int {
+            $statusPriority = $this->statusPriority($left->status, ['active']);
+            $compare = $statusPriority <=> $this->statusPriority($right->status, ['active']);
+
+            if ($compare !== 0) {
+                return $compare;
+            }
+
+            $compare = $this->nullableDateComparison($left->start_date, $right->start_date);
+
+            if ($compare !== 0) {
+                return $compare;
+            }
+
+            return ((int) $left->id) <=> ((int) $right->id);
+        })->values();
+    }
+
+    private function sortPaymentsForDisplay(Collection $payments): Collection
+    {
+        return $payments->sort(function (Payment $left, Payment $right): int {
+            $compare = $this->statusPriority($left->status, ['completed']) <=> $this->statusPriority($right->status, ['completed']);
+
+            if ($compare !== 0) {
+                return $compare;
+            }
+
+            $compare = $this->nullableDateComparison($right->paid_at, $left->paid_at);
+
+            if ($compare !== 0) {
+                return $compare;
+            }
+
+            $compare = $this->nullableDateComparison($right->created_at, $left->created_at);
+
+            if ($compare !== 0) {
+                return $compare;
+            }
+
+            return ((int) $right->id) <=> ((int) $left->id);
+        })->values();
+    }
+
+    private function statusPriority(?string $status, array $priorityOrder): int
+    {
+        $index = array_search($status, $priorityOrder, true);
+
+        return $index === false ? count($priorityOrder) : $index;
+    }
+
+    private function nullableDateComparison($left, $right): int
+    {
+        $leftValue = $left ? $left->format('Y-m-d H:i:s.u') : null;
+        $rightValue = $right ? $right->format('Y-m-d H:i:s.u') : null;
+
+        if ($leftValue === null && $rightValue === null) {
+            return 0;
+        }
+
+        if ($leftValue === null) {
+            return 1;
+        }
+
+        if ($rightValue === null) {
+            return -1;
+        }
+
+        return $leftValue <=> $rightValue;
+    }
+
+    private function dateFallsBetween($value, ?Carbon $from, ?Carbon $to): bool
+    {
+        if (! $value instanceof Carbon) {
+            return false;
+        }
+
+        if ($from && $value->copy()->startOfDay()->lt($from->copy()->startOfDay())) {
+            return false;
+        }
+
+        if ($to && $value->copy()->endOfDay()->gt($to->copy()->endOfDay())) {
+            return false;
+        }
+
+        return true;
     }
 
     protected function issueCertificateIfEligible(Course $course, CourseEnrollment $enrollment): ?CourseCertificate

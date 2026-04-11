@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Support\StudyDuration;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\MongoModel as Model;
 use Illuminate\Support\Carbon;
 
 class CourseMaterial extends Model
@@ -87,10 +87,10 @@ class CourseMaterial extends Model
     {
         return match ($this->type) {
             'video' => 'Video YouTube',
-            'pdf' => 'Tài liệu PDF / Word',
-            'assignment' => 'Bài tập',
+            'pdf' => 'TÃ i liá»‡u PDF / Word',
+            'assignment' => 'BÃ i táº­p',
             'quiz' => 'Quiz',
-            'meeting' => 'Buổi học Meet',
+            'meeting' => 'Buá»•i há»c Meet',
             default => ucfirst((string) $this->type),
         };
     }
@@ -161,11 +161,11 @@ class CourseMaterial extends Model
     public function getMeetingStatusLabelAttribute(): string
     {
         return match ($this->meeting_status) {
-            'upcoming' => 'Chưa tới giờ mở',
-            'live' => 'Đang mở phòng học',
-            'ended' => 'Buổi học đã kết thúc',
-            'available' => 'Mở link học',
-            default => 'Nội dung học',
+            'upcoming' => 'ChÆ°a tá»›i giá» má»Ÿ',
+            'live' => 'Äang má»Ÿ phÃ²ng há»c',
+            'ended' => 'Buá»•i há»c Ä‘Ã£ káº¿t thÃºc',
+            'available' => 'Má»Ÿ link há»c',
+            default => 'Ná»™i dung há»c',
         };
     }
 
@@ -202,10 +202,10 @@ class CourseMaterial extends Model
         }
 
         if ($startsAt) {
-            return 'Mở từ ' . $startsAt->format('d/m/Y H:i');
+            return 'Má»Ÿ tá»« ' . $startsAt->format('d/m/Y H:i');
         }
 
-        return 'Kết thúc lúc ' . $endsAt->format('d/m/Y H:i');
+        return 'Káº¿t thÃºc lÃºc ' . $endsAt->format('d/m/Y H:i');
     }
 
     public function canJoinMeeting(): bool
@@ -248,8 +248,8 @@ class CourseMaterial extends Model
     public function getDocumentActionLabelAttribute(): string
     {
         return match ($this->document_extension) {
-            'doc', 'docx' => 'Mở tài liệu Word',
-            default => 'Mở tài liệu',
+            'doc', 'docx' => 'Má»Ÿ tÃ i liá»‡u Word',
+            default => 'Má»Ÿ tÃ i liá»‡u',
         };
     }
 

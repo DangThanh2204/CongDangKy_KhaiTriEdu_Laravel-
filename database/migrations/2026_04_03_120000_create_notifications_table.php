@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (config('database.default') === 'mongodb') {
+            return;
+        }
+
         if (Schema::hasTable('notifications')) {
             return;
         }
@@ -24,6 +28,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (config('database.default') === 'mongodb') {
+            return;
+        }
+
         Schema::dropIfExists('notifications');
     }
 };

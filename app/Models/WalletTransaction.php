@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\MongoModel as Model;
 
 class WalletTransaction extends Model
 {
@@ -204,8 +204,8 @@ class WalletTransaction extends Model
     public function getMethodLabelAttribute(): string
     {
         return match ($this->paymentMethod()) {
-            self::DIRECT_METHOD => 'Nạp trực tiếp',
-            self::BANK_METHOD => 'Chuyển khoản ngân hàng',
+            self::DIRECT_METHOD => 'Náº¡p trá»±c tiáº¿p',
+            self::BANK_METHOD => 'Chuyá»ƒn khoáº£n ngÃ¢n hÃ ng',
             self::VNPAY_METHOD => 'VNPay',
             default => ucfirst(str_replace('_', ' ', $this->paymentMethod() ?: '-')),
         };
@@ -214,10 +214,10 @@ class WalletTransaction extends Model
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'pending' => 'Chờ xử lý',
-            'completed' => 'Hoàn thành',
-            'failed' => 'Thất bại',
-            'expired' => 'Đã hết hạn',
+            'pending' => 'Chá» xá»­ lÃ½',
+            'completed' => 'HoÃ n thÃ nh',
+            'failed' => 'Tháº¥t báº¡i',
+            'expired' => 'ÄÃ£ háº¿t háº¡n',
             default => ucfirst($this->status),
         };
     }
@@ -255,11 +255,11 @@ class WalletTransaction extends Model
         }
 
         if ($this->status === 'expired') {
-            return 'Đã hết hạn' . ($this->expired_at_label ? ' lúc ' . $this->expired_at_label : '');
+            return 'ÄÃ£ háº¿t háº¡n' . ($this->expired_at_label ? ' lÃºc ' . $this->expired_at_label : '');
         }
 
         if ($this->expires_at_label) {
-            return 'Hết hạn lúc ' . $this->expires_at_label;
+            return 'Háº¿t háº¡n lÃºc ' . $this->expires_at_label;
         }
 
         return null;

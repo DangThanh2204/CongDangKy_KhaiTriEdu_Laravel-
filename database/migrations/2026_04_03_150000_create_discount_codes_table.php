@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (config('database.default') === 'mongodb') {
+            return;
+        }
+
         Schema::create('discount_codes', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
@@ -35,6 +39,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (config('database.default') === 'mongodb') {
+            return;
+        }
+
         Schema::dropIfExists('discount_codes');
     }
 };

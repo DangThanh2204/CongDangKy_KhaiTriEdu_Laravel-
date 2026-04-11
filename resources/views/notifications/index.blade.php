@@ -11,7 +11,7 @@
                     <p class="text-muted mb-0">Theo dõi nhanh các cập nhật mới về đăng ký, lớp học và ví của bạn.</p>
                 </div>
 
-                @if(( ?? 0) > 0)
+                @if(($unreadNotificationsCount ?? 0) > 0)
                     <form action="{{ route('notifications.mark-all-read') }}" method="POST">
                         @csrf
                         <button type="submit" class="btn btn-outline-primary">

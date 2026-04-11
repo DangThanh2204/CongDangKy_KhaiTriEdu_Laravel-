@@ -7,7 +7,6 @@ use App\Models\CourseReview;
 use App\Models\Payment;
 use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class AdminLayoutComposer
@@ -35,25 +34,19 @@ class AdminLayoutComposer
         }
 
         try {
-            if (Schema::hasTable((new WalletTransaction())->getTable())) {
-                WalletTransaction::expireOverdueDirectTopups();
+            WalletTransaction::expireOverdueDirectTopups();
 
-                $summary['pending_wallet_topup_count'] = WalletTransaction::query()
-                    ->pendingManualApproval()
-                    ->count();
-            }
+            $summary['pending_wallet_topup_count'] = WalletTransaction::query()
+                ->pendingManualApproval()
+                ->count();
 
-            if (Schema::hasTable((new CourseEnrollment())->getTable())) {
-                $summary['pending_enrollment_count'] = CourseEnrollment::query()
-                    ->where('status', 'pending')
-                    ->count();
-            }
+            $summary['pending_enrollment_count'] = CourseEnrollment::query()
+                ->where('status', 'pending')
+                ->count();
 
-            if (Schema::hasTable((new Payment())->getTable())) {
-                $summary['pending_payment_count'] = Payment::query()
-                    ->where('status', 'pending')
-                    ->count();
-            }
+            $summary['pending_payment_count'] = Payment::query()
+                ->where('status', 'pending')
+                ->count();
 
             if (! session()->has(self::REVIEWS_SEEN_AT_SESSION_KEY)) {
                 session()->put(self::REVIEWS_SEEN_AT_SESSION_KEY, now()->toDateTimeString());
@@ -61,11 +54,9 @@ class AdminLayoutComposer
 
             $reviewsSeenAt = session(self::REVIEWS_SEEN_AT_SESSION_KEY);
 
-            if (Schema::hasTable((new CourseReview())->getTable())) {
-                $summary['new_review_count'] = CourseReview::query()
-                    ->when($reviewsSeenAt, fn ($query) => $query->where('created_at', '>', $reviewsSeenAt))
-                    ->count();
-            }
+            $summary['new_review_count'] = CourseReview::query()
+                ->when($reviewsSeenAt, fn ($query) => $query->where('created_at', '>', $reviewsSeenAt))
+                ->count();
         } catch (\Throwable $exception) {
             report($exception);
         }

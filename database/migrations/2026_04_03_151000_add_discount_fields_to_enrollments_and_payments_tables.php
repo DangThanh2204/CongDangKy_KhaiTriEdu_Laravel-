@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (config('database.default') === 'mongodb') {
+            return;
+        }
+
         Schema::table('course_enrollments', function (Blueprint $table) {
             if (! Schema::hasColumn('course_enrollments', 'base_price')) {
                 $table->decimal('base_price', 12, 2)->nullable()->after('seat_hold_expires_at');
@@ -51,6 +55,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (config('database.default') === 'mongodb') {
+            return;
+        }
+
         Schema::table('course_enrollments', function (Blueprint $table) {
             $columns = [
                 'base_price',

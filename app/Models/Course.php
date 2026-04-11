@@ -4,8 +4,8 @@ namespace App\Models;
 
 use App\Support\StudyDuration;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\MongoModel as Model;
+use MongoDB\Laravel\Eloquent\SoftDeletes;
 
 class Course extends Model
 {
@@ -59,12 +59,14 @@ class Course extends Model
 
     public function sections()
     {
-        return $this->hasMany(CourseSection::class);
+        return $this->hasMany(CourseModule::class, 'course_id')
+            ->orderBy('order')
+            ->orderBy('id');
     }
 
     public function lessons()
     {
-        return $this->hasManyThrough(CourseLesson::class, CourseSection::class);
+        return $this->hasMany(CourseMaterial::class, 'course_id')->orderBy('order');
     }
 
     public function classes()
@@ -80,8 +82,11 @@ class Course extends Model
     public function resolveEnrollmentClass(): CourseClass
     {
         $courseClass = $this->classes()
-            ->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
-            ->orderBy('id')
+            ->get()
+            ->sortBy([
+                fn (CourseClass $courseClass) => $courseClass->status !== 'active',
+                fn (CourseClass $courseClass) => (int) $courseClass->id,
+            ])
             ->first();
 
         if ($courseClass) {
@@ -137,7 +142,7 @@ class Course extends Model
 
     public function enrollments()
     {
-        return $this->hasManyThrough(CourseEnrollment::class, CourseClass::class, 'course_id', 'class_id');
+        return $this->hasMany(CourseEnrollment::class, 'course_id');
     }
 
     public function certificates()

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\MongoModel as Model;
 use Illuminate\Support\Collection;
 
 class DiscountCode extends Model
@@ -197,25 +197,25 @@ class DiscountCode extends Model
     public function getAudienceLabelAttribute(): string
     {
         return match ($this->audience) {
-            self::AUDIENCE_NEW_STUDENT => 'Học viên mới',
-            default => 'Tất cả học viên',
+            self::AUDIENCE_NEW_STUDENT => 'Há»c viÃªn má»›i',
+            default => 'Táº¥t cáº£ há»c viÃªn',
         };
     }
 
     public function getScopeLabelAttribute(): string
     {
         return match ($this->scope_type) {
-            self::SCOPE_COURSE => 'Theo khóa học',
-            self::SCOPE_CATEGORY => 'Theo nhóm ngành',
-            self::SCOPE_SERIES => 'Theo lộ trình / series',
-            default => 'Toàn hệ thống',
+            self::SCOPE_COURSE => 'Theo khÃ³a há»c',
+            self::SCOPE_CATEGORY => 'Theo nhÃ³m ngÃ nh',
+            self::SCOPE_SERIES => 'Theo lá»™ trÃ¬nh / series',
+            default => 'ToÃ n há»‡ thá»‘ng',
         };
     }
 
     public function getValueLabelAttribute(): string
     {
         if ($this->value_type === self::VALUE_FIXED) {
-            return number_format((float) $this->value, 0) . 'đ';
+            return number_format((float) $this->value, 0) . 'Ä‘';
         }
 
         return rtrim(rtrim(number_format((float) $this->value, 2), '0'), '.') . '%';
@@ -224,18 +224,18 @@ class DiscountCode extends Model
     public function getStatusLabelAttribute(): string
     {
         if (! $this->is_active) {
-            return 'Đang tắt';
+            return 'Äang táº¯t';
         }
 
         if (! $this->isWithinWindow()) {
-            return 'Ngoài thời gian áp dụng';
+            return 'NgoÃ i thá»i gian Ã¡p dá»¥ng';
         }
 
         if (! $this->hasRemainingQuota()) {
-            return 'Hết lượt dùng';
+            return 'Háº¿t lÆ°á»£t dÃ¹ng';
         }
 
-        return 'Đang hoạt động';
+        return 'Äang hoáº¡t Ä‘á»™ng';
     }
 
     public function getSummaryLabelAttribute(): string
@@ -246,6 +246,6 @@ class DiscountCode extends Model
             $this->scope_label,
         ])->filter();
 
-        return $parts->implode(' • ');
+        return $parts->implode(' â€¢ ');
     }
 }

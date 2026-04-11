@@ -19,11 +19,14 @@ RUN apt-get update \
         unzip \
         libicu-dev \
         libjpeg62-turbo-dev \
+        libssl-dev \
         libpng-dev \
         libfreetype6-dev \
         libsqlite3-dev \
         libzip-dev \
+        pkg-config \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && pecl install mongodb \
     && docker-php-ext-install \
         bcmath \
         gd \
@@ -33,6 +36,7 @@ RUN apt-get update \
         pdo_mysql \
         pdo_sqlite \
         zip \
+    && docker-php-ext-enable mongodb \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 

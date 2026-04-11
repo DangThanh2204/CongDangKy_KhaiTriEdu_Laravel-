@@ -6,7 +6,6 @@ use App\Models\SystemLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 
 class SystemLogService
 {
@@ -46,10 +45,6 @@ class SystemLogService
         ];
 
         try {
-            if (! Schema::hasTable('system_logs')) {
-                return new SystemLog($payload);
-            }
-
             return SystemLog::create($payload);
         } catch (\Throwable $exception) {
             Log::warning('System log write skipped: ' . $exception->getMessage(), [

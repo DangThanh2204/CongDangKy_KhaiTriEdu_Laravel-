@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\MongoModel as Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Wallet extends Model

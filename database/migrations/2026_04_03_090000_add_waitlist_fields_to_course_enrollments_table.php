@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (config('database.default') === 'mongodb') {
+            return;
+        }
+
         Schema::table('course_enrollments', function (Blueprint $table) {
             $table->timestamp('waitlist_joined_at')->nullable()->after('cancelled_at');
             $table->timestamp('waitlist_promoted_at')->nullable()->after('waitlist_joined_at');
@@ -20,6 +24,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (config('database.default') === 'mongodb') {
+            return;
+        }
+
         Schema::table('course_enrollments', function (Blueprint $table) {
             $table->dropIndex('course_enrollments_waitlist_queue_index');
             $table->dropIndex('course_enrollments_seat_hold_index');

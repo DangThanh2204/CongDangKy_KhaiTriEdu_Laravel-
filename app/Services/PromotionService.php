@@ -257,7 +257,7 @@ class PromotionService
         }
 
         $discountCode = DiscountCode::query()
-            ->whereRaw('UPPER(code) = ?', [strtoupper($voucherCode)])
+            ->where('code', strtoupper($voucherCode))
             ->first();
 
         if (! $discountCode || ! $discountCode->is_active) {

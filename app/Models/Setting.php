@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\MongoModel as Model;
 
 class Setting extends Model
 {
@@ -10,7 +10,7 @@ class Setting extends Model
     public $timestamps = true;
 
     /**
-     * Lấy giá trị setting theo key
+     * Láº¥y giÃ¡ trá»‹ setting theo key
      */
     public static function get($key, $default = null)
     {
@@ -19,7 +19,7 @@ class Setting extends Model
     }
 
     /**
-     * Lưu hoặc cập nhật setting
+     * LÆ°u hoáº·c cáº­p nháº­t setting
      */
     public static function set($key, $value)
     {

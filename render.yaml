@@ -16,6 +16,8 @@ services:
       - key: APP_KEY
         sync: false
       - key: DB_CONNECTION
+        value: mongodb
+      - key: DB_URI
         sync: false
       - key: DB_HOST
         sync: false
@@ -26,6 +28,12 @@ services:
       - key: DB_USERNAME
         sync: false
       - key: DB_PASSWORD
+        sync: false
+      - key: MONGODB_AUTH_SOURCE
+        sync: false
+      - key: MONGODB_REPLICA_SET
+        sync: false
+      - key: MONGODB_TLS
         sync: false
       - key: SESSION_DRIVER
         value: file
@@ -47,16 +55,6 @@ services:
         value: info
       - key: FILESYSTEM_DISK
         value: public
-      - key: RENDER_FALLBACK_SQLITE
-        value: true
-      - key: RENDER_SQLITE_PATH
-        value: /tmp/render.sqlite
-      - key: RENDER_IMPORT_SQL_DUMP
-        value: true
-      - key: RENDER_SQL_DUMP_PATH
-        value: /var/www/html/khaitriedu.sql
-      - key: RENDER_SCHEMA_DUMP_PATH
-        value: /var/www/html/database/schema/mysql-schema.sql
       - key: RENDER_RESET_DATABASE
         sync: false
       - key: RENDER_SEED_DEMO

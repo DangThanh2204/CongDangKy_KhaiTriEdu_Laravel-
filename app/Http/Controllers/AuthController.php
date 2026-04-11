@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -173,10 +172,6 @@ class AuthController extends Controller
     private function recentLoginFailureCount(string $ip): int
     {
         try {
-            if (! Schema::hasTable((new \App\Models\SystemLog())->getTable())) {
-                return 0;
-            }
-
             return \App\Models\SystemLog::where('action', 'login_failure')
                 ->where('ip', $ip)
                 ->where('created_at', '>=', now()->subMinutes(15))

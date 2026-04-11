@@ -72,9 +72,24 @@ class DocumentController extends Controller
             ->with(['user', 'courseClass.course.category', 'discountCode'])
             ->where('user_id', $enrollment->user_id)
             ->where('class_id', $enrollment->class_id)
-            ->orderByRaw("CASE WHEN status = 'completed' THEN 0 ELSE 1 END")
-            ->orderByDesc('paid_at')
-            ->orderByDesc('created_at')
+            ->get()
+            ->sort(function (Payment $left, Payment $right): int {
+                $leftPriority = $left->status === 'completed' ? 0 : 1;
+                $rightPriority = $right->status === 'completed' ? 0 : 1;
+
+                if ($leftPriority !== $rightPriority) {
+                    return $leftPriority <=> $rightPriority;
+                }
+
+                $leftPaidAt = $left->paid_at?->format('Y-m-d H:i:s.u');
+                $rightPaidAt = $right->paid_at?->format('Y-m-d H:i:s.u');
+
+                if ($leftPaidAt !== $rightPaidAt) {
+                    return ($rightPaidAt ?? '') <=> ($leftPaidAt ?? '');
+                }
+
+                return ($right->created_at?->format('Y-m-d H:i:s.u') ?? '') <=> ($left->created_at?->format('Y-m-d H:i:s.u') ?? '');
+            })
             ->first();
     }
 

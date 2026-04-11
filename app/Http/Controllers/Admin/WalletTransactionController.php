@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\WalletTransaction;
+use App\Support\CollectionPaginator;
 use App\Services\BlockchainAuditService;
 use App\Services\CsvExportService;
 use App\Services\FireflyService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class WalletTransactionController extends Controller
@@ -26,11 +28,19 @@ class WalletTransactionController extends Controller
         $fromDate = $request->get('from_date');
         $toDate = $request->get('to_date');
 
-        $transactions = $this->filteredQuery($request)
-            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 WHEN status = 'expired' THEN 1 ELSE 2 END")
-            ->latest()
-            ->paginate(20)
-            ->withQueryString();
+        $transactions = $this->sortTransactionsForDisplay(
+            $this->filteredQuery($request)->get()
+        );
+
+        $transactions = CollectionPaginator::paginate(
+            $transactions,
+            20,
+            max((int) $request->integer('page', 1), 1),
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ],
+        );
 
         return view('admin.wallet-transactions.index', compact('transactions', 'fromDate', 'toDate'));
     }
@@ -39,10 +49,9 @@ class WalletTransactionController extends Controller
     {
         $this->syncExpiredDirectTopups();
 
-        $transactions = $this->filteredQuery($request)
-            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 WHEN status = 'expired' THEN 1 ELSE 2 END")
-            ->latest()
-            ->get();
+        $transactions = $this->sortTransactionsForDisplay(
+            $this->filteredQuery($request)->get()
+        );
 
         return $csvExportService->download(
             'wallet-transactions-' . now()->format('Y-m-d-His') . '.csv',
@@ -102,6 +111,25 @@ class WalletTransactionController extends Controller
         }
 
         return $query;
+    }
+
+    protected function sortTransactionsForDisplay(Collection $transactions): Collection
+    {
+        return $transactions->sort(function (WalletTransaction $left, WalletTransaction $right): int {
+            $priority = [
+                'pending' => 0,
+                'expired' => 1,
+            ];
+
+            $leftPriority = $priority[$left->status] ?? 2;
+            $rightPriority = $priority[$right->status] ?? 2;
+
+            if ($leftPriority !== $rightPriority) {
+                return $leftPriority <=> $rightPriority;
+            }
+
+            return ($right->created_at?->format('Y-m-d H:i:s.u') ?? '') <=> ($left->created_at?->format('Y-m-d H:i:s.u') ?? '');
+        })->values();
     }
 
     public function show(WalletTransaction $walletTransaction)

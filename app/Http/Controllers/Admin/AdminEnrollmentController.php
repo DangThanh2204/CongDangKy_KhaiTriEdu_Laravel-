@@ -70,14 +70,32 @@ class AdminEnrollmentController extends Controller
     {
         $courses = Course::with([
                 'category',
-                'classes' => function ($query) {
-                    $query->orderByRaw("CASE WHEN status = 'active' THEN 0 ELSE 1 END")
-                        ->orderBy('start_date')
-                        ->orderBy('id');
-                },
+                'classes',
             ])
             ->orderBy('title')
             ->get();
+
+        $courses->each(function (Course $course): void {
+            $sortedClasses = $course->classes->sort(function (CourseClass $left, CourseClass $right): int {
+                $leftPriority = $left->status === 'active' ? 0 : 1;
+                $rightPriority = $right->status === 'active' ? 0 : 1;
+
+                if ($leftPriority !== $rightPriority) {
+                    return $leftPriority <=> $rightPriority;
+                }
+
+                $leftStart = $left->start_date?->format('Y-m-d') ?? '9999-12-31';
+                $rightStart = $right->start_date?->format('Y-m-d') ?? '9999-12-31';
+
+                if ($leftStart !== $rightStart) {
+                    return $leftStart <=> $rightStart;
+                }
+
+                return ((int) $left->id) <=> ((int) $right->id);
+            })->values();
+
+            $course->setRelation('classes', $sortedClasses);
+        });
 
         return view('admin.enrollments.manual-create', compact('courses'));
     }

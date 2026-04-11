@@ -1,122 +1,145 @@
 # Deploy Render Free
 
-Project `khai-tri-edu` đã được chuẩn bị sẵn để demo trên Render bằng `Docker` và hỗ trợ 2 chế độ dữ liệu:
+Project `khai-tri-edu` hien deploy tren Render theo huong `Docker + MongoDB`.
 
-- `SQLite fallback` cho demo nhanh, ít lỗi
-- `MySQL/MariaDB public` để gần giống môi trường local hơn
+## Checklist nhanh
 
-## Chế độ khuyến nghị nếu muốn giống local
+1. Push code len GitHub/GitLab/Bitbucket.
+2. Tao MongoDB Atlas cluster hoac mot MongoDB service co public URI.
+3. Vao Render, chon `New > Blueprint`.
+4. Chon repo co file `render.yaml`.
+5. Dien cac env secret ben duoi.
+6. Deploy lan dau.
+7. Mo log de kiem tra `php artisan mongodb:bootstrap` chay xong.
+8. Neu dang co du lieu cu tu MySQL dump, chay `php artisan mongodb:import-sql-dump --dry-run` de preview truoc.
 
-Dùng `MySQL/MariaDB public` và để Render kết nối bằng các biến môi trường:
+## Bien moi truong bat buoc
 
-- `DB_CONNECTION=mysql`
-- `DB_HOST=...`
-- `DB_PORT=3306`
-- `DB_DATABASE=...`
-- `DB_USERNAME=...`
-- `DB_PASSWORD=...`
+Di vao service tren Render, tab `Environment`, dam bao co:
 
-## Import schema/data từ dump local
+```dotenv
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://your-app.onrender.com
+APP_KEY=base64:YOUR_32_BYTE_KEY
 
-Repo hiện có file dump:
+DB_CONNECTION=mongodb
+DB_URI=mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/khai_tri_edu?retryWrites=true&w=majority&appName=KhaiTriEdu
 
-- `khaitriedu.sql`
+SESSION_DRIVER=file
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
+FILESYSTEM_DISK=public
+LOG_CHANNEL=stderr
+LOG_LEVEL=info
+```
 
-File này có cả schema và dữ liệu, nên có thể dùng để khởi tạo public database gần giống local hơn.
+## Bien moi truong MongoDB tuy chon
 
-### Muốn Render tự import dump khi DB đang trống
+Chi can dung neu ban khong muon nhung het vao `DB_URI`:
 
-Thêm trên Render `Environment`:
+```dotenv
+DB_HOST=...
+DB_PORT=27017
+DB_DATABASE=khai_tri_edu
+DB_USERNAME=...
+DB_PASSWORD=...
+MONGODB_AUTH_SOURCE=admin
+MONGODB_REPLICA_SET=
+MONGODB_TLS=true
+```
 
-- `DB_CONNECTION=mysql`
-- `DB_HOST=...`
-- `DB_PORT=3306`
-- `DB_DATABASE=...`
-- `DB_USERNAME=...`
-- `DB_PASSWORD=...`
-- `RENDER_IMPORT_SQL_DUMP=true`
-- `RENDER_SQL_DUMP_PATH=/var/www/html/khaitriedu.sql`
+Neu da co `DB_URI` day du, thuong khong can set them bo nay.
 
-Khi database chưa có bảng nào, start script sẽ tự import file dump này.
+## Import du lieu cu tu `khaitriedu.sql`
 
-## Muốn luôn có dữ liệu mẫu/demo
+Neu repo dang co file `khaitriedu.sql`, co the import sang MongoDB bang artisan command:
 
-Nếu ngoài dump local bạn vẫn muốn thêm bộ dữ liệu demo ổn định cho màn trình diễn, bật:
+```bash
+php artisan mongodb:import-sql-dump --dry-run
+php artisan mongodb:import-sql-dump --fresh
+```
 
-- `RENDER_SEED_DEMO=true`
+Giai thich nhanh:
 
-Seeder `Database\Seeders\RenderDemoSeeder` sẽ bổ sung / cập nhật:
+- `--dry-run`: chi parse va thong ke so dong se import, khong ghi vao MongoDB
+- `--fresh`: xoa cac collection app truoc khi import lai tu dump
 
-- admin demo
-- giảng viên demo
-- học viên demo
-- khóa học demo online/offline
-- module, nội dung học, đợt học
-- đăng ký học mẫu
-- thanh toán mẫu
-- ví và nạp trực tiếp mẫu
-- tin tức mẫu
+Neu dump co table `migrations`, command se bo qua table nay.
 
-## Trường hợp không có public MySQL ngay
+## Bien moi truong seed demo
 
-Nếu chưa có MySQL/MariaDB public, bạn có thể để Render fallback về SQLite bằng:
+Neu muon Render tu do du lieu mau trong lan deploy dau:
 
-- `RENDER_FALLBACK_SQLITE=true`
+```dotenv
+RENDER_SEED_DEMO=true
+RENDER_RESET_DATABASE=true
+```
 
-Khi không set `DB_CONNECTION`, start script sẽ tự dùng:
+Sau khi deploy xong lan dau, nen doi lai:
 
-- `sqlite`
-- file: `/tmp/render.sqlite`
+```dotenv
+RENDER_SEED_DEMO=true
+RENDER_RESET_DATABASE=false
+```
 
-## Các biến môi trường khác nên có nếu muốn bật đủ chức năng
+Neu ban de `RENDER_RESET_DATABASE=true`, moi lan redeploy se xoa sach collection app roi seed lai.
 
-### Social login
+## Cach tao APP_KEY
 
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-- `FACEBOOK_CLIENT_ID`
-- `FACEBOOK_CLIENT_SECRET`
+Co the tao local bang lenh:
 
-Tùy chọn:
+```bash
+php -r "echo 'base64:'.base64_encode(random_bytes(32));"
+```
 
-- `GOOGLE_REDIRECT_URI`
-- `FACEBOOK_REDIRECT_URI`
+Copy gia tri in ra vao `APP_KEY` tren Render.
 
-Nếu không nhập 2 biến redirect này, hệ thống sẽ tự fallback theo `APP_URL` hoặc `RENDER_EXTERNAL_URL`.
+## MongoDB Atlas can set gi
 
-### Gemini assistant
+Trong Atlas:
 
-- `GEMINI_API_KEY`
+1. Tao database user co quyen doc ghi.
+2. Whitelist IP:
+   - nhanh nhat la `0.0.0.0/0`
+   - an toan hon la them outbound IP cua Render neu ban co plan ho tro
+3. Lay `Connection String`.
+4. Thay `<username>`, `<password>`, `<db>` thanh gia tri that.
 
-### Mail
+Mau:
 
-- `MAIL_MAILER`
-- `MAIL_SCHEME`
-- `MAIL_HOST`
-- `MAIL_PORT`
-- `MAIL_USERNAME`
-- `MAIL_PASSWORD`
-- `MAIL_FROM_ADDRESS`
-- `MAIL_FROM_NAME`
+```text
+mongodb+srv://myuser:mypassword@cluster0.xxxxx.mongodb.net/khai_tri_edu?retryWrites=true&w=majority
+```
 
-### VNPay
-
-- `VNPAY_TMN_CODE`
-- `VNPAY_HASH_SECRET`
-- `VNPAY_RETURN_URL`
-- `VNPAY_IPN_URL`
-
-## Tài khoản demo của RenderDemoSeeder
+## Tai khoan demo sau khi seed
 
 - Admin: `admin@khaitri.edu.vn` / `Demo@123`
-- Giảng viên: `giangvien@khaitri.edu.vn` / `Demo@123`
-- Học viên 1: `hocvien1@khaitri.edu.vn` / `Demo@123`
-- Học viên 2: `hocvien2@khaitri.edu.vn` / `Demo@123`
-- Học viên 3: `hocvien3@khaitri.edu.vn` / `Demo@123`
+- Giang vien: `giangvien@khaitri.edu.vn` / `Demo@123`
+- Hoc vien 1: `hocvien1@khaitri.edu.vn` / `Demo@123`
+- Hoc vien 2: `hocvien2@khaitri.edu.vn` / `Demo@123`
+- Hoc vien 3: `hocvien3@khaitri.edu.vn` / `Demo@123`
 
-## Lưu ý
+## Kiem tra deploy thanh cong
 
-- Render free vẫn sleep khi không có truy cập.
-- Nếu dùng MySQL/MariaDB public, dữ liệu sẽ bền hơn SQLite fallback rất nhiều.
-- Nếu `RENDER_IMPORT_SQL_DUMP=true`, dump chỉ tự import khi database đang trống.
-- Nếu đã import dump local rồi mà vẫn bật `RENDER_SEED_DEMO=true`, seeder demo sẽ bổ sung / cập nhật thêm dữ liệu demo chứ không thay toàn bộ DB.
+Render log nen thay cac buoc chinh:
+
+- `APP_KEY was missing or invalid...` neu ban chua set key
+- `php artisan optimize:clear`
+- `php artisan mongodb:bootstrap`
+- `MongoDB bootstrap completed.`
+- `apache2-foreground`
+
+Neu mo app len bi loi 500, check lai theo thu tu:
+
+1. `DB_URI` co dung khong.
+2. Atlas da mo IP chua.
+3. `APP_KEY` da set chua.
+4. Co de `RENDER_RESET_DATABASE=true` qua lau khong.
+
+## Ghi chu
+
+- Docker image da cai san PHP extension `mongodb` trong `Dockerfile`.
+- Render khong con bootstrap bang MySQL dump hay SQLite fallback nua.
+- Listing khoa hoc, dashboard thong ke va notification da duoc refactor de chay theo huong Mongo-friendly.
+- Neu local dung XAMPP/PHP rieng, ban van can cai them PHP extension `mongodb` thi moi import that, chay feature test va ket noi MongoDB duoc.

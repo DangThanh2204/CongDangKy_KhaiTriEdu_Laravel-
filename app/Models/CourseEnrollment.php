@@ -3,14 +3,32 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\MongoModel as Model;
 
 class CourseEnrollment extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $enrollment): void {
+            if (! filled($enrollment->class_id)) {
+                return;
+            }
+
+            if (filled($enrollment->course_id) && ! $enrollment->isDirty('class_id')) {
+                return;
+            }
+
+            $enrollment->course_id = CourseClass::query()
+                ->whereKey($enrollment->class_id)
+                ->value('course_id');
+        });
+    }
+
     protected $fillable = [
         'user_id',
+        'course_id',
         'class_id',
         'status',
         'enrolled_at',
@@ -68,14 +86,7 @@ class CourseEnrollment extends Model
 
     public function course()
     {
-        return $this->hasOneThrough(
-            Course::class,
-            CourseClass::class,
-            'id',
-            'id',
-            'class_id',
-            'course_id'
-        );
+        return $this->belongsTo(Course::class, 'course_id');
     }
 
     public function discountCode()
@@ -144,9 +155,7 @@ class CourseEnrollment extends Model
     {
         $courseId = $course instanceof Course ? $course->id : $course;
 
-        return $query->whereHas('courseClass', function ($classQuery) use ($courseId) {
-            $classQuery->where('course_id', $courseId);
-        });
+        return $query->where('course_id', $courseId);
     }
 
     public function approve(): void
@@ -312,23 +321,23 @@ class CourseEnrollment extends Model
     public function getStatusTextAttribute()
     {
         if ($this->hasActiveSeatHold()) {
-            return 'Giữ chỗ 24h';
+            return 'Giá»¯ chá»— 24h';
         }
 
         if ($this->isWaitlisted()) {
-            return 'Trong hàng chờ';
+            return 'Trong hÃ ng chá»';
         }
 
         if ($this->isCompleted()) {
-            return 'Hoàn thành';
+            return 'HoÃ n thÃ nh';
         }
 
         $statuses = [
-            'pending' => 'Chờ duyệt',
-            'approved' => 'Đã duyệt',
-            'rejected' => 'Từ chối',
-            'cancelled' => 'Đã hủy',
-            'completed' => 'Hoàn thành',
+            'pending' => 'Chá» duyá»‡t',
+            'approved' => 'ÄÃ£ duyá»‡t',
+            'rejected' => 'Tá»« chá»‘i',
+            'cancelled' => 'ÄÃ£ há»§y',
+            'completed' => 'HoÃ n thÃ nh',
         ];
 
         return $statuses[$this->status] ?? $this->status;
@@ -361,9 +370,9 @@ class CourseEnrollment extends Model
 
     private function adjustCourseStudentsCount(int $delta): void
     {
-        $this->loadMissing('courseClass.course');
+        $this->loadMissing('course');
 
-        $course = $this->courseClass?->course;
+        $course = $this->course;
 
         if (! $course || $delta === 0) {
             return;

@@ -6,7 +6,6 @@ use App\Models\CourseEnrollment;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Notifications\PortalAlertNotification;
-use Illuminate\Support\Facades\Schema;
 
 class PortalNotificationService
 {
@@ -339,7 +338,17 @@ class PortalNotificationService
 
         if ($this->supportsDatabaseNotifications()) {
             try {
-                $user->notify(new PortalAlertNotification($payload, ['database']));
+                $databaseNotification = new PortalAlertNotification($payload, ['database']);
+
+                if ($this->usesMongoNotificationStore()) {
+                    $user->portalNotifications()->create([
+                        'type' => $databaseNotification::class,
+                        'data' => $databaseNotification->toArray($user),
+                        'read_at' => null,
+                    ]);
+                } else {
+                    $user->notify($databaseNotification);
+                }
             } catch (\Throwable $exception) {
                 report($exception);
             }
@@ -363,7 +372,11 @@ class PortalNotificationService
         }
 
         try {
-            return $user->notifications()
+            $query = $this->usesMongoNotificationStore()
+                ? $user->portalNotifications()
+                : $user->notifications();
+
+            return $query
                 ->where('type', PortalAlertNotification::class)
                 ->where('data->reminder_key', $reminderKey)
                 ->exists();
@@ -376,12 +389,11 @@ class PortalNotificationService
 
     protected function supportsDatabaseNotifications(): bool
     {
-        try {
-            return Schema::hasTable('notifications');
-        } catch (\Throwable $exception) {
-            report($exception);
+        return true;
+    }
 
-            return false;
-        }
+    protected function usesMongoNotificationStore(): bool
+    {
+        return config('database.default') === 'mongodb';
     }
 }

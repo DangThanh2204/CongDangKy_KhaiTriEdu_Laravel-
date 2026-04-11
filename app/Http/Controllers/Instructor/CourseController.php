@@ -60,10 +60,25 @@ class CourseController extends Controller
 
         $materials = $course->materials()
             ->with('module')
-            ->orderByRaw("CASE WHEN course_module_id IS NULL THEN 1 ELSE 0 END")
-            ->orderBy('course_module_id')
-            ->orderBy('order')
-            ->get();
+            ->get()
+            ->sort(function ($left, $right): int {
+                $leftPriority = $left->course_module_id === null ? 1 : 0;
+                $rightPriority = $right->course_module_id === null ? 1 : 0;
+
+                if ($leftPriority !== $rightPriority) {
+                    return $leftPriority <=> $rightPriority;
+                }
+
+                $leftModule = $left->course_module_id ?? 0;
+                $rightModule = $right->course_module_id ?? 0;
+
+                if ($leftModule !== $rightModule) {
+                    return $leftModule <=> $rightModule;
+                }
+
+                return ((int) ($left->order ?? 0)) <=> ((int) ($right->order ?? 0));
+            })
+            ->values();
         $modules = $course->modules()->ordered()->get();
 
         return view('instructor.courses.materials.index', compact('course', 'materials', 'modules'));

@@ -4,7 +4,6 @@ namespace App\View\Composers;
 
 use App\Models\CourseEnrollment;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class AppLayoutComposer
@@ -25,13 +24,22 @@ class AppLayoutComposer
                     ->count();
             }
 
-            if ($user && Schema::hasTable('notifications')) {
-                $appNotifications = $user->notifications()
-                    ->latest()
-                    ->limit(6)
-                    ->get();
+            if ($user && $this->supportsDatabaseNotifications()) {
+                if ($this->usesMongoNotificationStore()) {
+                    $appNotifications = $user->portalNotifications()
+                        ->latest('created_at')
+                        ->limit(6)
+                        ->get();
 
-                $unreadNotificationsCount = $user->unreadNotifications()->count();
+                    $unreadNotificationsCount = $user->unreadPortalNotifications()->count();
+                } else {
+                    $appNotifications = $user->notifications()
+                        ->latest()
+                        ->limit(6)
+                        ->get();
+
+                    $unreadNotificationsCount = $user->unreadNotifications()->count();
+                }
             }
         } catch (\Throwable $exception) {
             report($exception);
@@ -45,5 +53,15 @@ class AppLayoutComposer
             'appNotifications' => $appNotifications,
             'unreadNotificationsCount' => $unreadNotificationsCount,
         ]);
+    }
+
+    private function supportsDatabaseNotifications(): bool
+    {
+        return true;
+    }
+
+    private function usesMongoNotificationStore(): bool
+    {
+        return config('database.default') === 'mongodb';
     }
 }

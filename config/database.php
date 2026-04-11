@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mongodb'),
 
     /*
     |--------------------------------------------------------------------------
@@ -30,6 +30,21 @@ return [
     */
 
     'connections' => [
+
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'dsn' => env('DB_URI'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => (int) env('DB_PORT', 27017),
+            'database' => env('DB_DATABASE', 'khai_tri_edu'),
+            'username' => env('DB_USERNAME'),
+            'password' => env('DB_PASSWORD'),
+            'options' => array_filter([
+                'authSource' => env('MONGODB_AUTH_SOURCE'),
+                'replicaSet' => env('MONGODB_REPLICA_SET'),
+                'tls' => env('MONGODB_TLS'),
+            ], static fn ($value) => ! is_null($value) && $value !== ''),
+        ],
 
         'sqlite' => [
             'driver' => 'sqlite',

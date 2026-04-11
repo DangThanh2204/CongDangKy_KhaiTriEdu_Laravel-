@@ -3,14 +3,32 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\MongoModel as Model;
 
 class Payment extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $payment): void {
+            if (! filled($payment->class_id)) {
+                return;
+            }
+
+            if (filled($payment->course_id) && ! $payment->isDirty('class_id')) {
+                return;
+            }
+
+            $payment->course_id = CourseClass::query()
+                ->whereKey($payment->class_id)
+                ->value('course_id');
+        });
+    }
+
     protected $fillable = [
         'user_id',
+        'course_id',
         'class_id',
         'amount',
         'base_amount',
@@ -47,6 +65,11 @@ class Payment extends Model
         return $this->belongsTo(CourseClass::class, 'class_id');
     }
 
+    public function course()
+    {
+        return $this->belongsTo(Course::class, 'course_id');
+    }
+
     public function discountCode()
     {
         return $this->belongsTo(DiscountCode::class, 'discount_code_id');
@@ -54,9 +77,9 @@ class Payment extends Model
 
     public function getCourseAttribute()
     {
-        $this->loadMissing('courseClass.course');
+        $this->loadMissing(['course', 'courseClass.course']);
 
-        return $this->courseClass?->course;
+        return $this->getRelation('course') ?: $this->courseClass?->course;
     }
 
     public function isPending(): bool
@@ -82,21 +105,21 @@ class Payment extends Model
     public function getMethodLabelAttribute(): string
     {
         return [
-            'wallet' => 'Ví nội bộ',
-            'promotion' => 'Khuyến mãi / miễn phí',
+            'wallet' => 'VÃ­ ná»™i bá»™',
+            'promotion' => 'Khuyáº¿n mÃ£i / miá»…n phÃ­',
             'vnpay' => 'VNPay',
-            'bank_transfer' => 'Chuyển khoản',
-            'cash' => 'Tiền mặt',
-            'counter' => 'Tại quầy',
+            'bank_transfer' => 'Chuyá»ƒn khoáº£n',
+            'cash' => 'Tiá»n máº·t',
+            'counter' => 'Táº¡i quáº§y',
         ][$this->method] ?? ucfirst(str_replace('_', ' ', (string) $this->method));
     }
 
     public function getStatusLabelAttribute(): string
     {
         return [
-            'pending' => 'Chờ thanh toán',
-            'completed' => 'Đã thanh toán',
-            'failed' => 'Thất bại',
+            'pending' => 'Chá» thanh toÃ¡n',
+            'completed' => 'ÄÃ£ thanh toÃ¡n',
+            'failed' => 'Tháº¥t báº¡i',
         ][$this->status] ?? ucfirst((string) $this->status);
     }
 
@@ -106,7 +129,7 @@ class Payment extends Model
             return null;
         }
 
-        return number_format((float) $this->discount_amount, 0) . 'đ';
+        return number_format((float) $this->discount_amount, 0) . 'Ä‘';
     }
 
     public function markCompleted(?string $note = null): bool

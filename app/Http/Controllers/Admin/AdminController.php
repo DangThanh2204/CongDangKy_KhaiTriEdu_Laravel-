@@ -17,10 +17,10 @@ use App\Services\BlockchainSyncService;
 use App\Services\FireflyService;
 use App\Services\FireflyConsortiumService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Collection;
 
 class AdminController extends Controller
 {
@@ -94,6 +94,8 @@ class AdminController extends Controller
             $hasVerifiedColumn = Schema::hasTable($userTable) && Schema::hasColumn($userTable, 'is_verified');
 
             if (Schema::hasTable($userTable)) {
+                $users = User::query()->get();
+
                 $stats['total_users'] = User::count();
                 $stats['total_admins'] = User::where('role', 'admin')->count();
                 $stats['total_staff'] = User::where('role', 'staff')->count();
@@ -104,31 +106,31 @@ class AdminController extends Controller
                 $stats['verified_users'] = $hasVerifiedColumn ? User::where('is_verified', true)->count() : 0;
                 $stats['unverified_users'] = $hasVerifiedColumn ? User::where('is_verified', false)->count() : 0;
 
-                $usersByRole = User::select('role', DB::raw('count(*) as count'))
+                $usersByRole = $users
                     ->groupBy('role')
-                    ->get()
-                    ->pluck('count', 'role');
+                    ->map(fn (Collection $group) => $group->count())
+                    ->sortKeys();
 
-                $recentRegistrations = User::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
-                    ->where('created_at', '>=', $today->copy()->subDays(7))
-                    ->groupBy('date')
-                    ->orderBy('date')
-                    ->get();
+                $recentRegistrations = $users
+                    ->filter(function (User $user) use ($today) {
+                        return $user->created_at && $user->created_at->gte($today->copy()->subDays(7));
+                    })
+                    ->groupBy(fn (User $user) => $user->created_at->format('Y-m-d'))
+                    ->map(fn (Collection $group) => $group->count())
+                    ->sortKeys();
 
                 $recentUsers = User::query()
                     ->latest('created_at')
                     ->take(6)
                     ->get();
 
-                $monthlyRegistrations = User::select(
-                        DB::raw('MONTH(created_at) as month'),
-                        DB::raw('COUNT(*) as count')
-                    )
-                    ->whereYear('created_at', date('Y'))
-                    ->groupBy('month')
-                    ->orderBy('month')
-                    ->get()
-                    ->pluck('count', 'month');
+                $monthlyRegistrations = $users
+                    ->filter(function (User $user) {
+                        return $user->created_at && (int) $user->created_at->format('Y') === (int) date('Y');
+                    })
+                    ->groupBy(fn (User $user) => (int) $user->created_at->format('n'))
+                    ->map(fn (Collection $group) => $group->count())
+                    ->sortKeys();
             }
 
             if (Schema::hasTable($courseTable)) {
@@ -165,20 +167,20 @@ class AdminController extends Controller
 
                 if (Schema::hasTable($enrollmentTable)) {
                     $approvedCounts = CourseEnrollment::query()
-                        ->selectRaw('class_id, COUNT(*) as aggregate_count')
                         ->whereIn('status', ['approved', 'completed'])
+                        ->get()
                         ->groupBy('class_id')
-                        ->pluck('aggregate_count', 'class_id');
+                        ->map(fn (Collection $group) => $group->count());
 
                     if ($hasWaitlistColumns) {
                         $heldSeatCounts = CourseEnrollment::query()
-                            ->selectRaw('class_id, COUNT(*) as aggregate_count')
                             ->where('status', 'pending')
                             ->whereNotNull('waitlist_promoted_at')
                             ->whereNotNull('seat_hold_expires_at')
                             ->where('seat_hold_expires_at', '>', now())
+                            ->get()
                             ->groupBy('class_id')
-                            ->pluck('aggregate_count', 'class_id');
+                            ->map(fn (Collection $group) => $group->count());
                     }
                 }
 
@@ -297,31 +299,30 @@ class AdminController extends Controller
 
         switch ($type) {
             case 'role_distribution':
-                $data = User::select('role', DB::raw('count(*) as count'))
+                $data = User::query()
+                    ->get()
                     ->groupBy('role')
-                    ->get();
+                    ->map(fn (Collection $group) => $group->count());
 
                 return response()->json([
-                    'labels' => $data->pluck('role'),
-                    'data' => $data->pluck('count'),
+                    'labels' => $data->keys()->values(),
+                    'data' => $data->values(),
                     'colors' => ['#2c5aa0', '#28a745', '#ff6b35', '#6f42c1', '#20c997'],
                 ]);
 
             case 'monthly_registrations':
                 $currentYear = date('Y');
-                $data = User::select(
-                        DB::raw('MONTH(created_at) as month'),
-                        DB::raw('COUNT(*) as count')
-                    )
-                    ->whereYear('created_at', $currentYear)
-                    ->groupBy('month')
-                    ->orderBy('month')
-                    ->get();
+                $data = User::query()
+                    ->get()
+                    ->filter(function (User $user) use ($currentYear) {
+                        return $user->created_at && $user->created_at->format('Y') === (string) $currentYear;
+                    })
+                    ->groupBy(fn (User $user) => (int) $user->created_at->format('n'))
+                    ->map(fn (Collection $group) => $group->count());
 
                 $monthlyData = [];
                 for ($month = 1; $month <= 12; $month++) {
-                    $monthData = $data->where('month', $month)->first();
-                    $monthlyData[] = $monthData ? $monthData->count : 0;
+                    $monthlyData[] = (int) ($data[$month] ?? 0);
                 }
 
                 return response()->json([
@@ -330,15 +331,18 @@ class AdminController extends Controller
                 ]);
 
             case 'weekly_activity':
-                $data = User::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as count'))
-                    ->where('created_at', '>=', now()->subDays(30))
-                    ->groupBy('date')
-                    ->orderBy('date')
-                    ->get();
+                $data = User::query()
+                    ->get()
+                    ->filter(function (User $user) {
+                        return $user->created_at && $user->created_at->gte(now()->subDays(30));
+                    })
+                    ->groupBy(fn (User $user) => $user->created_at->format('Y-m-d'))
+                    ->map(fn (Collection $group) => $group->count())
+                    ->sortKeys();
 
                 return response()->json([
-                    'labels' => $data->pluck('date'),
-                    'data' => $data->pluck('count'),
+                    'labels' => $data->keys()->values(),
+                    'data' => $data->values(),
                 ]);
         }
 
@@ -626,11 +630,12 @@ private function securityAlertSnapshot(): array
 
         try {
             $rows = $modelClass::query()
-                ->selectRaw('DATE(created_at) as aggregate_date, COUNT(*) as aggregate_count')
                 ->whereBetween('created_at', [$startDate->copy()->startOfDay(), $endDate->copy()->endOfDay()])
-                ->groupBy('aggregate_date')
-                ->orderBy('aggregate_date')
-                ->pluck('aggregate_count', 'aggregate_date');
+                ->get()
+                ->filter(fn ($model) => $model->created_at)
+                ->groupBy(fn ($model) => $model->created_at->format('Y-m-d'))
+                ->map(fn (Collection $group) => $group->count())
+                ->sortKeys();
 
             foreach ($labels as $index => $label) {
                 $cursor = $startDate->copy()->addDays($index);
@@ -663,11 +668,12 @@ private function securityAlertSnapshot(): array
 
         try {
             $rows = $modelClass::query()
-                ->selectRaw("DATE_FORMAT(created_at, '%Y-%m') as aggregate_month, COUNT(*) as aggregate_count")
                 ->whereBetween('created_at', [$startMonth->copy()->startOfMonth(), $endMonth->copy()->endOfMonth()])
-                ->groupBy('aggregate_month')
-                ->orderBy('aggregate_month')
-                ->pluck('aggregate_count', 'aggregate_month');
+                ->get()
+                ->filter(fn ($model) => $model->created_at)
+                ->groupBy(fn ($model) => $model->created_at->format('Y-m'))
+                ->map(fn (Collection $group) => $group->count())
+                ->sortKeys();
 
             foreach ($labels as $index => $label) {
                 $cursor = $startMonth->copy()->addMonths($index);

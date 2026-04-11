@@ -3,7 +3,7 @@
 // [file content begin]
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Models\MongoModel as Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PostCategory extends Model
@@ -35,7 +35,7 @@ class PostCategory extends Model
         return $this->posts()->count();
     }
 
-    // Thêm vào PostCategory.php
+    // ThÃªm vÃ o PostCategory.php
     public function getActivePostsCountAttribute()
     {
         return $this->posts()->where('status', 'published')->count();

@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Support\StudyDuration;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\MongoModel as Model;
 
 class CourseModule extends Model
 {

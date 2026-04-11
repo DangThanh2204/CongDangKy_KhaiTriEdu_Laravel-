@@ -16,7 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Dang ky middleware aliases
+        $middleware->trustProxies(at: '*');
+
+        // Đăng ký middleware aliases
         $middleware->alias([
             'admin' => App\Http\Middleware\AdminMiddleware::class,
             'staff' => App\Http\Middleware\StaffMiddleware::class,
@@ -24,9 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'instructor' => App\Http\Middleware\InstructorMiddleware::class,
         ]);
 
-        // Hoac ban co the them vao middleware groups neu can
+        // Hoặc bạn có thể thêm vào middleware groups nếu cần
         // $middleware->web(append: [
-        //     // Them middleware vao group web neu can
+        //     // Thêm middleware vào group web nếu cần
         // ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

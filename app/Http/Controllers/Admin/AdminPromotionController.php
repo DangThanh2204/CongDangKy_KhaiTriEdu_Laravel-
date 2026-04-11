@@ -9,7 +9,6 @@ use App\Models\DiscountCode;
 use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class AdminPromotionController extends Controller
@@ -169,7 +168,7 @@ class AdminPromotionController extends Controller
 
     protected function hasDiscountSchema(): bool
     {
-        return Schema::hasTable('discount_codes');
+        return config('database.default') === 'mongodb' || DiscountCode::query()->count() >= 0;
     }
 
     protected function redirectVoucherSchemaUnavailable(): RedirectResponse
