@@ -43,6 +43,10 @@ class CourseCategory extends Model
     // Accessors
     public function getCoursesCountAttribute()
     {
+        if (array_key_exists('courses_count', $this->attributes)) {
+            return (int) $this->attributes['courses_count'];
+        }
+
         return $this->courses()->count();
     }
 

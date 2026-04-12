@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\CourseCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class AdminCourseCategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = CourseCategory::withCount('courses');
+        $query = CourseCategory::query()->with('parent');
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
@@ -27,6 +28,7 @@ class AdminCourseCategoryController extends Controller
         }
 
         $categories = $query->ordered()->paginate(10)->withQueryString();
+        $this->attachCourseCounts($categories->getCollection());
 
         $stats = [
             'totalCategories' => CourseCategory::count(),
@@ -71,7 +73,7 @@ class AdminCourseCategoryController extends Controller
 
     public function edit(CourseCategory $courseCategory)
     {
-        $courseCategory->loadCount('courses');
+        $this->attachCourseCounts(collect([$courseCategory]));
 
         $parentCategories = CourseCategory::whereNull('parent_id')
             ->where('id', '!=', $courseCategory->id)
@@ -130,5 +132,21 @@ class AdminCourseCategoryController extends Controller
             : 'Nhóm ngành đã bị vô hiệu hóa!';
 
         return back()->with('success', $message);
+    }
+
+    private function attachCourseCounts(Collection $categories): void
+    {
+        if ($categories->isEmpty()) {
+            return;
+        }
+
+        $countsByCategory = Course::query()
+            ->whereIn('category_id', $categories->pluck('id')->all())
+            ->get(['category_id'])
+            ->countBy(fn ($course) => (string) $course->category_id);
+
+        $categories->each(function (CourseCategory $category) use ($countsByCategory) {
+            $category->setAttribute('courses_count', (int) ($countsByCategory[(string) $category->id] ?? 0));
+        });
     }
 }
