@@ -218,6 +218,28 @@ class Course extends Model
         return 0;
     }
 
+    public function getModulesCountAttribute(): int
+    {
+        if (array_key_exists('modules_count', $this->attributes)) {
+            return (int) $this->attributes['modules_count'];
+        }
+
+        return $this->relationLoaded('modules')
+            ? $this->modules->count()
+            : $this->modules()->count();
+    }
+
+    public function getClassesCountAttribute(): int
+    {
+        if (array_key_exists('classes_count', $this->attributes)) {
+            return (int) $this->attributes['classes_count'];
+        }
+
+        return $this->relationLoaded('classes')
+            ? $this->classes->count()
+            : $this->classes()->count();
+    }
+
     public function getDeliveryModeAttribute(): string
     {
         return ($this->learning_type ?? 'online') === 'online' ? 'online' : 'offline';

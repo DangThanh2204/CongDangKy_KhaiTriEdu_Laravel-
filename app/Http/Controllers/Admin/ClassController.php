@@ -8,6 +8,7 @@ use App\Models\CourseClass;
 use App\Models\User;
 use App\Services\CsvExportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class ClassController extends Controller
 {
@@ -23,6 +24,7 @@ class ClassController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(15)
             ->withQueryString();
+        $this->attachEnrollmentCounts($classes->getCollection());
 
         $stats = [
             'total' => CourseClass::count(),
@@ -80,8 +82,7 @@ class ClassController extends Controller
         $fromDate = $request->get('from_date');
         $toDate = $request->get('to_date');
 
-        $query = CourseClass::with(['course.category', 'instructor', 'schedules'])
-            ->withCount('enrollments');
+        $query = CourseClass::with(['course.category', 'instructor', 'schedules']);
 
         if ($search) {
             $query->where(function ($innerQuery) use ($search) {
@@ -155,7 +156,8 @@ class ClassController extends Controller
 
     public function edit(CourseClass $courseClass)
     {
-        $courseClass->load(['schedules', 'course', 'instructor'])->loadCount('enrollments');
+        $courseClass->load(['schedules', 'course', 'instructor']);
+        $this->attachEnrollmentCounts(collect([$courseClass]));
 
         $courses = Course::with('category')
             ->orderBy('title')
@@ -235,6 +237,31 @@ class ClassController extends Controller
                 ]);
             }
         }
+    }
+
+    private function attachEnrollmentCounts(Collection $classes): void
+    {
+        if ($classes->isEmpty()) {
+            return;
+        }
+
+        $countsByClass = collect();
+
+        foreach ($classes->pluck('id')->all() as $classId) {
+            $countsByClass[(string) $classId] = 0;
+        }
+
+        \App\Models\CourseEnrollment::query()
+            ->whereIn('class_id', $classes->pluck('id')->all())
+            ->get(['class_id'])
+            ->each(function ($enrollment) use ($countsByClass) {
+                $classKey = (string) $enrollment->class_id;
+                $countsByClass[$classKey] = (int) ($countsByClass[$classKey] ?? 0) + 1;
+            });
+
+        $classes->each(function (CourseClass $courseClass) use ($countsByClass) {
+            $courseClass->setAttribute('enrollments_count', (int) ($countsByClass[(string) $courseClass->id] ?? 0));
+        });
     }
 
     public function destroy(CourseClass $courseClass)

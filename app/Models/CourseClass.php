@@ -56,6 +56,15 @@ class CourseClass extends Model
         return $this->enrollments()->whereIn('status', ['approved', 'completed'])->count();
     }
 
+    public function getEnrollmentsCountAttribute(): int
+    {
+        if (array_key_exists('enrollments_count', $this->attributes)) {
+            return (int) $this->attributes['enrollments_count'];
+        }
+
+        return $this->enrollments()->count();
+    }
+
     public function getHeldSeatsCountAttribute(): int
     {
         if (($this->max_students ?: 0) <= 0) {

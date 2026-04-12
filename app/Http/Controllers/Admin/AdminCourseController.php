@@ -8,6 +8,7 @@ use App\Models\CourseCategory;
 use App\Models\User;
 use App\Services\CsvExportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -25,6 +26,7 @@ class AdminCourseController extends Controller
             ->latest()
             ->paginate(10)
             ->withQueryString();
+        $this->attachRelationCounts($courses->getCollection());
 
         $stats = [
             'totalCourses' => Course::count(),
@@ -50,6 +52,7 @@ class AdminCourseController extends Controller
     public function export(Request $request, CsvExportService $csvExportService)
     {
         $courses = $this->filteredQuery($request)->latest()->get();
+        $this->attachRelationCounts($courses);
 
         return $csvExportService->download(
             'courses-' . now()->format('Y-m-d-His') . '.csv',
@@ -80,8 +83,7 @@ class AdminCourseController extends Controller
         $fromDate = $request->get('from_date');
         $toDate = $request->get('to_date');
 
-        $query = Course::with(['category', 'classes', 'modules'])
-            ->withCount(['classes', 'modules']);
+        $query = Course::with(['category', 'classes', 'modules']);
 
         if ($search) {
             $query->where('title', 'like', '%' . $search . '%');
@@ -104,6 +106,18 @@ class AdminCourseController extends Controller
         }
 
         return $query;
+    }
+
+    private function attachRelationCounts(Collection $courses): void
+    {
+        if ($courses->isEmpty()) {
+            return;
+        }
+
+        $courses->each(function (Course $course) {
+            $course->setAttribute('modules_count', $course->modules->count());
+            $course->setAttribute('classes_count', $course->classes->count());
+        });
     }
 
     public function create()
