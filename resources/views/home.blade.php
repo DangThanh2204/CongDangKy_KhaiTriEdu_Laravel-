@@ -9,34 +9,8 @@
 
 @section('content')
     @php
-        $featuredCourses = collect();
-
-        try {
-            $featuredCourses = \App\Models\Course::published()
-                ->with(['category', 'modules'])
-                ->orderByDesc('created_at')
-                ->limit(4)
-                ->get()
-                ->map(function ($course) {
-                    $course->setAttribute('modules_count', $course->modules->count());
-
-                    return $course;
-                });
-        } catch (\Throwable $exception) {
-            $featuredCourses = collect();
-        }
-
-        $latestPosts = collect();
-
-        try {
-            $latestPosts = \App\Models\Post::published()
-                ->with(['author', 'category'])
-                ->orderByDesc('created_at')
-                ->limit(3)
-                ->get();
-        } catch (\Throwable $exception) {
-            $latestPosts = collect();
-        }
+        $featuredCourses = $featuredCourses ?? collect();
+        $latestPosts = $latestPosts ?? collect();
 
         $portalDashboardUrl = route('login');
         $portalDashboardLabel = 'Tạo tài khoản học viên';
@@ -257,17 +231,8 @@
             <div class="row g-4">
                 @forelse($featuredCourses as $course)
                     @php
-                        $courseEnrollments = collect();
-
-                        if (Auth::check()) {
-                            $courseEnrollments = \App\Models\CourseEnrollment::query()
-                                ->forCourse($course)
-                                ->where('user_id', Auth::id())
-                                ->get(['status']);
-                        }
-
-                        $isEnrolled = $courseEnrollments->contains(fn ($enrollment) => in_array($enrollment->status, ['approved', 'completed'], true));
-                        $isPending = $courseEnrollments->contains('status', 'pending');
+                        $isEnrolled = (bool) ($course->is_current_user_enrolled ?? false);
+                        $isPending = (bool) ($course->is_current_user_pending ?? false);
                     @endphp
 
                     <div class="col-md-6 col-xl-3">

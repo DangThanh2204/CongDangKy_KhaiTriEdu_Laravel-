@@ -139,9 +139,6 @@
                         <label for="course_id" class="form-label fw-bold">Khóa Học Quan Tâm</label>
                         <select class="form-select @error('course_id') is-invalid @enderror" id="course_id" name="course_id">
                             <option value="">-- Chọn khóa học --</option>
-                            @php
-                                $courses = \App\Models\Course::published()->limit(10)->get();
-                            @endphp
                             @foreach($courses as $course)
                                 <option value="{{ $course->id }}" @selected(old('course_id') == $course->id)>
                                     {{ $course->title }}

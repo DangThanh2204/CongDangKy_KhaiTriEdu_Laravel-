@@ -39,44 +39,62 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        View::composer('*', function ($view) {
-            $defaults = [
-                'siteName' => 'Khai Tri Education',
-                'siteTagline' => 'Nen tang hoc tap truc tuyen',
-                'siteLogo' => null,
-                'siteFavicon' => null,
-                'footerText' => '',
-                'contactEmail' => '',
-                'contactPhone' => '',
-                'contactAddress' => '',
-                'facebookUrl' => '',
-                'twitterUrl' => '',
-                'instagramUrl' => '',
-            ];
-
-            try {
-                $view->with([
-                    'siteName' => Setting::get('site_name', $defaults['siteName']),
-                    'siteTagline' => Setting::get('site_tagline', $defaults['siteTagline']),
-                    'siteLogo' => Setting::get('site_logo', $defaults['siteLogo']),
-                    'siteFavicon' => Setting::get('site_favicon', $defaults['siteFavicon']),
-                    'footerText' => Setting::get('footer_text', $defaults['footerText']),
-                    'contactEmail' => Setting::get('contact_email', $defaults['contactEmail']),
-                    'contactPhone' => Setting::get('contact_phone', $defaults['contactPhone']),
-                    'contactAddress' => Setting::get('contact_address', $defaults['contactAddress']),
-                    'facebookUrl' => Setting::get('facebook_url', $defaults['facebookUrl']),
-                    'twitterUrl' => Setting::get('twitter_url', $defaults['twitterUrl']),
-                    'instagramUrl' => Setting::get('instagram_url', $defaults['instagramUrl']),
-                ]);
-            } catch (\Throwable $exception) {
-                report($exception);
-                $view->with($defaults);
-            }
-        });
+        View::share($this->resolveSharedSiteSettings());
 
         View::composer('layouts.app', AppLayoutComposer::class);
         View::composer('layouts.admin', AdminLayoutComposer::class);
 
         require_once app_path('Helpers/youtube.php');
+    }
+
+    private function resolveSharedSiteSettings(): array
+    {
+        $defaults = [
+            'siteName' => 'Khai Tri Education',
+            'siteTagline' => 'Nen tang hoc tap truc tuyen',
+            'siteLogo' => null,
+            'siteFavicon' => null,
+            'footerText' => '',
+            'contactEmail' => '',
+            'contactPhone' => '',
+            'contactAddress' => '',
+            'facebookUrl' => '',
+            'twitterUrl' => '',
+            'instagramUrl' => '',
+        ];
+
+        try {
+            $values = Setting::getMany([
+                'site_name' => $defaults['siteName'],
+                'site_tagline' => $defaults['siteTagline'],
+                'site_logo' => $defaults['siteLogo'],
+                'site_favicon' => $defaults['siteFavicon'],
+                'footer_text' => $defaults['footerText'],
+                'contact_email' => $defaults['contactEmail'],
+                'contact_phone' => $defaults['contactPhone'],
+                'contact_address' => $defaults['contactAddress'],
+                'facebook_url' => $defaults['facebookUrl'],
+                'twitter_url' => $defaults['twitterUrl'],
+                'instagram_url' => $defaults['instagramUrl'],
+            ]);
+
+            return [
+                'siteName' => $values['site_name'],
+                'siteTagline' => $values['site_tagline'],
+                'siteLogo' => $values['site_logo'],
+                'siteFavicon' => $values['site_favicon'],
+                'footerText' => $values['footer_text'],
+                'contactEmail' => $values['contact_email'],
+                'contactPhone' => $values['contact_phone'],
+                'contactAddress' => $values['contact_address'],
+                'facebookUrl' => $values['facebook_url'],
+                'twitterUrl' => $values['twitter_url'],
+                'instagramUrl' => $values['instagram_url'],
+            ];
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return $defaults;
+        }
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseImageController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
@@ -15,9 +16,7 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('home');
-})->name('home');
+Route::get('/', HomeController::class)->name('home');
 
 Route::get('/about', [AboutController::class, 'index'])->name('about');
 Route::view('/partners', 'partners.index')->name('partners');

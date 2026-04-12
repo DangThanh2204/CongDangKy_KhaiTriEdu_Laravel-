@@ -6,12 +6,15 @@ use App\Models\CourseEnrollment;
 use App\Models\CourseReview;
 use App\Models\Payment;
 use App\Models\WalletTransaction;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AdminLayoutComposer
 {
     private const REVIEWS_SEEN_AT_SESSION_KEY = 'admin.notifications.reviews_seen_at';
+    private const COUNTS_CACHE_KEY = 'admin.attention.counts';
+    private const EXPIRE_TOPUPS_CACHE_KEY = 'wallet.topups.expired.last_run';
 
     public function compose(View $view): void
     {
@@ -34,19 +37,23 @@ class AdminLayoutComposer
         }
 
         try {
-            WalletTransaction::expireOverdueDirectTopups();
+            $this->expireOverdueTopupsIfNeeded();
 
-            $summary['pending_wallet_topup_count'] = WalletTransaction::query()
-                ->pendingManualApproval()
-                ->count();
-
-            $summary['pending_enrollment_count'] = CourseEnrollment::query()
-                ->where('status', 'pending')
-                ->count();
-
-            $summary['pending_payment_count'] = Payment::query()
-                ->where('status', 'pending')
-                ->count();
+            $summary = array_merge($summary, Cache::remember(
+                self::COUNTS_CACHE_KEY,
+                now()->addSeconds(15),
+                fn () => [
+                    'pending_wallet_topup_count' => WalletTransaction::query()
+                        ->pendingManualApproval()
+                        ->count(),
+                    'pending_enrollment_count' => CourseEnrollment::query()
+                        ->where('status', 'pending')
+                        ->count(),
+                    'pending_payment_count' => Payment::query()
+                        ->where('status', 'pending')
+                        ->count(),
+                ]
+            ));
 
             if (! session()->has(self::REVIEWS_SEEN_AT_SESSION_KEY)) {
                 session()->put(self::REVIEWS_SEEN_AT_SESSION_KEY, now()->toDateTimeString());
@@ -69,5 +76,14 @@ class AdminLayoutComposer
         $summary['has_attention_items'] = $summary['total_attention_count'] > 0;
 
         $view->with('adminAttentionSummary', $summary);
+    }
+
+    private function expireOverdueTopupsIfNeeded(): void
+    {
+        if (! Cache::add(self::EXPIRE_TOPUPS_CACHE_KEY, true, now()->addMinute())) {
+            return;
+        }
+
+        WalletTransaction::expireOverdueDirectTopups();
     }
 }

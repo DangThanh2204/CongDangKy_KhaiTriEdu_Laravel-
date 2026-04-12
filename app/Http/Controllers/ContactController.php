@@ -2,13 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Course;
 use Illuminate\Http\Request;
 
 class ContactController extends Controller
 {
     public function index()
     {
-        return view('contact.index');
+        $courses = collect();
+
+        try {
+            $courses = Course::published()
+                ->orderBy('title')
+                ->limit(10)
+                ->get(['id', 'title']);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+
+        return view('contact.index', [
+            'courses' => $courses,
+        ]);
     }
 
     public function send(Request $request)
