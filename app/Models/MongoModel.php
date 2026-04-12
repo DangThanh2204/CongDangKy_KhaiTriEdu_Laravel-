@@ -25,4 +25,13 @@ abstract class MongoModel extends BaseModel
 
         return parent::asDecimal($value, $decimals);
     }
+
+    protected function fromDecimal($value, $decimals)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return parent::fromDecimal($value, $decimals);
+    }
 }

@@ -421,7 +421,7 @@ class RenderDemoSeeder extends Seeder
             'name' => $attributes['name'],
         ]);
 
-        $class->fill($attributes);
+        $class->fill($this->withoutNullDecimalAttributes($attributes, ['price_override']));
         $class->course_id = $course->id;
         $class->save();
 
@@ -518,11 +518,10 @@ class RenderDemoSeeder extends Seeder
                 'started_at' => $startedAt,
                 'last_viewed_at' => $lastViewedAt,
                 'completed_at' => $completedAt,
-                'best_quiz_score' => null,
                 'quiz_attempts_count' => 0,
                 'passed_at' => null,
                 'meta' => ['seed' => 'render-demo'],
-            ]
+            ],
         );
 
         $progress->forceFill([
@@ -624,5 +623,16 @@ class RenderDemoSeeder extends Seeder
             'created_at' => $paidAt ?? now(),
             'updated_at' => now(),
         ])->saveQuietly();
+    }
+
+    private function withoutNullDecimalAttributes(array $attributes, array $decimalKeys): array
+    {
+        foreach ($decimalKeys as $key) {
+            if (array_key_exists($key, $attributes) && ($attributes[$key] === null || $attributes[$key] === '')) {
+                unset($attributes[$key]);
+            }
+        }
+
+        return $attributes;
     }
 }
