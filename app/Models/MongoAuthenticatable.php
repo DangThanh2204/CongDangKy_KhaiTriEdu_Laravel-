@@ -16,4 +16,13 @@ abstract class MongoAuthenticatable extends BaseAuthenticatable
     protected $primaryKey = 'id';
 
     protected $keyType = 'int';
+
+    protected function asDecimal($value, $decimals)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return parent::asDecimal($value, $decimals);
+    }
 }
