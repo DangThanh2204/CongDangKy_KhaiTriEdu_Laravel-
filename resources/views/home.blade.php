@@ -9,23 +9,31 @@
 
 @section('content')
     @php
-        $featuredCourses = \App\Models\Course::published()
-            ->with('category')
-            ->withCount('modules')
-            ->orderByDesc('created_at')
-            ->limit(4)
-            ->get();
+        $featuredCourses = collect();
+
+        try {
+            $featuredCourses = \App\Models\Course::published()
+                ->with(['category', 'modules'])
+                ->orderByDesc('created_at')
+                ->limit(4)
+                ->get()
+                ->map(function ($course) {
+                    $course->setAttribute('modules_count', $course->modules->count());
+
+                    return $course;
+                });
+        } catch (\Throwable $exception) {
+            $featuredCourses = collect();
+        }
 
         $latestPosts = collect();
 
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('posts')) {
-                $latestPosts = \App\Models\Post::published()
-                    ->with(['author', 'category'])
-                    ->orderByDesc('created_at')
-                    ->limit(3)
-                    ->get();
-            }
+            $latestPosts = \App\Models\Post::published()
+                ->with(['author', 'category'])
+                ->orderByDesc('created_at')
+                ->limit(3)
+                ->get();
         } catch (\Throwable $exception) {
             $latestPosts = collect();
         }

@@ -28,7 +28,7 @@ class CourseController extends Controller
     }
     public function index(Request $request)
     {
-        $query = Course::with(['category'])->withCount('modules')->published();
+        $query = Course::with(['category', 'modules'])->published();
 
         if ($request->has('category') && $request->category) {
             $query->byCategory($request->category);
@@ -67,6 +67,7 @@ class CourseController extends Controller
         }
 
         $courses = $query->orderBy('created_at', 'desc')->paginate(12)->withQueryString();
+        $courses->setCollection($this->attachModulesCount($courses->getCollection()));
 
         $enrolledCourses = [];
         $pendingCourses = [];
@@ -209,10 +210,10 @@ class CourseController extends Controller
         $similarCourses = Course::published()
             ->where('id', '!=', $course->id)
             ->where('category_id', $course->category_id)
-            ->with(['category'])
-            ->withCount('modules')
+            ->with(['category', 'modules'])
             ->limit(4)
             ->get();
+        $similarCourses = $this->attachModulesCount($similarCourses);
 
         $course->load([
             'category',
@@ -782,6 +783,16 @@ class CourseController extends Controller
 
             return ((int) $left->id) <=> ((int) $right->id);
         })->values();
+    }
+
+    private function attachModulesCount(Collection $courses): Collection
+    {
+        return $courses->map(function (Course $course) {
+            $modules = $course->relationLoaded('modules') ? $course->modules : $course->modules()->get();
+            $course->setAttribute('modules_count', $modules->count());
+
+            return $course;
+        });
     }
 
     private function sortPaymentsForDisplay(Collection $payments): Collection
