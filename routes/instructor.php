@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Instructor\CourseController;
+use App\Http\Controllers\Instructor\ClassroomController;
 use App\Http\Controllers\Instructor\DashboardController;
 use App\Http\Controllers\Instructor\EnrollmentController;
 use App\Http\Controllers\Instructor\QuizController;
@@ -13,6 +14,11 @@ Route::middleware(['web', 'auth', 'instructor'])
     ->group(function () {
         Route::get('/', [DashboardController::class, 'index']);
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::prefix('classes')->name('classes.')->group(function () {
+            Route::get('/', [ClassroomController::class, 'index'])->name('index');
+            Route::get('/{courseClass}/export-students', [ClassroomController::class, 'exportStudents'])->name('export-students');
+        });
 
         Route::resource('courses', CourseController::class)->except(['show', 'destroy']);
         Route::get('courses/{course}', [CourseController::class, 'show'])->name('courses.show');

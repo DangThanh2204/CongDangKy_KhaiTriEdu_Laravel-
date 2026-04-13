@@ -178,6 +178,7 @@
                                     <li><a class="dropdown-item" href="{{ route('staff.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Staff Dashboard</a></li>
                                 @elseif(Auth::user()->isInstructor())
                                     <li><a class="dropdown-item" href="{{ route('instructor.dashboard') }}"><i class="fas fa-chalkboard-teacher me-2"></i>Giảng viên Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('instructor.classes.index') }}"><i class="fas fa-users-class me-2"></i>Lớp tôi đang dạy</a></li>
                                     <li><a class="dropdown-item" href="{{ route('wallet.index') }}"><i class="fas fa-wallet me-2"></i>Ví của tôi</a></li>
                                 @else
                                     <li>

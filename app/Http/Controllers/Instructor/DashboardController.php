@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Instructor;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Course;
+use App\Models\CourseClass;
 use App\Models\Quiz;
 use App\Models\CourseVideo;
 use App\Models\QuizAttempt;
@@ -15,18 +15,19 @@ class DashboardController extends Controller
     {
         $instructorId = auth()->id();
 
-        // Get all class IDs taught by this instructor
-        $classIds = \App\Models\CourseClass::where('instructor_id', $instructorId)->pluck('id');
+        $instructorClasses = CourseClass::query()
+            ->where('instructor_id', $instructorId)
+            ->get(['id', 'course_id']);
 
-        // Get all course IDs from those classes
-        $courseIds = \App\Models\CourseClass::whereIn('id', $classIds)->pluck('course_id')->unique();
+        $classIds = $instructorClasses->pluck('id');
+        $courseIds = $instructorClasses->pluck('course_id')->filter()->unique()->values();
 
         $stats = [
             'total_courses' => Course::whereIn('id', $courseIds)->count(),
             'total_quizzes' => Quiz::whereIn('course_id', $courseIds)->count(),
             'total_videos' => CourseVideo::whereIn('course_id', $courseIds)->count(),
             'total_students' => \App\Models\CourseEnrollment::whereIn('class_id', $classIds)
-                ->where('status', 'approved')
+                ->whereIn('status', ['approved', 'completed'])
                 ->count(),
             'recent_quiz_attempts' => QuizAttempt::with(['quiz.course', 'user'])
                 ->whereIn('quiz_id', Quiz::whereIn('course_id', $courseIds)->pluck('id'))
@@ -35,7 +36,12 @@ class DashboardController extends Controller
                 ->get(),
         ];
 
-        $recentCourses = Course::whereIn('id', $courseIds)->latest()->take(5)->get();
+        $recentCourses = Course::query()
+            ->with(['category', 'classes', 'modules'])
+            ->whereIn('id', $courseIds)
+            ->latest()
+            ->take(5)
+            ->get();
 
         return view('instructor.dashboard', compact('stats', 'recentCourses'));
     }
