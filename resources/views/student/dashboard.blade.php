@@ -22,6 +22,9 @@
                     <a href="{{ route('student.application-status') }}" class="btn btn-outline-primary">
                         <i class="fas fa-file-waveform me-1"></i>Tra cứu hồ sơ
                     </a>
+                    <a href="{{ route('student.payments.index') }}" class="btn btn-outline-dark">
+                        <i class="fas fa-receipt me-1"></i>Lịch sử thanh toán
+                    </a>
                     <a href="{{ route('courses.index') }}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>Đăng ký khóa học mới
                     </a>
@@ -109,7 +112,7 @@
                                     @if($nextLevel)
                                         Tiến độ lên {{ $nextLevel['badge_name'] }}
                                     @else
-                                        Bạn đã ở mốc cao nhất
+                                        Bạn đã ở mức cao nhất
                                     @endif
                                 </span>
                                 <strong>{{ $studentLevel['progress_to_next'] }}%</strong>
@@ -121,7 +124,7 @@
                                 @if($nextLevel)
                                     Còn <strong>{{ number_format($studentLevel['points_to_next']) }} điểm</strong> để lên <strong>{{ $nextLevel['badge_name'] }}</strong>.
                                 @else
-                                    Hệ thống hiện chưa có mốc cao hơn. Hãy tiếp tục giữ phong độ học tập này.
+                                    Hệ thống hiện chưa có mức cao hơn. Hãy tiếp tục giữ phong độ học tập này.
                                 @endif
                             </div>
                         </div>

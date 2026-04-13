@@ -31,7 +31,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Hiển thị dashboard admin.
+     * Hi?n th? dashboard admin.
      */
     public function dashboard()
     {
@@ -291,7 +291,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Lấy dữ liệu cho biểu đồ (API).
+     * L?y d? li?u cho bi?u d? (API).
      */
     public function getChartData(Request $request)
     {
@@ -350,7 +350,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Hiển thị profile admin.
+     * Hi?n th? profile admin.
      */
     public function profile()
     {
@@ -360,7 +360,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Cập nhật profile admin.
+     * C?p nh?t profile admin.
      */
     public function updateProfile(Request $request)
     {
@@ -403,7 +403,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Hiển thị hệ thống logs đơn giản.
+     * Hi?n th? h? th?ng logs don gi?n.
      */
     public function systemLogs()
     {
@@ -649,7 +649,7 @@ private function securityAlertSnapshot(): array
             'labels' => $labels,
             'data' => $data,
             'total' => array_sum($data),
-            'range_label' => $days . ' ngÃ y gáº§n nháº¥t',
+            'range_label' => $days . ' ngày gần nhất',
         ];
     }
 
@@ -687,7 +687,7 @@ private function securityAlertSnapshot(): array
             'labels' => $labels,
             'data' => $data,
             'total' => array_sum($data),
-            'range_label' => $months . ' thÃ¡ng gáº§n nháº¥t',
+            'range_label' => $months . ' tháng gần nhất',
         ];
     }
 
@@ -786,7 +786,7 @@ private function securityAlertSnapshot(): array
             'database_driver' => config('database.default'),
             'timezone' => config('app.timezone'),
             'environment' => app()->environment(),
-            'debug_mode' => config('app.debug') ? 'Bật' : 'Tắt',
+            'debug_mode' => config('app.debug') ? 'B?t' : 'T?t',
             'storage_free' => $this->formatBytes(disk_free_space(storage_path())),
             'storage_total' => $this->formatBytes(disk_total_space(storage_path())),
             'memory_usage' => $this->formatBytes(memory_get_usage(true)),

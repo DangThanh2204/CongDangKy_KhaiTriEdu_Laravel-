@@ -28,7 +28,7 @@
 
     $course = $payment->courseClass?->course;
     $isAdmin = optional(auth()->user())->isAdmin();
-    $receiptReady = $payment->isCompleted() && in_array($payment->method, ['wallet', 'vnpay'], true);
+    $receiptReady = $payment->isCompleted();
 @endphp
 <div class="container py-5">
     <div class="row justify-content-center">
@@ -154,6 +154,11 @@
                         @if($course)
                             <a href="{{ route('courses.show', $course) }}" class="btn btn-outline-primary">
                                 <i class="fas fa-arrow-left me-2"></i>Quay lại khóa học
+                            </a>
+                        @endif
+                        @if(! $isAdmin)
+                            <a href="{{ route('student.payments.index') }}" class="btn btn-outline-dark">
+                                <i class="fas fa-receipt me-2"></i>Lịch sử thanh toán
                             </a>
                         @endif
                         <a href="{{ route('wallet.index') }}" class="btn btn-outline-secondary">

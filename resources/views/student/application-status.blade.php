@@ -19,6 +19,9 @@
                 <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
                     <i class="fas fa-gauge-high me-2"></i>Về dashboard
                 </a>
+                <a href="{{ route('student.payments.index') }}" class="btn btn-outline-dark">
+                    <i class="fas fa-receipt me-2"></i>Lịch sử thanh toán
+                </a>
                 <a href="{{ route('courses.intakes') }}" class="btn btn-primary">
                     <i class="fas fa-calendar-check me-2"></i>Xem lịch khai giảng
                 </a>
@@ -56,6 +59,7 @@
                         $course = $application['course'];
                         $class = $application['class'];
                         $payment = $application['payment'];
+                        $payments = $application['payments'];
                         $primaryAction = $application['primary_action'];
                         $blockchainSummary = $application['blockchain_summary'];
                         $certificate = $enrollment->certificate;
@@ -99,10 +103,10 @@
                         <div class="application-detail-grid">
                             <div class="application-detail-card">
                                 <span>Học phí hồ sơ</span>
-                                <strong>{{ number_format((float) ($enrollment->final_price ?? 0), 0, ',', '.') }}đ</strong>
+                                <strong>{{ number_format((float) ($enrollment->final_price ?? 0), 0, ',', '.') }}d</strong>
                                 <small>
                                     @if((float) ($enrollment->discount_amount ?? 0) > 0)
-                                        Gốc {{ number_format((float) ($enrollment->base_price ?? 0), 0, ',', '.') }}đ, giảm {{ number_format((float) ($enrollment->discount_amount ?? 0), 0, ',', '.') }}đ.
+                                        Gốc {{ number_format((float) ($enrollment->base_price ?? 0), 0, ',', '.') }}d, giảm {{ number_format((float) ($enrollment->discount_amount ?? 0), 0, ',', '.') }}d.
                                     @else
                                         {{ (float) ($enrollment->final_price ?? 0) > 0 ? 'Đây là số tiền cần thanh toán cho hồ sơ này.' : 'Hồ sơ này hiện không yêu cầu thanh toán.' }}
                                     @endif
@@ -135,6 +139,70 @@
                             </div>
                         </div>
 
+                        <section class="application-payment-history-card">
+                            <div class="application-payment-history-header">
+                                <div>
+                                    <span class="application-payment-history-kicker">Giao dịch thanh toán</span>
+                                    <h3>Lịch sử thanh toán của hồ sơ</h3>
+                                    <p>Xem tất cả các lần tạo phiếu, thanh toán thành công, thất bại hoặc đang chờ xử lý cho hồ sơ này.</p>
+                                </div>
+                                <a href="{{ route('student.payments.index') }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-table-list me-2"></i>Xem toàn bộ
+                                </a>
+                            </div>
+
+                            @if($payments->isNotEmpty())
+                                <div class="application-payment-list">
+                                    @foreach($payments as $paymentItem)
+                                        @php
+                                            $paymentBadge = match ($paymentItem->status) {
+                                                'completed' => 'success',
+                                                'failed' => 'danger',
+                                                default => 'warning text-dark',
+                                            };
+                                            $paymentMoment = $paymentItem->paid_at ?: $paymentItem->created_at;
+                                        @endphp
+                                        <article class="application-payment-item status-{{ $paymentItem->status }}">
+                                            <div class="application-payment-copy">
+                                                <div class="application-payment-top">
+                                                    <div>
+                                                        <strong>{{ $paymentItem->reference ?: ('PAY-' . $paymentItem->id) }}</strong>
+                                                        <div class="application-payment-meta">
+                                                            <span><i class="fas fa-coins"></i>{{ number_format((float) $paymentItem->amount, 0, ',', '.') }}đ</span>
+                                                            <span><i class="fas fa-credit-card"></i>{{ $paymentItem->method_label }}</span>
+                                                            <span><i class="fas fa-clock"></i>{{ optional($paymentMoment)->format('d/m/Y H:i') ?: 'Chưa ghi nhận thời gian' }}</span>
+                                                        </div>
+                                                    </div>
+                                                    <span class="badge bg-{{ $paymentBadge }}">{{ $paymentItem->status_label }}</span>
+                                                </div>
+                                                @if(filled($paymentItem->notes))
+                                                    <div class="application-payment-note">{{ \Illuminate\Support\Str::limit($paymentItem->notes, 180) }}</div>
+                                                @endif
+                                            </div>
+                                            <div class="application-payment-actions">
+                                                <a href="{{ route('payments.show', $paymentItem) }}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye me-2"></i>Xem chi tiết
+                                                </a>
+                                                @if($paymentItem->isCompleted())
+                                                    <a href="{{ route('documents.payment-receipt', $paymentItem) }}" class="btn btn-outline-success btn-sm">
+                                                        <i class="fas fa-file-invoice-dollar me-2"></i>Tải PDF
+                                                    </a>
+                                                @endif
+                                            </div>
+                                        </article>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="application-payment-empty">
+                                    <i class="fas fa-wallet"></i>
+                                    <div>
+                                        <strong>Chưa có giao dịch nào gắn với hồ sơ này.</strong>
+                                        <p class="mb-0">Khi hệ thống tạo phiếu hoặc ghi nhận thanh toán, bạn sẽ thấy tất cả tại đây.</p>
+                                    </div>
+                                </div>
+                            @endif
+                        </section>
+
                         @if($enrollment->notes)
                             <div class="application-note-box">
                                 <strong><i class="fas fa-note-sticky me-2"></i>Ghi chú từ hệ thống</strong>
@@ -150,8 +218,8 @@
                                     <p>Theo dõi các mốc như tạo hồ sơ, thanh toán, duyệt, xếp lớp và cấp chứng chỉ đã được ghi nhận hoặc đang chờ đồng bộ lên consortium.</p>
                                 </div>
                                 <div class="application-blockchain-stats">
-                                    <span class="badge text-bg-success-subtle border border-success-subtle">{{ $blockchainSummary['anchored'] }} mốc đã neo</span>
-                                    <span class="badge text-bg-warning-subtle border border-warning-subtle">{{ $blockchainSummary['pending'] }} mốc chờ đồng bộ</span>
+                                    <span class="badge text-bg-success-subtle border border-success-subtle">{{ $blockchainSummary['anchored'] }} mục đã neo</span>
+                                    <span class="badge text-bg-warning-subtle border border-warning-subtle">{{ $blockchainSummary['pending'] }} mục chờ đồng bộ</span>
                                 </div>
                             </div>
 
@@ -215,7 +283,7 @@
                             <a href="{{ route('documents.registration-form', $enrollment) }}" class="btn btn-outline-dark">
                                 <i class="fas fa-file-pdf me-2"></i>Tải phiếu đăng ký PDF
                             </a>
-                            @if($payment && $payment->isCompleted() && in_array($payment->method, ['wallet', 'vnpay'], true))
+                            @if($payment && $payment->isCompleted())
                                 <a href="{{ route('documents.payment-receipt', $payment) }}" class="btn btn-outline-success">
                                     <i class="fas fa-file-invoice-dollar me-2"></i>Tải biên nhận thanh toán
                                 </a>

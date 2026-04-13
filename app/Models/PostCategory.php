@@ -35,7 +35,7 @@ class PostCategory extends Model
         return $this->posts()->count();
     }
 
-    // ThÃªm vÃ o PostCategory.php
+    // Thêm vào PostCategory.php
     public function getActivePostsCountAttribute()
     {
         return $this->posts()->where('status', 'published')->count();

@@ -71,7 +71,7 @@ class FireflyService
         if (! $this->isConfigured()) {
             return [
                 'success' => false,
-                'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh Äáº§y Äá»§.',
+                'message' => 'FireFly chưa được cấu hình đầy đủ.',
                 'token_ready' => false,
                 'namespace' => $this->namespace,
                 'platform_identity' => $this->getPlatformIdentity(),
@@ -114,7 +114,7 @@ class FireflyService
 
         return [
             'success' => false,
-            'message' => $lastError ?: 'KhÃ´ng thá» káº¿t ná»i tá»i FireFly.',
+            'message' => $lastError ?: 'Không thể kết nối tới FireFly.',
             'token_ready' => $this->canManageTokens(),
             'namespace' => $this->namespace,
             'platform_identity' => $this->getPlatformIdentity(),
@@ -124,7 +124,7 @@ class FireflyService
     public function mint(string $toIdentity, float $amount, array $context = []): array
     {
         if (! $this->canManageTokens()) {
-            return ['success' => false, 'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh tÃ­ch há»£p token.'];
+            return ['success' => false, 'message' => 'FireFly chưa được cấu hình tích hợp token.'];
         }
 
         $requestId = (string) ($context['request_id'] ?? $context['reference'] ?? Str::uuid());
@@ -150,7 +150,7 @@ class FireflyService
     public function transfer(string $fromIdentity, string $toIdentity, float $amount, array $context = []): array
     {
         if (! $this->canManageTokens()) {
-            return ['success' => false, 'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh tÃ­ch há»£p token.'];
+            return ['success' => false, 'message' => 'FireFly chưa được cấu hình tích hợp token.'];
         }
 
         $requestId = (string) ($context['request_id'] ?? $context['reference'] ?? Str::uuid());
@@ -178,7 +178,7 @@ class FireflyService
     public function getBalance(string $identity): array
     {
         if (! $this->canManageTokens()) {
-            return ['success' => false, 'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh tÃ­ch há»£p token.'];
+            return ['success' => false, 'message' => 'FireFly chưa được cấu hình tích hợp token.'];
         }
 
         $response = $this->client()->get("/api/v1/namespaces/{$this->namespace}/tokens/balances", $this->cleanArray([
@@ -198,7 +198,7 @@ class FireflyService
     public function broadcastAuditEvent(string $eventType, array $payload, array $context = []): array
     {
         if (! $this->isConfigured()) {
-            return ['success' => false, 'message' => 'FireFly chÆ°a ÄÆ°á»£c cáº¥u hÃ¬nh.'];
+            return ['success' => false, 'message' => 'FireFly chưa được cấu hình.'];
         }
 
         $requestId = (string) ($context['request_id'] ?? Str::uuid());
