@@ -374,6 +374,7 @@
             loadTheme();
             bindLogoutConfirm();
             bindDropdownHover();
+            bindResponsiveNavbarHover();
             bindBackToTop();
             bindRevealAnimations();
             bindContactFormDemo();
@@ -466,6 +467,70 @@
                     }
                 });
             });
+        }
+
+        function bindResponsiveNavbarHover() {
+            const navbar = document.querySelector('.navbar');
+            const toggler = navbar?.querySelector('.navbar-toggler');
+            const collapseEl = navbar?.querySelector('#navbarNav');
+
+            if (!navbar || !toggler || !collapseEl || !window.bootstrap?.Collapse) {
+                return;
+            }
+
+            const hoverableCollapsedNavbar = window.matchMedia('(max-width: 1199.98px) and (hover: hover) and (pointer: fine)');
+            const collapse = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+            let closeTimer = null;
+
+            const clearCloseTimer = () => {
+                if (closeTimer) {
+                    clearTimeout(closeTimer);
+                    closeTimer = null;
+                }
+            };
+
+            const showMenu = () => {
+                if (!hoverableCollapsedNavbar.matches) {
+                    return;
+                }
+
+                clearCloseTimer();
+                collapse.show();
+            };
+
+            const hideMenu = () => {
+                if (!hoverableCollapsedNavbar.matches) {
+                    return;
+                }
+
+                clearCloseTimer();
+                closeTimer = setTimeout(() => {
+                    collapse.hide();
+                }, 120);
+            };
+
+            const syncMode = () => {
+                clearCloseTimer();
+
+                if (!hoverableCollapsedNavbar.matches) {
+                    collapse.hide();
+                }
+            };
+
+            toggler.addEventListener('mouseenter', showMenu);
+            toggler.addEventListener('mouseleave', hideMenu);
+            collapseEl.addEventListener('mouseenter', showMenu);
+            collapseEl.addEventListener('mouseleave', hideMenu);
+            navbar.addEventListener('mouseleave', hideMenu);
+            navbar.addEventListener('mouseenter', clearCloseTimer);
+
+            if (typeof hoverableCollapsedNavbar.addEventListener === 'function') {
+                hoverableCollapsedNavbar.addEventListener('change', syncMode);
+            } else if (typeof hoverableCollapsedNavbar.addListener === 'function') {
+                hoverableCollapsedNavbar.addListener(syncMode);
+            }
+
+            window.addEventListener('resize', syncMode);
         }
 
         function bindBackToTop() {
