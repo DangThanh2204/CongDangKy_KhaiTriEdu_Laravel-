@@ -237,7 +237,7 @@
                     <div class="row">
                         @foreach($enrollments as $enrollment)
                             @php
-                                $course = $enrollment->course;
+                                $course = $enrollment->course ?: $enrollment->class?->course;
                                 $class = $enrollment->class;
                                 $isOffline = $course?->isOffline();
                                 $canLearn = $enrollment->isApproved() || $enrollment->isCompleted();
@@ -259,19 +259,29 @@
                                     <div class="card-body d-flex flex-column">
                                         <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                                             <h6 class="card-title fw-bold mb-0">
-                                                <a href="{{ route('courses.show', $course) }}" class="text-decoration-none text-dark">{{ $course->title }}</a>
+                                                @if($course)
+                                                    <a href="{{ route('courses.show', $course) }}" class="text-decoration-none text-dark">{{ $course->title }}</a>
+                                                @else
+                                                    <span class="text-muted">Khóa học không còn khả dụng</span>
+                                                @endif
                                             </h6>
                                             <span class="badge bg-{{ $enrollment->status_color }} {{ $badgeTextClass }}">{{ $enrollment->status_text }}</span>
                                         </div>
 
                                         <div class="d-flex flex-wrap gap-2 mb-2 small">
-                                            <span class="badge bg-light text-dark border">{{ $course->delivery_mode_label }}</span>
-                                            <span class="badge bg-light text-dark border">{{ $course->category->name ?? 'Chưa phân loại' }}</span>
+                                            @if($course)
+                                                <span class="badge bg-light text-dark border">{{ $course->delivery_mode_label }}</span>
+                                                <span class="badge bg-light text-dark border">{{ $course->category->name ?? 'Chưa phân loại' }}</span>
+                                            @else
+                                                <span class="badge bg-light text-dark border">Chưa đồng bộ khóa học</span>
+                                            @endif
                                         </div>
 
                                         <div class="small text-muted mb-3">
                                             <div><i class="fas fa-calendar me-1"></i>Đăng ký lúc {{ optional($enrollment->created_at)->format('d/m/Y') }}</div>
-                                            <div><i class="fas fa-clock me-1"></i>{{ $course->estimated_duration_label }}</div>
+                                            @if($course)
+                                                <div><i class="fas fa-clock me-1"></i>{{ $course->estimated_duration_label }}</div>
+                                            @endif
                                         </div>
 
                                         @if($isOffline && $class)
@@ -293,13 +303,13 @@
                                         @endif
 
                                         <div class="mt-auto d-flex gap-2 flex-wrap">
-                                            @if($canLearn)
+                                            @if($canLearn && $course)
                                                 <a href="{{ route('courses.learn', $course) }}" class="btn btn-success btn-sm flex-fill">
                                                     <i class="fas fa-play me-1"></i>{{ $enrollment->isCompleted() ? 'Xem lại khóa học' : 'Vào học' }}
                                                 </a>
                                             @endif
 
-                                            @if($canCancel)
+                                            @if($canCancel && $course)
                                                 <form action="{{ route('courses.unenroll', $course) }}" method="POST" class="flex-fill">
                                                     @csrf
                                                     @method('DELETE')
@@ -313,7 +323,7 @@
                                 </div>
                             </div>
 
-                            @if($canChangeClass)
+                            @if($canChangeClass && $course)
                                 @php
                                     $allowChange = \App\Models\Setting::get('allow_class_change', '1');
                                     $otherClasses = \App\Models\CourseClass::where('course_id', $course->id)

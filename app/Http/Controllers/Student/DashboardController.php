@@ -15,7 +15,21 @@ class DashboardController extends Controller
         $enrollments = CourseEnrollment::with(['class.course.category', 'class.course.instructor'])
             ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function (CourseEnrollment $enrollment) {
+                $class = $enrollment->class;
+                $course = $enrollment->course ?: $class?->course;
+
+                if ($course) {
+                    $enrollment->setRelation('course', $course);
+                }
+
+                if ($class) {
+                    $enrollment->setRelation('courseClass', $class);
+                }
+
+                return $enrollment;
+            });
 
         $approvedCourses = $enrollments->where('status', 'approved');
         $pendingCourses = $enrollments->where('status', 'pending');

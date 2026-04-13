@@ -23,7 +23,17 @@ class ApplicationStatusController extends Controller
             ])
             ->where('user_id', $user->id)
             ->latest('created_at')
-            ->get();
+            ->get()
+            ->map(function (CourseEnrollment $enrollment) {
+                $class = $enrollment->courseClass;
+                $course = $enrollment->course ?: $class?->course;
+
+                if ($course) {
+                    $enrollment->setRelation('course', $course);
+                }
+
+                return $enrollment;
+            });
 
         $paymentsByClass = Payment::query()
             ->with(['discountCode', 'courseClass.course.category'])
