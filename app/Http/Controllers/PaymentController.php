@@ -120,9 +120,7 @@ class PaymentController extends Controller
 
         $payload = $verification['payload'];
         $reference = $this->vnpay->paymentReference($payload);
-        $payment = $reference
-            ? Payment::with(['courseClass.course'])->where('reference', $reference)->first()
-            : null;
+        $payment = $this->findPaymentByReference($reference);
 
         if ($payment) {
             return $this->handlePaymentReturn($payment, $payload, $request);
@@ -156,9 +154,7 @@ class PaymentController extends Controller
 
         $payload = $verification['payload'];
         $reference = $this->vnpay->paymentReference($payload);
-        $payment = $reference
-            ? Payment::with(['courseClass.course'])->where('reference', $reference)->first()
-            : null;
+        $payment = $this->findPaymentByReference($reference);
 
         if ($payment) {
             return $this->handlePaymentIpn($payment, $payload, $request);
@@ -673,16 +669,51 @@ class PaymentController extends Controller
 
     private function findWalletTopupByReference(?string $reference): ?WalletTransaction
     {
-        if (! is_string($reference) || trim($reference) === '') {
+        $candidates = $this->referenceCandidates($reference);
+
+        if ($candidates === []) {
             return null;
         }
 
         return WalletTransaction::query()
             ->with('wallet.user')
-            ->where('reference', $reference)
             ->where('type', 'deposit')
-            ->where('metadata->method', 'vnpay')
+            ->whereIn('reference', $candidates)
+            ->latest('created_at')
+            ->get()
+            ->first(fn (WalletTransaction $walletTransaction) => $walletTransaction->isVnpayTopup());
+    }
+
+    private function findPaymentByReference(?string $reference): ?Payment
+    {
+        $candidates = $this->referenceCandidates($reference);
+
+        if ($candidates === []) {
+            return null;
+        }
+
+        return Payment::with(['courseClass.course'])
+            ->whereIn('reference', $candidates)
+            ->latest('created_at')
             ->first();
+    }
+
+    private function referenceCandidates(?string $reference): array
+    {
+        if (! is_string($reference)) {
+            return [];
+        }
+
+        $normalized = trim($reference);
+        if ($normalized === '') {
+            return [];
+        }
+
+        return array_values(array_unique([
+            $normalized,
+            strtoupper($normalized),
+            strtolower($normalized),
+        ]));
     }
 
     private function appendWalletMetadata(WalletTransaction $walletTransaction, array $payload): void

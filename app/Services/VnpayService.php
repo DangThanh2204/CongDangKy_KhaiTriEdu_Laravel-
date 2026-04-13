@@ -183,7 +183,13 @@ class VnpayService
     {
         $reference = $payload['vnp_TxnRef'] ?? null;
 
-        return is_string($reference) && $reference !== '' ? $reference : null;
+        if (! is_string($reference)) {
+            return null;
+        }
+
+        $reference = trim($reference);
+
+        return $reference !== '' ? $reference : null;
     }
 
     public function gatewaySummary(array $payload): string

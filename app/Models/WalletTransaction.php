@@ -81,21 +81,26 @@ class WalletTransaction extends Model
 
     public function paymentMethod(): string
     {
-        return (string) data_get($this->metadata, 'method', '');
+        return strtolower(trim((string) data_get($this->metadata, 'method', '')));
+    }
+
+    public function normalizedStatus(): string
+    {
+        return strtolower(trim((string) $this->status));
     }
 
     public function isPending(): bool
     {
-        return $this->status === 'pending' && ! $this->isExpired();
+        return $this->normalizedStatus() === 'pending' && ! $this->isExpired();
     }
 
     public function isExpired(): bool
     {
-        if ($this->status === 'expired') {
+        if ($this->normalizedStatus() === 'expired') {
             return true;
         }
 
-        return $this->status === 'pending'
+        return $this->normalizedStatus() === 'pending'
             && ! is_null($this->expires_at)
             && $this->expires_at->isPast();
     }
@@ -204,8 +209,8 @@ class WalletTransaction extends Model
     public function getMethodLabelAttribute(): string
     {
         return match ($this->paymentMethod()) {
-            self::DIRECT_METHOD => 'Náº¡p trá»±c tiáº¿p',
-            self::BANK_METHOD => 'Chuyá»ƒn khoáº£n ngÃ¢n hÃ ng',
+            self::DIRECT_METHOD => 'Nạp trực tiếp',
+            self::BANK_METHOD => 'Chuyển khoản ngân hàng',
             self::VNPAY_METHOD => 'VNPay',
             default => ucfirst(str_replace('_', ' ', $this->paymentMethod() ?: '-')),
         };
@@ -213,18 +218,18 @@ class WalletTransaction extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return match ($this->status) {
-            'pending' => 'Chá» xá»­ lÃ½',
-            'completed' => 'HoÃ n thÃ nh',
-            'failed' => 'Tháº¥t báº¡i',
-            'expired' => 'ÄÃ£ háº¿t háº¡n',
-            default => ucfirst($this->status),
+        return match ($this->normalizedStatus()) {
+            'pending' => 'Chờ xử lý',
+            'completed' => 'Hoàn thành',
+            'failed' => 'Thất bại',
+            'expired' => 'Đã hết hạn',
+            default => ucfirst($this->normalizedStatus()),
         };
     }
 
     public function getStatusBadgeClassAttribute(): string
     {
-        return match ($this->status) {
+        return match ($this->normalizedStatus()) {
             'pending' => 'bg-warning text-dark',
             'completed' => 'bg-success',
             'failed' => 'bg-danger',
@@ -254,12 +259,12 @@ class WalletTransaction extends Model
             return null;
         }
 
-        if ($this->status === 'expired') {
-            return 'ÄÃ£ háº¿t háº¡n' . ($this->expired_at_label ? ' lÃºc ' . $this->expired_at_label : '');
+        if ($this->normalizedStatus() === 'expired') {
+            return 'Đã hết hạn' . ($this->expired_at_label ? ' lúc ' . $this->expired_at_label : '');
         }
 
         if ($this->expires_at_label) {
-            return 'Háº¿t háº¡n lÃºc ' . $this->expires_at_label;
+            return 'Hết hạn lúc ' . $this->expires_at_label;
         }
 
         return null;
