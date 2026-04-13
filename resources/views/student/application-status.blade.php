@@ -68,7 +68,7 @@
                         <div class="application-card-header">
                             <div>
                                 <div class="application-card-kicker">Hồ sơ #{{ $enrollment->id }}</div>
-                                <h2>{{ $course->title ?? 'Khóa học đã bị ẩn' }}</h2>
+                                <h2>{{ $course?->title ?? 'Khóa học đã bị ẩn' }}</h2>
                                 <div class="application-card-meta">
                                     <span><i class="fas fa-calendar-plus me-2"></i>Nộp hồ sơ: {{ optional($enrollment->created_at)->format('d/m/Y H:i') }}</span>
                                     @if($course)

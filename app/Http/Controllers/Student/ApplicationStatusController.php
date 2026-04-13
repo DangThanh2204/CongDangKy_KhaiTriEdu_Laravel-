@@ -26,18 +26,17 @@ class ApplicationStatusController extends Controller
             ->get();
 
         $paymentsByClass = Payment::query()
-            ->with('discountCode')
+            ->with(['discountCode', 'courseClass.course.category'])
             ->where('user_id', $user->id)
-            ->orderByDesc('paid_at')
-            ->orderByDesc('created_at')
             ->get()
             ->groupBy(fn (Payment $payment) => (string) $payment->class_id)
-            ->map(fn (Collection $group) => $group->first());
+            ->map(fn (Collection $group) => $this->sortPaymentsForHistory($group));
 
         $applications = $enrollments->map(function (CourseEnrollment $enrollment) use ($paymentsByClass) {
-            $course = $enrollment->course;
             $class = $enrollment->courseClass;
-            $payment = $paymentsByClass->get((string) $enrollment->class_id);
+            $course = $enrollment->course ?: $class?->course;
+            $paymentHistory = $paymentsByClass->get((string) $enrollment->class_id, collect())->values();
+            $payment = $this->sortPaymentsForApplication($paymentHistory)->first();
             $submittedState = $this->buildSubmittedState($enrollment);
             $paymentState = $this->buildPaymentState($enrollment, $payment);
             $approvalState = $this->buildApprovalState($enrollment);
@@ -50,6 +49,7 @@ class ApplicationStatusController extends Controller
                 'course' => $course,
                 'class' => $class,
                 'payment' => $payment,
+                'payments' => $paymentHistory,
                 'submitted_state' => $submittedState,
                 'payment_state' => $paymentState,
                 'approval_state' => $approvalState,
@@ -293,7 +293,7 @@ class ApplicationStatusController extends Controller
 
     private function buildPrimaryAction(CourseEnrollment $enrollment): array
     {
-        $course = $enrollment->course;
+        $course = $enrollment->course ?: $enrollment->courseClass?->course;
 
         if (! $course) {
             return [
@@ -589,6 +589,77 @@ class ApplicationStatusController extends Controller
         } catch (\Throwable $exception) {
             return null;
         }
+    }
+
+    private function sortPaymentsForApplication(Collection $payments): Collection
+    {
+        return $payments
+            ->sort(function (Payment $left, Payment $right): int {
+                $compare = $this->statusPriority($left->status, ['completed']) <=> $this->statusPriority($right->status, ['completed']);
+
+                if ($compare !== 0) {
+                    return $compare;
+                }
+
+                $compare = $this->nullableDateComparison($right->paid_at, $left->paid_at);
+
+                if ($compare !== 0) {
+                    return $compare;
+                }
+
+                $compare = $this->nullableDateComparison($right->created_at, $left->created_at);
+
+                if ($compare !== 0) {
+                    return $compare;
+                }
+
+                return ((int) $right->id) <=> ((int) $left->id);
+            })
+            ->values();
+    }
+
+    private function sortPaymentsForHistory(Collection $payments): Collection
+    {
+        return $payments
+            ->sort(function (Payment $left, Payment $right): int {
+                $compare = $this->nullableDateComparison(
+                    $this->paymentMoment($right),
+                    $this->paymentMoment($left)
+                );
+
+                if ($compare !== 0) {
+                    return $compare;
+                }
+
+                $compare = $this->nullableDateComparison($right->created_at, $left->created_at);
+
+                if ($compare !== 0) {
+                    return $compare;
+                }
+
+                return ((int) $right->id) <=> ((int) $left->id);
+            })
+            ->values();
+    }
+
+    private function paymentMoment(Payment $payment)
+    {
+        return $payment->paid_at ?: $payment->created_at;
+    }
+
+    private function nullableDateComparison($left, $right): int
+    {
+        $leftValue = $left?->format('Y-m-d H:i:s.u');
+        $rightValue = $right?->format('Y-m-d H:i:s.u');
+
+        return ($leftValue ?? '') <=> ($rightValue ?? '');
+    }
+
+    private function statusPriority(?string $status, array $priorityOrder): int
+    {
+        $index = array_search($status, $priorityOrder, true);
+
+        return $index === false ? count($priorityOrder) : $index;
     }
 
     private function resolvePaymentMethodLabel(?Payment $payment, CourseEnrollment $enrollment): string
