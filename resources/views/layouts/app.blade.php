@@ -38,7 +38,7 @@
     @endauth
 </head>
 <body class="@yield('page-class')">
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+    <nav class="navbar navbar-expand-xl navbar-light fixed-top">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
                 @if($siteLogo)
@@ -53,7 +53,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="collapse navbar-collapse portal-navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-lg-center navbar-main-nav">
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
@@ -441,8 +441,14 @@
         }
 
         function bindDropdownHover() {
+            const desktopNavbar = window.matchMedia('(min-width: 1200px)');
+
             document.querySelectorAll('.navbar-nav .nav-item.dropdown').forEach(item => {
                 item.addEventListener('mouseenter', () => {
+                    if (!desktopNavbar.matches) {
+                        return;
+                    }
+
                     const toggleEl = item.querySelector('[data-bs-toggle="dropdown"]');
                     if (toggleEl) {
                         bootstrap.Dropdown.getOrCreateInstance(toggleEl).show();
@@ -450,6 +456,10 @@
                 });
 
                 item.addEventListener('mouseleave', () => {
+                    if (!desktopNavbar.matches) {
+                        return;
+                    }
+
                     const toggleEl = item.querySelector('[data-bs-toggle="dropdown"]');
                     if (toggleEl) {
                         bootstrap.Dropdown.getOrCreateInstance(toggleEl).hide();
