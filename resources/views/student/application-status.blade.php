@@ -8,6 +8,9 @@
 @endpush
 
 @section('content')
+    @php
+        $hasPaymentHistoryRoute = \Illuminate\Support\Facades\Route::has('student.payments.index');
+    @endphp
     <div class="container py-5 student-application-page">
         <section class="application-hero mb-4">
             <div class="application-hero-copy">
@@ -19,9 +22,11 @@
                 <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
                     <i class="fas fa-gauge-high me-2"></i>Về dashboard
                 </a>
+                @if($hasPaymentHistoryRoute)
                 <a href="{{ route('student.payments.index') }}" class="btn btn-outline-dark">
                     <i class="fas fa-receipt me-2"></i>Lịch sử thanh toán
                 </a>
+                @endif
                 <a href="{{ route('courses.intakes') }}" class="btn btn-primary">
                     <i class="fas fa-calendar-check me-2"></i>Xem lịch khai giảng
                 </a>

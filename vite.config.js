@@ -18,6 +18,7 @@ export default defineConfig({
                 'resources/css/pages/courses/intakes.css',
                 'resources/css/pages/student/dashboard.css',
                 'resources/css/pages/student/application-status.css',
+                'resources/css/pages/student/payment-history.css',
                 'resources/css/pages/admin/dashboard.css',
                 'resources/css/pages/admin/settings.css',
                 'resources/css/pages/admin/users.css',

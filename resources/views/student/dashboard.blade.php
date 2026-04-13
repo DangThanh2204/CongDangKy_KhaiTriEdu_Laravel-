@@ -12,6 +12,7 @@
         $currentLevel = $studentLevel['level'];
         $nextLevel = $studentLevel['next_level'];
         $currentLeaderboardEntry = $leaderboard['current_user'];
+        $hasPaymentHistoryRoute = \Illuminate\Support\Facades\Route::has('student.payments.index');
     @endphp
 
     <div class="container-fluid py-4">
@@ -22,9 +23,11 @@
                     <a href="{{ route('student.application-status') }}" class="btn btn-outline-primary">
                         <i class="fas fa-file-waveform me-1"></i>Tra cứu hồ sơ
                     </a>
+                    @if($hasPaymentHistoryRoute)
                     <a href="{{ route('student.payments.index') }}" class="btn btn-outline-dark">
                         <i class="fas fa-receipt me-1"></i>Lịch sử thanh toán
                     </a>
+                    @endif
                     <a href="{{ route('courses.index') }}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>Đăng ký khóa học mới
                     </a>

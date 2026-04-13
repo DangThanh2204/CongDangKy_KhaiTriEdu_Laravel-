@@ -6,6 +6,7 @@ use App\Http\Controllers\QuizController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Student\ApplicationStatusController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
+use App\Http\Controllers\Student\PaymentHistoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth'])->group(function () {
@@ -18,6 +19,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::middleware('student')->group(function () {
         Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('student.dashboard');
         Route::get('/ho-so-cua-toi', [ApplicationStatusController::class, 'index'])->name('student.application-status');
+        Route::get('/lich-su-thanh-toan', [PaymentHistoryController::class, 'index'])->name('student.payments.index');
 
         Route::post('/courses/{course}/enrollments/{enrollment}/change-class', [EnrollmentController::class, 'changeClass'])
             ->name('courses.enroll.change');
