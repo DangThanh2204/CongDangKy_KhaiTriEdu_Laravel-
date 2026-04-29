@@ -16,6 +16,7 @@ class GeminiChatService
     protected string $model;
     protected string $extraContext;
     protected string $adminTrainingPrompt;
+    protected array $guides;
 
     public function __construct()
     {
@@ -24,6 +25,7 @@ class GeminiChatService
         $this->model = config('services.gemini.assistant_model', 'gemini-2.5-flash-lite');
         $this->extraContext = trim((string) config('services.gemini.assistant_context', ''));
         $this->adminTrainingPrompt = trim((string) Setting::get('ai_assistant_prompt', ''));
+        $this->guides = (array) config('assistant_guides.guides', []);
     }
 
     public function isConfigured(): bool
@@ -35,11 +37,12 @@ class GeminiChatService
     {
         $shouldRecommendCourses = $this->shouldRecommendCourses($message, $meta);
         $recommendations = $shouldRecommendCourses ? $this->recommendCourses($message) : [];
+        $matchedGuides = $this->matchGuides($message, $meta);
 
         if (! $this->isConfigured()) {
             return [
                 'success' => true,
-                'message' => $this->buildFallbackReply($message, $recommendations, 'missing_api_key', $shouldRecommendCourses),
+                'message' => $this->buildFallbackReply($message, $recommendations, 'missing_api_key', $shouldRecommendCourses, $matchedGuides),
                 'response_id' => null,
                 'recommended_courses' => $recommendations,
                 'source' => 'fallback_local',
@@ -49,7 +52,7 @@ class GeminiChatService
         $payload = [
             'system_instruction' => [
                 'parts' => [
-                    ['text' => $this->buildInstructions()],
+                    ['text' => $this->buildInstructions($matchedGuides)],
                 ],
             ],
             'contents' => [
@@ -77,7 +80,7 @@ class GeminiChatService
 
             return [
                 'success' => true,
-                'message' => $this->buildFallbackReply($message, $recommendations, 'api_error', $shouldRecommendCourses),
+                'message' => $this->buildFallbackReply($message, $recommendations, 'api_error', $shouldRecommendCourses, $matchedGuides),
                 'status' => $status,
                 'details' => $details,
                 'response_id' => null,
@@ -91,7 +94,7 @@ class GeminiChatService
 
         return [
             'success' => true,
-            'message' => $text ?: $this->buildFallbackReply($message, $recommendations, 'empty_response', $shouldRecommendCourses),
+            'message' => $text ?: $this->buildFallbackReply($message, $recommendations, 'empty_response', $shouldRecommendCourses, $matchedGuides),
             'response_id' => null,
             'recommended_courses' => $recommendations,
             'raw' => $data,
@@ -107,7 +110,7 @@ class GeminiChatService
             ->timeout(30);
     }
 
-    protected function buildInstructions(): string
+    protected function buildInstructions(array $matchedGuides = []): string
     {
         $siteName = Setting::get('site_name', 'Khai Tri Education');
         $tagline = Setting::get('site_tagline', 'Nền tảng học tập trực tuyến');
@@ -164,6 +167,11 @@ class GeminiChatService
             '- Nhóm ngành hiện có: ' . (! empty($categories) ? implode(', ', $categories) : 'Chưa cập nhật'),
             "- Một số khóa học đang hiển thị:\n" . ($courses ?: '- Chưa có dữ liệu khóa học published.'),
         ];
+
+        $guidesBlock = $this->formatGuidesForPrompt($matchedGuides);
+        if ($guidesBlock !== '') {
+            $parts[] = $guidesBlock;
+        }
 
         if ($this->adminTrainingPrompt !== '') {
             $parts[] = "Hướng dẫn bổ sung từ quản trị viên:\n{$this->adminTrainingPrompt}";
@@ -398,10 +406,10 @@ class GeminiChatService
         })->all();
     }
 
-    protected function buildFallbackReply(string $message, array $recommendations, string $reason, bool $courseIntent = false): string
+    protected function buildFallbackReply(string $message, array $recommendations, string $reason, bool $courseIntent = false, array $matchedGuides = []): string
     {
         if (! $courseIntent) {
-            return $this->buildNonCourseFallbackReply($message, $reason);
+            return $this->buildNonCourseFallbackReply($message, $reason, $matchedGuides);
         }
 
         $intro = match ($reason) {
@@ -430,32 +438,131 @@ class GeminiChatService
         return implode("\n\n", $parts);
     }
 
-    protected function buildNonCourseFallbackReply(string $message, string $reason): string
+    protected function buildNonCourseFallbackReply(string $message, string $reason, array $matchedGuides = []): string
     {
-        $normalizedMessage = $this->normalizeText($message);
         $intro = match ($reason) {
             'missing_api_key' => 'Trợ lý AI chưa được cấu hình đầy đủ nên mình đang hỗ trợ theo dữ liệu sẵn có trên website.',
             'api_error' => 'Trợ lý AI tạm thời gặp lỗi kết nối nên mình đang hỗ trợ theo dữ liệu sẵn có trên website.',
             default => 'Mình đang hỗ trợ bạn theo dữ liệu hiện có trên website.',
         };
 
-        if (Str::contains($normalizedMessage, ['dang nhap', 'dang ky tai khoan', 'quen mat khau', 'otp', 'xac thuc'])) {
-            return $intro . "\n\nNếu bạn cần vào tài khoản, hãy dùng mục Đăng nhập hoặc Đăng ký ở góc trên. Nếu quên mật khẩu, chọn Quên mật khẩu để nhận hướng dẫn đặt lại.";
-        }
+        $primaryGuide = $matchedGuides[0] ?? null;
+        if ($primaryGuide) {
+            $stepLines = collect($primaryGuide['steps'] ?? [])
+                ->map(fn ($step, $index) => ($index + 1) . '. ' . $step)
+                ->implode("\n");
 
-        if (Str::contains($normalizedMessage, ['wallet', 'vi', 'nap tien', 'topup', 'thanh toan', 'hoa don'])) {
-            return $intro . "\n\nNếu bạn cần nạp ví, xem số dư hoặc giao dịch thanh toán, hãy vào mục Ví của tôi sau khi đăng nhập. Nếu bạn nói rõ đang vướng ở bước nào, mình sẽ hướng dẫn tiếp ngắn gọn hơn.";
-        }
+            $body = "Hướng dẫn nhanh — " . ($primaryGuide['title'] ?? 'Thao tác') . ":\n" . $stepLines;
 
-        if (Str::contains($normalizedMessage, ['lien he', 'dia chi', 'so dien thoai', 'email'])) {
-            return $intro . "\n\nNếu bạn cần liên hệ trung tâm, hãy vào mục Liên hệ để xem số điện thoại, email và địa chỉ hiện có trên website. Nếu muốn, mình có thể hướng dẫn bạn tìm đúng mục đó.";
-        }
+            if (! empty($primaryGuide['notes'])) {
+                $body .= "\nLưu ý: " . implode(' ', $primaryGuide['notes']);
+            }
 
-        if (Str::contains($normalizedMessage, ['tin tuc', 'news'])) {
-            return $intro . "\n\nNếu bạn muốn xem bài viết hoặc thông báo mới, hãy vào mục Tin tức trên thanh menu. Nếu bạn cần tìm một chủ đề cụ thể, cứ nói rõ hơn để mình hướng bạn nhanh hơn.";
+            return $intro . "\n\n" . $body;
         }
 
         return $intro . "\n\nBạn có thể nói rõ hơn bạn đang cần hỗ trợ về tài khoản, ví, thanh toán, liên hệ hay thao tác nào trên website để mình hướng dẫn đúng trọng tâm.";
+    }
+
+    protected function matchGuides(string $message, array $meta = []): array
+    {
+        if (empty($this->guides)) {
+            return [];
+        }
+
+        $normalizedMessage = $this->normalizeText($message);
+        $currentPath = $this->extractPath($meta['current_url'] ?? null);
+
+        $scored = [];
+
+        foreach ($this->guides as $key => $guide) {
+            $score = 0;
+            $keywords = $guide['keywords'] ?? [];
+
+            foreach ($keywords as $keyword) {
+                $needle = $this->normalizeText($keyword);
+                if ($needle !== '' && Str::contains($normalizedMessage, $needle)) {
+                    $score += 5;
+                }
+            }
+
+            if ($currentPath !== '') {
+                foreach (($guide['url_patterns'] ?? []) as $pattern) {
+                    if (@preg_match($pattern, $currentPath) === 1) {
+                        $score += 2;
+                    }
+                }
+            }
+
+            if ($score > 0) {
+                $scored[] = [
+                    'key' => is_string($key) ? $key : (string) $key,
+                    'score' => $score,
+                    'guide' => $guide,
+                ];
+            }
+        }
+
+        if (empty($scored)) {
+            return [];
+        }
+
+        usort($scored, fn ($a, $b) => $b['score'] <=> $a['score']);
+
+        return collect($scored)
+            ->take(3)
+            ->map(fn ($item) => array_merge($item['guide'], ['key' => $item['key']]))
+            ->all();
+    }
+
+    protected function formatGuidesForPrompt(array $matchedGuides): string
+    {
+        if (empty($matchedGuides)) {
+            return '';
+        }
+
+        $blocks = [];
+
+        foreach ($matchedGuides as $guide) {
+            $title = $guide['title'] ?? 'Thao tác';
+            $url = '';
+
+            if (! empty($guide['route'])) {
+                try {
+                    $url = route($guide['route'], [], false);
+                } catch (\Throwable) {
+                    $url = '';
+                }
+            }
+
+            $header = '### ' . $title . ($url !== '' ? ' (' . $url . ')' : '');
+            $steps = collect($guide['steps'] ?? [])
+                ->map(fn ($step, $index) => ($index + 1) . '. ' . $step)
+                ->implode("\n");
+
+            $block = $header . "\n" . $steps;
+
+            if (! empty($guide['notes'])) {
+                $block .= "\nLưu ý:\n- " . implode("\n- ", $guide['notes']);
+            }
+
+            $blocks[] = $block;
+        }
+
+        return "Cẩm nang thao tác phù hợp với câu hỏi (ưu tiên dùng các bước dưới đây để trả lời, giữ đúng tên trang và URL):\n\n"
+            . implode("\n\n", $blocks);
+    }
+
+    protected function extractPath(?string $url): string
+    {
+        if (! is_string($url) || trim($url) === '') {
+            return '';
+        }
+
+        $parsed = parse_url(trim($url));
+        $path = $parsed['path'] ?? $url;
+
+        return '/' . ltrim((string) $path, '/');
     }
 
     protected function matchesCatalogTerm(string $normalizedMessage): bool
