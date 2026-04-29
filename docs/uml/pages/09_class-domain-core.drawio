@@ -1,0 +1,211 @@
+<mxfile host="65bd71144e" compressed="false">
+    <diagram id="class-domain-core" name="Class Diagram Lõi">
+        <mxGraphModel dx="1192" dy="719" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="CLASS DIAGRAM - CÁC THỰC THỂ LÕI" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontStyle=1;fontSize=18;" parent="1" vertex="1">
+                    <mxGeometry x="345" y="20" width="470" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="10" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;User&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ fullname: string&lt;br/&gt;+ email: string&lt;br/&gt;+ role: string&lt;hr/&gt;+ isAdmin()&lt;br/&gt;+ isInstructor()&lt;br/&gt;+ isStudent()&lt;br/&gt;+ getOrCreateWallet()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="630" width="190" height="156" as="geometry"/>
+                </mxCell>
+                <mxCell id="20" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;Course&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ title: string&lt;br/&gt;+ price: decimal&lt;br/&gt;+ learningType: string&lt;br/&gt;+ status: string&lt;hr/&gt;+ isOnline()&lt;br/&gt;+ isOffline()&lt;br/&gt;+ requiresManualApproval()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="360" width="210" height="166" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;CourseClass&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ name: string&lt;br/&gt;+ startDate: date&lt;br/&gt;+ maxStudents: int&lt;br/&gt;+ status: string&lt;hr/&gt;+ remainingSlots()&lt;br/&gt;+ isFull()&lt;br/&gt;+ isOnline()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="870" y="600" width="210" height="166" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;CourseEnrollment&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ status: string&lt;br/&gt;+ finalPrice: decimal&lt;br/&gt;+ seatHoldExpiresAt: datetime&lt;br/&gt;+ completedAt: datetime&lt;hr/&gt;+ approve()&lt;br/&gt;+ reject()&lt;br/&gt;+ cancel()&lt;br/&gt;+ complete()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="400" y="350" width="230" height="176" as="geometry"/>
+                </mxCell>
+                <mxCell id="50" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;Wallet&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ balance: decimal&lt;hr/&gt;+ deposit()&lt;br/&gt;+ charge()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="110" y="380" width="190" height="108" as="geometry"/>
+                </mxCell>
+                <mxCell id="95" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;WalletTransaction&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ type: string&lt;br/&gt;+ amount: decimal&lt;br/&gt;+ status: string&lt;br/&gt;+ reference: string&lt;br/&gt;+ expiresAt: datetime&lt;hr/&gt;+ paymentMethod()&lt;br/&gt;+ isPending()&lt;br/&gt;+ complete()&lt;br/&gt;+ fail()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="95" y="100" width="220" height="176" as="geometry"/>
+                </mxCell>
+                <mxCell id="60" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;CourseMaterial&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ type: string&lt;br/&gt;+ title: string&lt;br/&gt;+ order: int&lt;br/&gt;+ estimatedDurationMinutes: int&lt;hr/&gt;+ requiresQuizPass()&lt;br/&gt;+ isMeeting()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="980" y="210" width="210" height="156" as="geometry"/>
+                </mxCell>
+                <mxCell id="70" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;Quiz&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ title: string&lt;br/&gt;+ passingScore: int&lt;br/&gt;+ maxAttempts: int&lt;br/&gt;+ isActive: bool&lt;hr/&gt;+ canUserAttempt(userId)&lt;br/&gt;+ isPassed(score)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="680" y="100" width="190" height="156" as="geometry"/>
+                </mxCell>
+                <mxCell id="80" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;CourseCertificate&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ certificateNo: string&lt;br/&gt;+ issuedAt: datetime&lt;br/&gt;+ meta: array&lt;hr/&gt;+ verify()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="390" y="100" width="220" height="126" as="geometry"/>
+                </mxCell>
+                <mxCell id="90" value="&lt;div style=&quot;text-align:center;&quot;&gt;&lt;b&gt;Payment&lt;/b&gt;&lt;/div&gt;&lt;hr/&gt;+ id: string&lt;br/&gt;+ amount: decimal&lt;br/&gt;+ method: string&lt;br/&gt;+ status: string&lt;br/&gt;+ reference: string&lt;hr/&gt;+ isVnpay()&lt;br/&gt;+ markCompleted()&lt;br/&gt;+ markFailed()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacingLeft=8;spacingRight=8;spacingTop=6;fillColor=#ffffff;strokeColor=#000000;fontSize=11;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="650" width="190" height="156" as="geometry"/>
+                </mxCell>
+                <mxCell id="100" value="sở hữu ví" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;startArrow=diamondThin;startFill=1;endArrow=none;" parent="1" source="10" target="50" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="110" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="100" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint x="-16" y="-6" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="111" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="100" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint x="18" y="-6" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="101" value="có ghi danh" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;endArrow=none;" parent="1" source="10" target="40" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="340" y="660"/>
+                            <mxPoint x="340" y="470"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="112" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="101" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint x="-10" y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="113" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="101" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint x="10" y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="102" value="bao gồm lớp học" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;startArrow=diamondThin;startFill=1;endArrow=none;" parent="1" source="20" target="30" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="805" y="570"/>
+                            <mxPoint x="975" y="570"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="114" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="102" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="115" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="102" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="103" value="chứa học liệu" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;startArrow=diamondThin;startFill=1;endArrow=none;" parent="1" source="20" target="60" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="860" y="288"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="116" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="103" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint x="-16" y="-6" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="117" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="103" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint x="18" y="-6" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="104" value="có quiz" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;startArrow=diamondThin;startFill=1;endArrow=none;" parent="1" source="20" target="70" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="775" y="340"/>
+                            <mxPoint x="775" y="340"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="118" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="104" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="119" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="104" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="105" value="ghi danh vào" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;startArrow=diamondThin;startFill=1;endArrow=none;" parent="1" source="30" target="40" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="575" y="630"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="120" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="105" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="121" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="105" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="106" value="cấp chứng chỉ" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;startArrow=diamondThin;startFill=1;endArrow=none;" parent="1" source="40" target="80" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="500" y="320"/>
+                            <mxPoint x="500" y="320"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="122" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="106" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint x="-16" y="-6" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="123" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="106" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint y="4" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="107" value="thanh toán cho lớp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;endArrow=none;" parent="1" source="90" target="30" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="710" y="693"/>
+                            <mxPoint x="710" y="693"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="124" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="107" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="125" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="107" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="108" value="phát sinh giao dịch" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;startArrow=diamondThin;startFill=1;endArrow=none;" parent="1" source="50" target="95" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="127" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="108" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint x="-16" y="-6" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="128" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="108" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint x="18" y="-6" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="109" value="thực hiện thanh toán" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;endArrow=none;" parent="1" source="10" target="90" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="490" y="760"/>
+                            <mxPoint x="490" y="760"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="129" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="109" vertex="1" connectable="0">
+                    <mxGeometry x="-1" width="20" height="20" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="130" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;" parent="109" vertex="1" connectable="0">
+                    <mxGeometry x="1" width="40" height="20" relative="1" as="geometry">
+                        <mxPoint x="-40" y="2" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
