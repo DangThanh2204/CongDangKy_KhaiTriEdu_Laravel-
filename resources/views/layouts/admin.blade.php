@@ -169,13 +169,6 @@
                 'attention_title' => null,
                 'items' => [
                     [
-                        'route' => 'admin.blockchain.dashboard',
-                        'patterns' => ['admin.blockchain.*'],
-                        'label' => 'Blockchain FireFly',
-                        'icon' => 'fas fa-link',
-                        'title' => 'Dashboard blockchain FireFly',
-                    ],
-                    [
                         'route' => 'admin.system-logs.index',
                         'patterns' => ['admin.system-logs.*'],
                         'label' => 'Nhật ký hệ thống',

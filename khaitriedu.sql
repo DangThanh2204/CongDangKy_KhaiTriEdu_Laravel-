@@ -803,7 +803,6 @@ CREATE TABLE `wallets` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `balance` decimal(14,2) NOT NULL DEFAULT 0.00,
-  `firefly_identity` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -812,11 +811,11 @@ CREATE TABLE `wallets` (
 -- Dumping data for table `wallets`
 --
 
-INSERT INTO `wallets` (`id`, `user_id`, `balance`, `firefly_identity`, `created_at`, `updated_at`) VALUES
-(1, 2, 12596000.00, 'user:2', '2026-03-20 18:25:02', '2026-03-30 23:58:30'),
-(2, 1, 0.00, 'user:1', '2026-03-20 20:30:02', '2026-03-20 20:30:02'),
-(3, 4, 0.00, 'user:4', '2026-03-21 09:02:28', '2026-03-21 09:02:28'),
-(4, 5, 4000.00, 'user:5', '2026-03-26 07:00:48', '2026-03-26 16:42:24');
+INSERT INTO `wallets` (`id`, `user_id`, `balance`, `created_at`, `updated_at`) VALUES
+(1, 2, 12596000.00, '2026-03-20 18:25:02', '2026-03-30 23:58:30'),
+(2, 1, 0.00, '2026-03-20 20:30:02', '2026-03-20 20:30:02'),
+(3, 4, 0.00, '2026-03-21 09:02:28', '2026-03-21 09:02:28'),
+(4, 5, 4000.00, '2026-03-26 07:00:48', '2026-03-26 16:42:24');
 
 -- --------------------------------------------------------
 
@@ -844,42 +843,42 @@ CREATE TABLE `wallet_transactions` (
 --
 
 INSERT INTO `wallet_transactions` (`id`, `wallet_id`, `course_id`, `type`, `amount`, `status`, `reference`, `expires_at`, `expired_at`, `metadata`, `created_at`, `updated_at`) VALUES
-(1, 1, NULL, 'deposit', 10000000.00, 'completed', NULL, '2026-03-22 18:38:59', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 18:38:59', '2026-03-20 18:38:59'),
-(2, 1, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":3,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 18:39:07', '2026-03-20 18:39:07'),
-(3, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":4,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 19:27:33', '2026-03-20 19:27:33'),
-(4, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":5,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 19:36:04', '2026-03-20 19:36:04'),
-(5, 1, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":3,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:30:19', '2026-03-20 20:30:19'),
+(1, 1, NULL, 'deposit', 10000000.00, 'completed', NULL, '2026-03-22 18:38:59', NULL, '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 18:38:59', '2026-03-20 18:38:59'),
+(2, 1, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":3}', '2026-03-20 18:39:07', '2026-03-20 18:39:07'),
+(3, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":4}', '2026-03-20 19:27:33', '2026-03-20 19:27:33'),
+(4, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":5}', '2026-03-20 19:36:04', '2026-03-20 19:36:04'),
+(5, 1, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":3}', '2026-03-20 20:30:19', '2026-03-20 20:30:19'),
 (6, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":3,\"course_id\":2,\"class_id\":4,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 20:30:28', '2026-03-20 20:30:28'),
 (7, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":4,\"course_id\":2,\"class_id\":5,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 20:30:36', '2026-03-20 20:30:36'),
-(8, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":4,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:30:49', '2026-03-20 20:30:49'),
-(9, 1, NULL, 'deposit', 500000.00, 'completed', NULL, '2026-03-22 20:49:26', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:49:26', '2026-03-20 20:49:26'),
-(10, 1, NULL, 'deposit', 1000.00, 'completed', NULL, '2026-03-22 20:49:39', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:49:39', '2026-03-20 20:49:39'),
-(11, 1, NULL, 'deposit', 10000.00, 'completed', NULL, '2026-03-22 20:50:01', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:50:01', '2026-03-20 20:50:01'),
-(12, 1, NULL, 'deposit', 1000000.00, 'completed', NULL, '2026-03-22 20:51:22', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:51:22', '2026-03-20 20:51:22'),
-(13, 1, NULL, 'deposit', 1000.00, 'completed', 'DEP69BE168AD0415', '2026-03-22 20:54:50', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 20:54:50', '2026-03-20 20:55:05'),
+(8, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":4}', '2026-03-20 20:30:49', '2026-03-20 20:30:49'),
+(9, 1, NULL, 'deposit', 500000.00, 'completed', NULL, '2026-03-22 20:49:26', NULL, '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 20:49:26', '2026-03-20 20:49:26'),
+(10, 1, NULL, 'deposit', 1000.00, 'completed', NULL, '2026-03-22 20:49:39', NULL, '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 20:49:39', '2026-03-20 20:49:39'),
+(11, 1, NULL, 'deposit', 10000.00, 'completed', NULL, '2026-03-22 20:50:01', NULL, '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 20:50:01', '2026-03-20 20:50:01'),
+(12, 1, NULL, 'deposit', 1000000.00, 'completed', NULL, '2026-03-22 20:51:22', NULL, '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 20:51:22', '2026-03-20 20:51:22'),
+(13, 1, NULL, 'deposit', 1000.00, 'completed', 'DEP69BE168AD0415', '2026-03-22 20:54:50', NULL, '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 20:54:50', '2026-03-20 20:55:05'),
 (14, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":8,\"course_id\":2,\"class_id\":4,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 21:02:15', '2026-03-20 21:02:15'),
 (15, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":4,\"course_id\":2,\"class_id\":5,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 21:02:30', '2026-03-20 21:02:30'),
 (16, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":8,\"course_id\":2,\"class_id\":4,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-20 21:26:15', '2026-03-20 21:26:15'),
-(17, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":4,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 21:26:24', '2026-03-20 21:26:24'),
+(17, 1, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":4}', '2026-03-20 21:26:24', '2026-03-20 21:26:24'),
 (18, 1, NULL, 'deposit', 10000.00, 'expired', 'DEP69BE1DF96DD6E', '2026-03-22 21:26:33', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 21:26:33', '2026-03-20 21:26:33'),
-(19, 1, NULL, 'deposit', 10000.00, 'completed', 'DEP69BE1EC1A4853', '2026-03-22 21:29:53', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-20 21:29:53', '2026-03-20 21:30:02'),
+(19, 1, NULL, 'deposit', 10000.00, 'completed', 'DEP69BE1EC1A4853', '2026-03-22 21:29:53', NULL, '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 21:29:53', '2026-03-20 21:30:02'),
 (20, 1, NULL, 'deposit', 10000.00, 'expired', 'DEP69BE21C703037', '2026-03-22 21:42:47', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 21:42:47', '2026-03-20 21:42:47'),
 (21, 1, NULL, 'deposit', 100000.00, 'expired', 'DEP69BE221D8B246', '2026-03-22 21:44:13', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":2}', '2026-03-20 21:44:13', '2026-03-20 21:44:13'),
 (22, 3, NULL, 'deposit', 1000000.00, 'expired', 'DEP69BEC11F72659', '2026-03-23 09:02:39', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":4}', '2026-03-21 09:02:39', '2026-03-21 09:02:39'),
-(23, 1, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":3,\"firefly\":{\"success\":false,\"message\":\"Firefly not configured\"}}', '2026-03-22 09:42:55', '2026-03-22 09:42:56'),
+(23, 1, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":3}', '2026-03-22 09:42:55', '2026-03-22 09:42:56'),
 (24, 1, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":17,\"course_id\":2,\"class_id\":4,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-22 09:43:18', '2026-03-22 09:43:18'),
 (25, 1, NULL, 'deposit', 1000000.00, 'completed', 'DEP69C029C0051AF', '2026-03-24 10:41:20', NULL, '{\"method\":\"direct\",\"requested_by\":2,\"confirmed_by\":1,\"confirmed_at\":\"2026-03-22 17:50:27\"}', '2026-03-22 10:41:20', '2026-03-22 10:50:27'),
 (26, 3, NULL, 'deposit', 100000.00, 'expired', 'DEP69C02C8A9E172', '2026-03-24 10:53:14', '2026-03-28 03:04:50', '{\"method\":\"direct\",\"requested_by\":4}', '2026-03-22 10:53:14', '2026-03-22 10:53:14'),
-(27, 4, NULL, 'deposit', 10000.00, 'completed', 'DEP69C5A0DFE8622', '2026-03-28 14:10:55', NULL, '{\"method\":\"direct\",\"requested_by\":5,\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.topup_confirmed_by_admin\"},\"confirmed_by\":1,\"confirmed_at\":\"2026-03-26 21:11:14\",\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"}}', '2026-03-26 14:10:55', '2026-03-26 14:11:14'),
-(28, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":7,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 14:11:37', '2026-03-26 14:11:37'),
-(29, 4, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":28,\"course_id\":2,\"class_id\":7,\"reason\":\"refund_on_unenroll_before_start\",\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.refund_issued\"}}', '2026-03-26 14:12:25', '2026-03-26 14:12:25'),
-(30, 4, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":8,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 14:12:49', '2026-03-26 14:12:49'),
-(31, 4, NULL, 'deposit', 10000.00, 'completed', 'DEP69C5C3CE16B9B', '2026-03-28 16:39:58', NULL, '{\"method\":\"direct\",\"requested_by\":5,\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.topup_confirmed_by_admin\"},\"confirmed_by\":1,\"confirmed_at\":\"2026-03-26 23:40:11\",\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"}}', '2026-03-26 16:39:58', '2026-03-26 16:40:11'),
-(32, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":6,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 16:40:21', '2026-03-26 16:40:21'),
-(33, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":7,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 16:41:12', '2026-03-26 16:41:12'),
-(34, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":7,\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"},\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.course_purchase\"}}', '2026-03-26 16:42:24', '2026-03-26 16:42:24'),
-(35, 1, NULL, 'deposit', 100000.00, 'completed', '10f8a536-c260-4c38-87a3-da7a557059c9', NULL, NULL, '{\"method\":\"qr\",\"requested_by\":2,\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.topup_confirmed\"},\"firefly\":{\"success\":false,\"message\":\"FireFly token integration not configured\"}}', '2026-03-30 23:58:21', '2026-03-30 23:58:30'),
-(36, 1, NULL, 'deposit', 10000.00, 'pending', 'a4f0a440-68eb-4057-875e-863a8cabec62', NULL, NULL, '{\"method\":\"qr\",\"requested_by\":2,\"blockchain_audit\":{\"success\":false,\"message\":\"FireFly not configured\",\"action\":\"wallet.topup_requested\"}}', '2026-03-31 00:26:13', '2026-03-31 00:26:13');
+(27, 4, NULL, 'deposit', 10000.00, 'completed', 'DEP69C5A0DFE8622', '2026-03-28 14:10:55', NULL, '{\"method\":\"direct\",\"requested_by\":5,\"confirmed_by\":1,\"confirmed_at\":\"2026-03-26 21:11:14\"}', '2026-03-26 14:10:55', '2026-03-26 14:11:14'),
+(28, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":7}', '2026-03-26 14:11:37', '2026-03-26 14:11:37'),
+(29, 4, NULL, 'deposit', 2000.00, 'completed', NULL, NULL, NULL, '{\"refunded_purchase_id\":28,\"course_id\":2,\"class_id\":7,\"reason\":\"refund_on_unenroll_before_start\"}', '2026-03-26 14:12:25', '2026-03-26 14:12:25'),
+(30, 4, NULL, 'purchase', 10000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":1,\"class_id\":8}', '2026-03-26 14:12:49', '2026-03-26 14:12:49'),
+(31, 4, NULL, 'deposit', 10000.00, 'completed', 'DEP69C5C3CE16B9B', '2026-03-28 16:39:58', NULL, '{\"method\":\"direct\",\"requested_by\":5,\"confirmed_by\":1,\"confirmed_at\":\"2026-03-26 23:40:11\"}', '2026-03-26 16:39:58', '2026-03-26 16:40:11'),
+(32, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":6}', '2026-03-26 16:40:21', '2026-03-26 16:40:21'),
+(33, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":7}', '2026-03-26 16:41:12', '2026-03-26 16:41:12'),
+(34, 4, NULL, 'purchase', 2000.00, 'completed', NULL, NULL, NULL, '{\"course_id\":2,\"class_id\":7}', '2026-03-26 16:42:24', '2026-03-26 16:42:24'),
+(35, 1, NULL, 'deposit', 100000.00, 'completed', '10f8a536-c260-4c38-87a3-da7a557059c9', NULL, NULL, '{\"method\":\"qr\",\"requested_by\":2}', '2026-03-30 23:58:21', '2026-03-30 23:58:30'),
+(36, 1, NULL, 'deposit', 10000.00, 'pending', 'a4f0a440-68eb-4057-875e-863a8cabec62', NULL, NULL, '{\"method\":\"qr\",\"requested_by\":2}', '2026-03-31 00:26:13', '2026-03-31 00:26:13');
 
 --
 -- Indexes for dumped tables
@@ -1141,7 +1140,6 @@ ALTER TABLE `users`
 --
 ALTER TABLE `wallets`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `wallets_firefly_identity_unique` (`firefly_identity`),
   ADD KEY `wallets_user_id_foreign` (`user_id`);
 
 --

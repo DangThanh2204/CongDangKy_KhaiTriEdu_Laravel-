@@ -43,7 +43,6 @@ class CourseEnrollment extends Model
         'final_price',
         'discount_code_id',
         'discount_snapshot',
-        'blockchain_meta',
         'completed_at',
         'notes',
     ];
@@ -60,7 +59,6 @@ class CourseEnrollment extends Model
         'discount_amount' => 'decimal:2',
         'final_price' => 'decimal:2',
         'discount_snapshot' => 'array',
-        'blockchain_meta' => 'array',
         'completed_at' => 'datetime',
     ];
 
@@ -321,23 +319,23 @@ class CourseEnrollment extends Model
     public function getStatusTextAttribute()
     {
         if ($this->hasActiveSeatHold()) {
-            return 'Giá»¯ chá»— 24h';
+            return 'Giữ chỗ 24h';
         }
 
         if ($this->isWaitlisted()) {
-            return 'Trong hÃ ng chá»';
+            return 'Trong hàng chờ';
         }
 
         if ($this->isCompleted()) {
-            return 'HoÃ n thÃ nh';
+            return 'Hoàn thành';
         }
 
         $statuses = [
-            'pending' => 'Chá» duyá»‡t',
-            'approved' => 'ÄÃ£ duyá»‡t',
-            'rejected' => 'Tá»« chá»‘i',
-            'cancelled' => 'ÄÃ£ há»§y',
-            'completed' => 'HoÃ n thÃ nh',
+            'pending' => 'Chờ duyệt',
+            'approved' => 'Đã duyệt',
+            'rejected' => 'Từ chối',
+            'cancelled' => 'Đã hủy',
+            'completed' => 'Hoàn thành',
         ];
 
         return $statuses[$this->status] ?? $this->status;

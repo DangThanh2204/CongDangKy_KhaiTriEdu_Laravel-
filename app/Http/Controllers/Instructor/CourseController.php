@@ -483,7 +483,7 @@ class CourseController extends Controller
 
     protected function authorizeCourse(Course $course): void
     {
-        if (Auth::user()?->role === 'admin') {
+        if (Auth::user()?->isAdmin()) {
             return;
         }
 

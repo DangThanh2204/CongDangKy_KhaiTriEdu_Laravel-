@@ -632,7 +632,7 @@ CREATE TABLE `users` (
   `password` varchar(255) DEFAULT NULL,
   `avatar` varchar(255) DEFAULT NULL,
   `otp` varchar(255) DEFAULT NULL,
-  `role` enum('admin','staff','student','instructor') NOT NULL DEFAULT 'student',
+  `role` enum('admin','student','instructor') NOT NULL DEFAULT 'student',
   `is_verified` tinyint(1) NOT NULL DEFAULT 0,
   `rating` decimal(2,1) NOT NULL DEFAULT 0.0,
   `total_rating` int(11) NOT NULL DEFAULT 0,
@@ -678,11 +678,9 @@ CREATE TABLE `wallets` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) unsigned NOT NULL,
   `balance` decimal(14,2) NOT NULL DEFAULT 0.00,
-  `firefly_identity` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `wallets_firefly_identity_unique` (`firefly_identity`),
   KEY `wallets_user_id_foreign` (`user_id`),
   CONSTRAINT `wallets_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

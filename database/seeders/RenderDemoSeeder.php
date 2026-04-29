@@ -244,7 +244,6 @@ class RenderDemoSeeder extends Seeder
             $wallet = Wallet::updateOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'firefly_identity' => 'user:' . $user->id,
                     'balance' => match ($key) {
                         'student_one' => 450000,
                         'student_two' => 120000,

@@ -81,7 +81,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/wallet', [WalletController::class, 'index'])->name('wallet.index');
     Route::post('/wallet/topup', [WalletController::class, 'topUp'])->name('wallet.topup');
     Route::post('/wallet/confirm-qr', [WalletController::class, 'confirmQr'])->name('wallet.confirm-qr');
-    Route::post('/wallet/sync', [WalletController::class, 'syncBalance'])->name('wallet.sync');
     Route::get('/wallet/{walletTransaction}/vnpay', [WalletController::class, 'redirectToVnpay'])->name('wallet.vnpay.redirect');
 
     Route::get('/payments/{payment}/vnpay', [PaymentController::class, 'redirectToVnpay'])->name('payments.vnpay.redirect');

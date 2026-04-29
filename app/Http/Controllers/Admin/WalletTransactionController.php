@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\WalletTransaction;
-use App\Support\CollectionPaginator;
-use App\Services\BlockchainAuditService;
 use App\Services\CsvExportService;
-use App\Services\FireflyService;
+use App\Support\CollectionPaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -15,12 +13,6 @@ use Illuminate\Support\Facades\Auth;
 
 class WalletTransactionController extends Controller
 {
-    public function __construct(
-        protected FireflyService $firefly,
-        protected BlockchainAuditService $blockchainAudit,
-    ) {
-    }
-
     public function index(Request $request)
     {
         $this->syncExpiredDirectTopups();
@@ -55,7 +47,7 @@ class WalletTransactionController extends Controller
 
         return $csvExportService->download(
             'wallet-transactions-' . now()->format('Y-m-d-His') . '.csv',
-            ['ID', 'Học viên', 'Email', 'Số tiền', 'Mã giao dịch', 'Phương thức', 'Trạng thái', 'Bắt đầu', 'Hết hạn', 'Hết hạn lúc'],
+            ['ID', 'Hoc vien', 'Email', 'So tien', 'Ma giao dich', 'Phuong thuc', 'Trang thai', 'Bat dau', 'Het han', 'Het han luc'],
             $transactions->map(function (WalletTransaction $transaction) {
                 return [
                     $transaction->id,
@@ -146,11 +138,11 @@ class WalletTransactionController extends Controller
         $walletTransaction->refresh();
 
         if ($walletTransaction->status === 'expired' || $walletTransaction->isExpired()) {
-            return back()->with('error', 'Yêu cầu nạp tiền thủ công này đã hết hạn, không thể xác nhận nữa.');
+            return back()->with('error', 'Yeu cau nap tien thu cong nay da het han, khong the xac nhan nua.');
         }
 
         if (! $walletTransaction->isPending()) {
-            return back()->with('error', 'Giao dịch này đã được xử lý.');
+            return back()->with('error', 'Giao dich nay da duoc xu ly.');
         }
 
         $data = $request->validate([
@@ -169,42 +161,6 @@ class WalletTransactionController extends Controller
         $walletTransaction->save();
         $walletTransaction->complete();
 
-        $fireflyResponse = $this->firefly->mint($walletTransaction->wallet->firefly_identity, (float) $walletTransaction->amount, [
-            'reference' => $walletTransaction->reference,
-            'data' => [
-                'type' => 'wallet_topup',
-                'wallet_transaction_id' => $walletTransaction->id,
-                'wallet_id' => $walletTransaction->wallet_id,
-                'amount' => (float) $walletTransaction->amount,
-                'method' => data_get($walletTransaction->metadata, 'method'),
-                'confirmed_by' => Auth::id(),
-                'reference' => $walletTransaction->reference,
-            ],
-        ]);
-
-        $auditResponse = $this->blockchainAudit->record('wallet.topup_confirmed_by_admin', [
-            'wallet_transaction_id' => $walletTransaction->id,
-            'wallet_id' => $walletTransaction->wallet_id,
-            'amount' => (float) $walletTransaction->amount,
-            'reference' => $walletTransaction->reference,
-            'method' => data_get($walletTransaction->metadata, 'method'),
-            'confirmed_by' => Auth::id(),
-            'firefly_identity' => $walletTransaction->wallet->firefly_identity,
-            'firefly_tx_id' => $fireflyResponse['tx_id'] ?? null,
-            'firefly_message_id' => $fireflyResponse['message_id'] ?? null,
-        ], [
-            'reference' => $walletTransaction->reference,
-            'user_id' => Auth::id(),
-            'username' => Auth::user()?->username,
-            'role' => Auth::user()?->role,
-            'ip' => $request->ip(),
-        ]);
-
-        $this->appendMetadata($walletTransaction, [
-            'firefly' => $fireflyResponse,
-            'blockchain_audit' => $auditResponse,
-        ]);
-
         \App\Services\SystemLogService::record('transaction', 'topup_confirmed', [
             'wallet_tx_id' => $walletTransaction->id,
             'amount' => $walletTransaction->amount,
@@ -213,7 +169,7 @@ class WalletTransactionController extends Controller
             'confirmed_by' => Auth::id(),
         ]);
 
-        return back()->with('success', 'Đã xác nhận giao dịch nạp tiền thành công.');
+        return back()->with('success', 'Da xac nhan giao dich nap tien thanh cong.');
     }
 
     public function fail(Request $request, WalletTransaction $walletTransaction)
@@ -222,11 +178,11 @@ class WalletTransactionController extends Controller
         $walletTransaction->refresh();
 
         if ($walletTransaction->status === 'expired' || $walletTransaction->isExpired()) {
-            return back()->with('error', 'Yêu cầu nạp tiền thủ công này đã hết hạn và không cần đánh dấu thất bại thêm nữa.');
+            return back()->with('error', 'Yeu cau nap tien thu cong nay da het han va khong can danh dau that bai them nua.');
         }
 
         if (! $walletTransaction->isPending()) {
-            return back()->with('error', 'Giao dịch này đã được xử lý.');
+            return back()->with('error', 'Giao dich nay da duoc xu ly.');
         }
 
         $data = $request->validate([
@@ -239,26 +195,6 @@ class WalletTransactionController extends Controller
             'admin_note' => $data['admin_note'],
         ]);
 
-        $auditResponse = $this->blockchainAudit->record('wallet.topup_failed', [
-            'wallet_transaction_id' => $walletTransaction->id,
-            'wallet_id' => $walletTransaction->wallet_id,
-            'amount' => (float) $walletTransaction->amount,
-            'reference' => $walletTransaction->reference,
-            'method' => data_get($walletTransaction->metadata, 'method'),
-            'failed_by' => Auth::id(),
-            'admin_note' => $data['admin_note'],
-        ], [
-            'reference' => $walletTransaction->reference,
-            'user_id' => Auth::id(),
-            'username' => Auth::user()?->username,
-            'role' => Auth::user()?->role,
-            'ip' => $request->ip(),
-        ]);
-
-        $this->appendMetadata($walletTransaction, [
-            'blockchain_audit' => $auditResponse,
-        ]);
-
         \App\Services\SystemLogService::record('transaction', 'topup_failed', [
             'wallet_tx_id' => $walletTransaction->id,
             'amount' => $walletTransaction->amount,
@@ -268,13 +204,7 @@ class WalletTransactionController extends Controller
             'admin_note' => $data['admin_note'],
         ]);
 
-        return back()->with('success', 'Đã đánh dấu giao dịch nạp tiền là thất bại.');
-    }
-
-    protected function appendMetadata(WalletTransaction $walletTransaction, array $payload): void
-    {
-        $walletTransaction->metadata = array_merge($walletTransaction->metadata ?? [], $payload);
-        $walletTransaction->save();
+        return back()->with('success', 'Da danh dau giao dich nap tien la that bai.');
     }
 
     private function syncExpiredDirectTopups(): void

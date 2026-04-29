@@ -127,6 +127,52 @@ Artisan::command('mongodb:import-sql-dump {path?} {--fresh} {--dry-run}', functi
     return 0;
 })->purpose('Import a MySQL SQL dump into MongoDB collections used by the app');
 
+Artisan::command('roles:replace-staff {target=admin} {--dry-run}', function () {
+    $target = (string) $this->argument('target');
+    $allowedTargets = ['admin', 'instructor', 'student'];
+
+    if (! in_array($target, $allowedTargets, true)) {
+        $this->error('Target role must be one of: ' . implode(', ', $allowedTargets));
+
+        return 1;
+    }
+
+    $connection = DB::connection();
+    $isMongo = config('database.default') === 'mongodb';
+
+    if ($isMongo) {
+        $collection = $connection->getCollection('users');
+        $count = $collection->countDocuments(['role' => 'staff']);
+    } else {
+        $count = $connection->table('users')->where('role', 'staff')->count();
+    }
+
+    if ($count === 0) {
+        $this->info('No legacy staff users found.');
+
+        return 0;
+    }
+
+    if ($this->option('dry-run')) {
+        $this->line("Would replace {$count} staff user(s) with role {$target}.");
+
+        return 0;
+    }
+
+    if ($isMongo) {
+        $connection->getCollection('users')->updateMany(
+            ['role' => 'staff'],
+            ['$set' => ['role' => $target]]
+        );
+    } else {
+        $connection->table('users')->where('role', 'staff')->update(['role' => $target]);
+    }
+
+    $this->info("Replaced {$count} staff user(s) with role {$target}.");
+
+    return 0;
+})->purpose('Replace legacy staff accounts with a supported role');
+
 Artisan::command('portal:dispatch-reminders', function (PortalNotificationService $notificationService) {
     $summary = $notificationService->dispatchReminderNotifications();
 
@@ -138,8 +184,4 @@ Artisan::command('portal:dispatch-reminders', function (PortalNotificationServic
 
 Schedule::command('portal:dispatch-reminders')
     ->everyFifteenMinutes()
-    ->withoutOverlapping();
-
-Schedule::command('blockchain:sync-pending --limit=20')
-    ->everyThirtyMinutes()
     ->withoutOverlapping();

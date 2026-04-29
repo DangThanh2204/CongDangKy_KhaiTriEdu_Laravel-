@@ -7,7 +7,6 @@ use App\Models\Course;
 use App\Models\CourseClass;
 use App\Models\CourseEnrollment;
 use App\Models\User;
-use App\Services\ApplicationLifecycleBlockchainService;
 use App\Services\CsvExportService;
 use App\Services\EnrollmentQueueService;
 use App\Services\PortalNotificationService;
@@ -21,7 +20,6 @@ class AdminEnrollmentController extends Controller
     public function __construct(
         protected EnrollmentQueueService $enrollmentQueue,
         protected PortalNotificationService $notificationService,
-        protected ApplicationLifecycleBlockchainService $lifecycleBlockchain,
     ) {
     }
 
@@ -155,9 +153,7 @@ class AdminEnrollmentController extends Controller
                 $waitlistEnrollment = $this->enrollmentQueue->joinWaitlist(
                     $user->id,
                     $class,
-                    $validated['notes'] ?? 'admin_waitlist',
-                    $this->adminLifecycleContext($request),
-                    ['source' => 'admin_manual_enrollment', 'trigger' => 'manual_enrollment']
+                    $validated['notes'] ?? 'admin_waitlist'
                 );
                 $this->notificationService->notifyWaitlistJoined($waitlistEnrollment);
                 $position = $waitlistEnrollment->waitlist_position;
@@ -187,22 +183,8 @@ class AdminEnrollmentController extends Controller
                 'completed_at' => null,
             ])->save();
 
-            $this->lifecycleBlockchain->applicationCreated($enrollment, $this->adminLifecycleContext($request), [
-                'source' => 'admin_manual_enrollment',
-                'trigger' => 'manual_enrollment',
-            ]);
-            $this->lifecycleBlockchain->classAssigned($enrollment, $class, $this->adminLifecycleContext($request), [
-                'source' => 'admin_manual_enrollment',
-                'trigger' => 'manual_enrollment',
-                'assignment_type' => 'manual_admin_assignment',
-            ]);
-
             if ($shouldApprove) {
                 $enrollment->approve();
-                $this->lifecycleBlockchain->approved($enrollment->fresh(['user', 'courseClass.course']), $this->adminLifecycleContext($request), [
-                    'source' => 'admin_manual_enrollment',
-                    'trigger' => 'manual_enrollment',
-                ]);
             } else {
                 $this->notificationService->notifyEnrollmentReceived($enrollment);
             }
@@ -285,10 +267,6 @@ class AdminEnrollmentController extends Controller
         }
 
         $enrollment->approve();
-        $this->lifecycleBlockchain->approved($enrollment->fresh(['user', 'courseClass.course']), $this->adminLifecycleContext($request), [
-            'source' => 'admin_review',
-            'trigger' => 'approve_enrollment',
-        ]);
 
         return back()->with('success', 'Đã duyệt đăng ký thành công.');
     }
@@ -305,11 +283,6 @@ class AdminEnrollmentController extends Controller
 
         $class = $enrollment->courseClass;
         $enrollment->reject($request->rejection_notes);
-        $this->lifecycleBlockchain->rejected($enrollment->fresh(['user', 'courseClass.course']), $this->adminLifecycleContext($request), [
-            'source' => 'admin_review',
-            'trigger' => 'reject_enrollment',
-            'reason' => $request->rejection_notes,
-        ]);
 
         if ($class && $class->isOffline()) {
             $this->enrollmentQueue->syncClassQueue($class);
@@ -430,10 +403,6 @@ class AdminEnrollmentController extends Controller
             }
 
             $enrollment->approve();
-            $this->lifecycleBlockchain->approved($enrollment->fresh(['user', 'courseClass.course']), $this->adminLifecycleContext($request), [
-                'source' => 'admin_bulk_review',
-                'trigger' => 'bulk_approve',
-            ]);
             $approvedCount++;
         }
 
@@ -443,16 +412,6 @@ class AdminEnrollmentController extends Controller
         }
 
         return back()->with('success', $message);
-    }
-
-    private function adminLifecycleContext(Request $request): array
-    {
-        return [
-            'user_id' => auth()->id(),
-            'username' => auth()->user()?->username,
-            'role' => auth()->user()?->role,
-            'ip' => $request->ip(),
-        ];
     }
 
     private function offlinePendingQuery(Request $request)

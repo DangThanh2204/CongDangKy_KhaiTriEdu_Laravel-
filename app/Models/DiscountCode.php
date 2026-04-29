@@ -197,25 +197,25 @@ class DiscountCode extends Model
     public function getAudienceLabelAttribute(): string
     {
         return match ($this->audience) {
-            self::AUDIENCE_NEW_STUDENT => 'Há»c viÃªn má»›i',
-            default => 'Táº¥t cáº£ há»c viÃªn',
+            self::AUDIENCE_NEW_STUDENT => 'Học viên mới',
+            default => 'Tất cả học viên',
         };
     }
 
     public function getScopeLabelAttribute(): string
     {
         return match ($this->scope_type) {
-            self::SCOPE_COURSE => 'Theo khÃ³a há»c',
-            self::SCOPE_CATEGORY => 'Theo nhÃ³m ngÃ nh',
-            self::SCOPE_SERIES => 'Theo lá»™ trÃ¬nh / series',
-            default => 'ToÃ n há»‡ thá»‘ng',
+            self::SCOPE_COURSE => 'Theo khóa học',
+            self::SCOPE_CATEGORY => 'Theo nhóm ngành',
+            self::SCOPE_SERIES => 'Theo lộ trình / series',
+            default => 'Toàn hệ thống',
         };
     }
 
     public function getValueLabelAttribute(): string
     {
         if ($this->value_type === self::VALUE_FIXED) {
-            return number_format((float) $this->value, 0) . 'Ä‘';
+            return number_format((float) $this->value, 0) . 'đ';
         }
 
         return rtrim(rtrim(number_format((float) $this->value, 2), '0'), '.') . '%';
@@ -224,18 +224,18 @@ class DiscountCode extends Model
     public function getStatusLabelAttribute(): string
     {
         if (! $this->is_active) {
-            return 'Äang táº¯t';
+            return 'Đang tắt';
         }
 
         if (! $this->isWithinWindow()) {
-            return 'NgoÃ i thá»i gian Ã¡p dá»¥ng';
+            return 'Ngoài thời gian áp dụng';
         }
 
         if (! $this->hasRemainingQuota()) {
-            return 'Háº¿t lÆ°á»£t dÃ¹ng';
+            return 'Hết lượt dùng';
         }
 
-        return 'Äang hoáº¡t Ä‘á»™ng';
+        return 'Đang hoạt động';
     }
 
     public function getSummaryLabelAttribute(): string
@@ -246,6 +246,6 @@ class DiscountCode extends Model
             $this->scope_label,
         ])->filter();
 
-        return $parts->implode(' â€¢ ');
+        return $parts->implode(' • ');
     }
 }

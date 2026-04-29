@@ -11,23 +11,23 @@
     <div class="card-body">
         <form method="POST" action="{{ route('admin.users.store') }}" enctype="multipart/form-data">
             @csrf
-            
+
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="username" class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control @error('username') is-invalid @enderror" 
+                        <input type="text" class="form-control @error('username') is-invalid @enderror"
                                id="username" name="username" value="{{ old('username') }}" required>
                         @error('username')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
-                
+
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="fullname" class="form-label">Họ và tên <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control @error('fullname') is-invalid @enderror" 
+                        <input type="text" class="form-control @error('fullname') is-invalid @enderror"
                                id="fullname" name="fullname" value="{{ old('fullname') }}" required>
                         @error('fullname')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -40,21 +40,20 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                        <input type="email" class="form-control @error('email') is-invalid @enderror"
                                id="email" name="email" value="{{ old('email') }}" required>
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
-                
+
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="role" class="form-label">Vai trò <span class="text-danger">*</span></label>
                         <select class="form-select @error('role') is-invalid @enderror" id="role" name="role" required>
                             <option value="">Chọn vai trò</option>
                             <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Quản trị</option>
-                            <option value="staff" {{ old('role') == 'staff' ? 'selected' : '' }}>Nhân viên</option>
                             <option value="instructor" {{ old('role') == 'instructor' ? 'selected' : '' }}>Giảng viên</option>
                             <option value="student" {{ old('role') == 'student' ? 'selected' : '' }}>Học viên</option>
                         </select>
@@ -69,18 +68,18 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="password" class="form-label">Mật khẩu <span class="text-danger">*</span></label>
-                        <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                        <input type="password" class="form-control @error('password') is-invalid @enderror"
                                id="password" name="password" required>
                         @error('password')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
                 </div>
-                
+
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="password_confirmation" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
-                        <input type="password" class="form-control" id="password_confirmation" 
+                        <input type="password" class="form-control" id="password_confirmation"
                                name="password_confirmation" required>
                     </div>
                 </div>
@@ -88,7 +87,7 @@
 
             <div class="mb-3">
                 <label for="avatar" class="form-label">Ảnh đại diện</label>
-                <input type="file" class="form-control @error('avatar') is-invalid @enderror" 
+                <input type="file" class="form-control @error('avatar') is-invalid @enderror"
                        id="avatar" name="avatar" accept="image/*">
                 @error('avatar')
                     <div class="invalid-feedback">{{ $message }}</div>

@@ -42,32 +42,22 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
-    }
-
-    public function isStaff(): bool
-    {
-        return $this->role === 'staff';
+        return $this->roleKey() === 'admin';
     }
 
     public function isInstructor(): bool
     {
-        return $this->role === 'instructor';
+        return $this->roleKey() === 'instructor';
     }
 
     public function isStudent(): bool
     {
-        return $this->role === 'student';
+        return $this->roleKey() === 'student';
     }
 
     public function scopeAdmins($query)
     {
-        return $query->where('role', 'admin');
-    }
-
-    public function scopeStaff($query)
-    {
-        return $query->where('role', 'staff');
+        return $query->whereIn('role', ['admin', 'staff']);
     }
 
     public function scopeInstructors($query)
@@ -83,6 +73,29 @@ class User extends Authenticatable
     public function scopeVerified($query)
     {
         return $query->where('is_verified', true);
+    }
+
+    public function roleKey(): string
+    {
+        return $this->role === 'staff' ? 'admin' : (string) $this->role;
+    }
+
+    public function roleLabel(): string
+    {
+        return match ($this->roleKey()) {
+            'admin' => 'Quản trị',
+            'instructor' => 'Giảng viên',
+            default => 'Học viên',
+        };
+    }
+
+    public function roleBadgeClass(): string
+    {
+        return match ($this->roleKey()) {
+            'admin' => 'danger',
+            'instructor' => 'primary',
+            default => 'info',
+        };
     }
 
     public function wallet()
@@ -127,8 +140,8 @@ class User extends Authenticatable
 
     public function getOrCreateWallet(): Wallet
     {
-        return $this->wallet()->firstOrCreate([
-            'firefly_identity' => 'user:' . $this->id,
+        return $this->wallet()->firstOrCreate([], [
+            'balance' => 0,
         ]);
     }
 

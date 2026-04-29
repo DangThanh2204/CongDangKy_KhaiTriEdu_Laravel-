@@ -105,21 +105,21 @@ class Payment extends Model
     public function getMethodLabelAttribute(): string
     {
         return [
-            'wallet' => 'VÃ­ ná»™i bá»™',
-            'promotion' => 'Khuyáº¿n mÃ£i / miá»…n phÃ­',
+            'wallet' => 'Ví nội bộ',
+            'promotion' => 'Khuyến mãi / miễn phí',
             'vnpay' => 'VNPay',
-            'bank_transfer' => 'Chuyá»ƒn khoáº£n',
-            'cash' => 'Tiá»n máº·t',
-            'counter' => 'Táº¡i quáº§y',
+            'bank_transfer' => 'Chuyển khoản',
+            'cash' => 'Tiền mặt',
+            'counter' => 'Tại quầy',
         ][$this->method] ?? ucfirst(str_replace('_', ' ', (string) $this->method));
     }
 
     public function getStatusLabelAttribute(): string
     {
         return [
-            'pending' => 'Chá» thanh toÃ¡n',
-            'completed' => 'ÄÃ£ thanh toÃ¡n',
-            'failed' => 'Tháº¥t báº¡i',
+            'pending' => 'Chờ thanh toán',
+            'completed' => 'Đã thanh toán',
+            'failed' => 'Thất bại',
         ][$this->status] ?? ucfirst((string) $this->status);
     }
 
@@ -129,7 +129,7 @@ class Payment extends Model
             return null;
         }
 
-        return number_format((float) $this->discount_amount, 0) . 'Ä‘';
+        return number_format((float) $this->discount_amount, 0) . 'đ';
     }
 
     public function markCompleted(?string $note = null): bool

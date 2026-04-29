@@ -11,9 +11,8 @@ use App\Models\CourseMaterial;
 use App\Models\CourseMaterialProgress;
 use App\Models\CourseMaterialQuizAttempt;
 use App\Models\Payment;
-use App\Support\CollectionPaginator;
-use App\Services\CertificateBlockchainService;
 use App\Services\PromotionService;
+use App\Support\CollectionPaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
@@ -22,10 +21,6 @@ use Illuminate\Support\Str;
 
 class CourseController extends Controller
 {
-    public function __construct(
-        protected CertificateBlockchainService $certificateBlockchain,
-    ) {
-    }
     public function index(Request $request)
     {
         $query = Course::with(['category', 'modules'])->published();
@@ -195,7 +190,7 @@ class CourseController extends Controller
                 )->first();
                 $registrationDocumentUrl = route('documents.registration-form', $currentEnrollment);
 
-                if ($currentPayment && $currentPayment->isCompleted() && in_array($currentPayment->method, ['wallet', 'vnpay'], true)) {
+                if ($currentPayment && $currentPayment->isCompleted()) {
                     $paymentReceiptUrl = route('documents.payment-receipt', $currentPayment);
                 }
             }
@@ -624,7 +619,7 @@ class CourseController extends Controller
             return redirect()->route('courses.learn', $course)->with('error', 'Ban can hoan thanh toan bo noi dung truoc khi nhan chung chi.');
         }
 
-        $verification = $this->certificateBlockchain->verificationSnapshot($certificate);
+        $verification = $this->buildCertificateVerification($certificate);
 
         return view('courses.certificate', compact('course', 'enrollment', 'certificate', 'verification'));
     }
@@ -646,8 +641,7 @@ class CourseController extends Controller
             });
 
             if ($certificate) {
-                $certificate = $this->certificateBlockchain->ensureAnchored($certificate);
-                $verification = $this->certificateBlockchain->verificationSnapshot($certificate);
+                $verification = $this->buildCertificateVerification($certificate);
             }
         }
 
@@ -904,7 +898,26 @@ class CourseController extends Controller
             ]
         );
 
-        return $this->certificateBlockchain->ensureAnchored($certificate);
+        return $certificate;
+    }
+
+    protected function buildCertificateVerification(CourseCertificate $certificate): array
+    {
+        $issuedAt = $certificate->issued_at ?: $certificate->created_at;
+        $verificationUrl = route('certificates.verify', ['code' => $certificate->certificate_no]);
+
+        return [
+            'verification_url' => $verificationUrl,
+            'qr_url' => 'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=' . urlencode($verificationUrl),
+            'hash' => hash('sha256', implode('|', [
+                (string) $certificate->certificate_no,
+                (string) $certificate->course_id,
+                (string) $certificate->user_id,
+                optional($issuedAt)->format('c'),
+            ])),
+            'status_label' => 'Hop le tren he thong',
+            'issued_at_label' => optional($issuedAt)->format('d/m/Y H:i'),
+        ];
     }
 
     protected function normalizeQuizAnswer($value): string

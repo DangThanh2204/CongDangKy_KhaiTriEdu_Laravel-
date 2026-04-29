@@ -53,24 +53,6 @@ return [
             : '/auth/facebook/callback'),
     ],
 
-    'firefly' => [
-        'url' => env('FIREFLY_URL'),
-        'api_key' => env('FIREFLY_API_KEY'),
-        'auth_mode' => env('FIREFLY_AUTH_MODE', 'bearer'),
-        'username' => env('FIREFLY_USERNAME'),
-        'password' => env('FIREFLY_PASSWORD'),
-        'namespace' => env('FIREFLY_NAMESPACE'),
-        'token_pool' => env('FIREFLY_TOKEN_POOL'),
-        'token_name' => env('FIREFLY_TOKEN_NAME', 'KhaiTriCredit'),
-        'platform_identity' => env('FIREFLY_PLATFORM_IDENTITY', 'platform'),
-        'signer' => env('FIREFLY_SIGNER'),
-        'audit_topic' => env('FIREFLY_AUDIT_TOPIC', 'audit'),
-        'member_label' => env('FIREFLY_MEMBER_LABEL', 'Khai Tr?'),
-        'member_role' => env('FIREFLY_MEMBER_ROLE', 'issuer'),
-        'consortium_quorum' => (int) env('FIREFLY_CONSORTIUM_QUORUM', 0),
-        'consortium_members' => env('FIREFLY_CONSORTIUM_MEMBERS'),
-    ],
-
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),

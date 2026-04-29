@@ -87,10 +87,10 @@ class CourseMaterial extends Model
     {
         return match ($this->type) {
             'video' => 'Video YouTube',
-            'pdf' => 'TÃ i liá»‡u PDF / Word',
-            'assignment' => 'BÃ i táº­p',
+            'pdf' => 'Tài liệu PDF / Word',
+            'assignment' => 'Bài tập',
             'quiz' => 'Quiz',
-            'meeting' => 'Buá»•i há»c Meet',
+            'meeting' => 'Buổi học Meet',
             default => ucfirst((string) $this->type),
         };
     }
@@ -161,11 +161,11 @@ class CourseMaterial extends Model
     public function getMeetingStatusLabelAttribute(): string
     {
         return match ($this->meeting_status) {
-            'upcoming' => 'ChÆ°a tá»›i giá» má»Ÿ',
-            'live' => 'Äang má»Ÿ phÃ²ng há»c',
-            'ended' => 'Buá»•i há»c Ä‘Ã£ káº¿t thÃºc',
-            'available' => 'Má»Ÿ link há»c',
-            default => 'Ná»™i dung há»c',
+            'upcoming' => 'Chưa tới giờ mở',
+            'live' => 'Đang mở phòng học',
+            'ended' => 'Buổi học đã kết thúc',
+            'available' => 'Mở link học',
+            default => 'Nội dung học',
         };
     }
 
@@ -202,10 +202,10 @@ class CourseMaterial extends Model
         }
 
         if ($startsAt) {
-            return 'Má»Ÿ tá»« ' . $startsAt->format('d/m/Y H:i');
+            return 'Mở từ ' . $startsAt->format('d/m/Y H:i');
         }
 
-        return 'Káº¿t thÃºc lÃºc ' . $endsAt->format('d/m/Y H:i');
+        return 'Kết thúc lúc ' . $endsAt->format('d/m/Y H:i');
     }
 
     public function canJoinMeeting(): bool
@@ -248,8 +248,8 @@ class CourseMaterial extends Model
     public function getDocumentActionLabelAttribute(): string
     {
         return match ($this->document_extension) {
-            'doc', 'docx' => 'Má»Ÿ tÃ i liá»‡u Word',
-            default => 'Má»Ÿ tÃ i liá»‡u',
+            'doc', 'docx' => 'Mở tài liệu Word',
+            default => 'Mở tài liệu',
         };
     }
 

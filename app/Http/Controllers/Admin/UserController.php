@@ -34,7 +34,7 @@ class UserController extends Controller
             'total_users' => (clone $baseQuery)->count(),
             'verified_users' => (clone $baseQuery)->where('is_verified', true)->count(),
             'student_users' => (clone $baseQuery)->where('role', 'student')->count(),
-            'admin_users' => (clone $baseQuery)->where('role', 'admin')->count(),
+            'admin_users' => (clone $baseQuery)->whereIn('role', ['admin', 'staff'])->count(),
         ];
 
         return view('admin.users.index', compact(
@@ -94,6 +94,10 @@ class UserController extends Controller
                 });
             })
             ->when($role, function ($query, $roleValue) {
+                if ($roleValue === 'admin') {
+                    return $query->whereIn('role', ['admin', 'staff']);
+                }
+
                 return $query->where('role', $roleValue);
             })
             ->when($status !== null, function ($query) use ($status) {
@@ -127,7 +131,7 @@ class UserController extends Controller
             'fullname' => 'required|string|max:100',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6|confirmed',
-            'role' => 'required|in:admin,staff,instructor,student',
+            'role' => 'required|in:admin,instructor,student',
             'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ]);
 
@@ -171,7 +175,7 @@ class UserController extends Controller
                 Rule::unique('users')->ignore($user->id),
             ],
             'password' => 'nullable|min:6|confirmed',
-            'role' => 'required|in:admin,staff,instructor,student',
+            'role' => 'required|in:admin,instructor,student',
             'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ]);
 

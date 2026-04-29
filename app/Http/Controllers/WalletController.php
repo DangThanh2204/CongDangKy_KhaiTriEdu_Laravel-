@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Models\WalletTransaction;
-use App\Services\BlockchainAuditService;
-use App\Services\FireflyService;
 use App\Services\SystemLogService;
 use App\Services\VnpayService;
 use Illuminate\Http\Request;
@@ -14,11 +12,8 @@ use Illuminate\Support\Str;
 
 class WalletController extends Controller
 {
-    public function __construct(
-        protected FireflyService $firefly,
-        protected BlockchainAuditService $blockchainAudit,
-        protected VnpayService $vnpay,
-    ) {
+    public function __construct(protected VnpayService $vnpay)
+    {
     }
 
     public function index()
@@ -81,7 +76,7 @@ class WalletController extends Controller
             return redirect()
                 ->route('wallet.index')
                 ->withInput()
-                ->with('error', 'Hệ thống chưa cấu hình đầy đủ thông tin tài khoản ngân hàng để nhận chuyển khoản.');
+                ->with('error', 'He thong chua cau hinh day du thong tin tai khoan ngan hang de nhan chuyen khoan.');
         }
 
         $reference = match ($method) {
@@ -125,38 +120,21 @@ class WalletController extends Controller
             'tx_id' => $transaction->id,
         ], $reference, $request);
 
-        $auditResponse = $this->blockchainAudit->record('wallet.topup_requested', [
-            'wallet_transaction_id' => $transaction->id,
-            'wallet_id' => $wallet->id,
-            'amount' => $amount,
-            'method' => $method,
-            'reference' => $reference,
-            'firefly_identity' => $wallet->firefly_identity,
-            'expires_at' => $expiresAt?->toDateTimeString(),
-        ], [
-            'reference' => $reference,
-            'user_id' => $user->id,
-            'username' => $user->username,
-            'role' => $user->role,
-            'ip' => $request->ip(),
-        ]);
-        $this->appendMetadata($transaction, ['blockchain_audit' => $auditResponse]);
-
         if ($method === WalletTransaction::VNPAY_METHOD) {
             return redirect()
                 ->route('wallet.vnpay.redirect', $transaction)
-                ->with('success', 'Yêu cầu nạp tiền qua VNPay đã được tạo. Hệ thống sẽ chuyển bạn sang cổng thanh toán.');
+                ->with('success', 'Yeu cau nap tien qua VNPay da duoc tao. He thong se chuyen ban sang cong thanh toan.');
         }
 
         if ($method === WalletTransaction::DIRECT_METHOD) {
             return redirect()
                 ->route('wallet.index')
-                ->with('success', 'Đã tạo mã nạp trực tiếp. Vui lòng mang mã này tới quầy và chờ admin xác nhận.');
+                ->with('success', 'Da tao ma nap truc tiep. Vui long mang ma nay toi quay va cho admin xac nhan.');
         }
 
         return redirect()
             ->route('wallet.index')
-            ->with('success', 'Đã tạo yêu cầu chuyển khoản. Hãy chuyển đúng số tiền, đúng nội dung rồi nhấn xác nhận để admin đối soát.');
+            ->with('success', 'Da tao yeu cau chuyen khoan. Hay chuyen dung so tien, dung noi dung roi nhan xac nhan de admin doi soat.');
     }
 
     public function redirectToVnpay(Request $request, WalletTransaction $walletTransaction)
@@ -167,25 +145,25 @@ class WalletController extends Controller
         $walletTransaction->refresh();
 
         if (! $walletTransaction->isDeposit() || data_get($walletTransaction->metadata, 'method') !== WalletTransaction::VNPAY_METHOD) {
-            return redirect()->route('wallet.index')->with('error', 'Giao dịch nạp ví này không sử dụng VNPay.');
+            return redirect()->route('wallet.index')->with('error', 'Giao dich nap vi nay khong su dung VNPay.');
         }
 
         if ((float) $walletTransaction->amount <= 0) {
-            return redirect()->route('wallet.index')->with('error', 'Số tiền nạp ví phải lớn hơn 0 để gửi sang VNPay.');
+            return redirect()->route('wallet.index')->with('error', 'So tien nap vi phai lon hon 0 de gui sang VNPay.');
         }
 
         if (! $walletTransaction->isPending()) {
             return redirect()->route('wallet.index')->with(
                 $walletTransaction->status === 'completed' ? 'success' : 'error',
                 $walletTransaction->status === 'completed'
-                    ? 'Giao dịch nạp ví này đã được thanh toán thành công.'
-                    : 'Giao dịch nạp ví này không còn ở trạng thái chờ xử lý.'
+                    ? 'Giao dich nap vi nay da duoc thanh toan thanh cong.'
+                    : 'Giao dich nap vi nay khong con o trang thai cho xu ly.'
             );
         }
 
         $issues = $this->vnpay->configurationIssues();
         if ($issues !== []) {
-            return redirect()->route('wallet.index')->with('error', 'VNPay chưa được cấu hình đầy đủ: ' . implode(' ', $issues));
+            return redirect()->route('wallet.index')->with('error', 'VNPay chua duoc cau hinh day du: ' . implode(' ', $issues));
         }
 
         try {
@@ -196,7 +174,7 @@ class WalletController extends Controller
                 'message' => $exception->getMessage(),
             ], $walletTransaction->reference, $request);
 
-            return redirect()->route('wallet.index')->with('error', 'Không thể khởi tạo giao dịch VNPay cho ví: ' . $exception->getMessage());
+            return redirect()->route('wallet.index')->with('error', 'Khong the khoi tao giao dich VNPay cho vi: ' . $exception->getMessage());
         }
 
         $request->session()->put('browser_session_guard_skip_once', true);
@@ -219,7 +197,7 @@ class WalletController extends Controller
             ->first();
 
         if (! $transaction) {
-            return back()->with('error', 'Không tìm thấy giao dịch nạp tiền hợp lệ.');
+            return back()->with('error', 'Khong tim thay giao dich nap tien hop le.');
         }
 
         if ($transaction->status === 'expired' || $transaction->isExpired()) {
@@ -231,22 +209,22 @@ class WalletController extends Controller
                 ]);
             }
 
-            return back()->with('error', 'Yêu cầu thanh toán này đã hết hạn. Vui lòng tạo yêu cầu mới.');
+            return back()->with('error', 'Yeu cau thanh toan nay da het han. Vui long tao yeu cau moi.');
         }
 
         $method = data_get($transaction->metadata, 'method');
 
         if ($method === WalletTransaction::DIRECT_METHOD) {
-            return back()->with('error', 'Yêu cầu nạp trực tiếp chỉ được xác nhận bởi quản trị viên hoặc nhân viên tại quầy.');
+            return back()->with('error', 'Yeu cau nap truc tiep chi duoc xac nhan boi quan tri vien hoac nhan vien tai quay.');
         }
 
         if ($method === WalletTransaction::VNPAY_METHOD) {
-            return back()->with('error', 'Giao dịch VNPay sẽ được hệ thống xác nhận tự động sau khi thanh toán thành công.');
+            return back()->with('error', 'Giao dich VNPay se duoc he thong xac nhan tu dong sau khi thanh toan thanh cong.');
         }
 
         if ($method === WalletTransaction::BANK_METHOD) {
             if ($transaction->status !== 'pending') {
-                return back()->with('error', 'Yêu cầu chuyển khoản này đã được xử lý trước đó.');
+                return back()->with('error', 'Yeu cau chuyen khoan nay da duoc xu ly truoc do.');
             }
 
             $metadata = array_merge($transaction->metadata ?? [], [
@@ -265,93 +243,18 @@ class WalletController extends Controller
 
             return redirect()
                 ->route('wallet.index')
-                ->with('success', 'Đã ghi nhận bạn đã chuyển khoản. Admin sẽ kiểm tra và cộng tiền vào ví sau khi đối soát.');
+                ->with('success', 'Da ghi nhan ban da chuyen khoan. Admin se kiem tra va cong tien vao vi sau khi doi soat.');
         }
 
         if (! $transaction->isPending()) {
-            return back()->with('error', 'Giao dịch này đã được xử lý trước đó.');
+            return back()->with('error', 'Giao dich nay da duoc xu ly truoc do.');
         }
 
         if (! $transaction->complete()) {
-            return back()->with('error', 'Không thể hoàn tất giao dịch.');
+            return back()->with('error', 'Khong the hoan tat giao dich.');
         }
 
-        $fireflyResponse = $this->firefly->mint($transaction->wallet->firefly_identity, (float) $transaction->amount, [
-            'reference' => $transaction->reference,
-            'data' => [
-                'type' => 'wallet_topup',
-                'wallet_transaction_id' => $transaction->id,
-                'wallet_id' => $transaction->wallet_id,
-                'method' => $method,
-                'amount' => (float) $transaction->amount,
-                'reference' => $transaction->reference,
-            ],
-        ]);
-
-        $auditResponse = $this->blockchainAudit->record('wallet.topup_confirmed', [
-            'wallet_transaction_id' => $transaction->id,
-            'wallet_id' => $transaction->wallet_id,
-            'amount' => (float) $transaction->amount,
-            'method' => $method,
-            'reference' => $transaction->reference,
-            'firefly_identity' => $transaction->wallet->firefly_identity,
-            'firefly_tx_id' => $fireflyResponse['tx_id'] ?? null,
-            'firefly_message_id' => $fireflyResponse['message_id'] ?? null,
-        ], [
-            'reference' => $transaction->reference,
-            'user_id' => Auth::id(),
-            'username' => Auth::user()?->username,
-            'role' => Auth::user()?->role,
-            'ip' => $request->ip(),
-        ]);
-
-        $this->appendMetadata($transaction, [
-            'firefly' => $fireflyResponse,
-            'blockchain_audit' => $auditResponse,
-        ]);
-
-        return redirect()->route('wallet.index')->with('success', 'Xác nhận thanh toán thành công, số dư đã được cập nhật.');
-    }
-
-    public function syncBalance()
-    {
-        $user = Auth::user();
-        $wallet = $user->getOrCreateWallet();
-
-        $response = $this->firefly->getBalance($wallet->firefly_identity);
-        if (! $response['success']) {
-            return redirect()->route('wallet.index')->with('error', 'Không thể đồng bộ số dư: ' . ($response['message'] ?? 'Lỗi không xác định'));
-        }
-
-        $balance = null;
-        $data = $response['data'] ?? null;
-
-        if (is_array($data)) {
-            if (isset($data['balance'])) {
-                $balance = $data['balance'];
-            } elseif (isset($data[0]['balance'])) {
-                $balance = $data[0]['balance'];
-            } elseif (isset($data[0]['available'])) {
-                $balance = $data[0]['available'];
-            }
-        } elseif (is_numeric($data)) {
-            $balance = $data;
-        }
-
-        if ($balance === null) {
-            return redirect()->route('wallet.index')->with('error', 'Không thể xác định số dư trả về từ FireFly.');
-        }
-
-        $wallet->balance = $balance;
-        $wallet->save();
-
-        return redirect()->route('wallet.index')->with('success', 'Đã đồng bộ số dư với FireFly.');
-    }
-
-    protected function appendMetadata(WalletTransaction $transaction, array $payload): void
-    {
-        $transaction->metadata = array_merge($transaction->metadata ?? [], $payload);
-        $transaction->save();
+        return redirect()->route('wallet.index')->with('success', 'Xac nhan thanh toan thanh cong, so du da duoc cap nhat.');
     }
 
     protected function bankTransferConfig(): array

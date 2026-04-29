@@ -138,7 +138,7 @@ class CourseClass extends Model
 
     public function getStatusTextAttribute()
     {
-        return $this->status === 'active' ? 'Má»Ÿ Ä‘Äƒng kÃ½' : 'Táº¡m dá»«ng';
+        return $this->status === 'active' ? 'Mở đăng ký' : 'Tạm dừng';
     }
 
     public function getStructuredScheduleLinesAttribute()
@@ -150,7 +150,7 @@ class CourseClass extends Model
         }
 
         $weekdayOrder = ['2' => 2, '3' => 3, '4' => 4, '5' => 5, '6' => 6, '7' => 7, 'CN' => 8];
-        $weekdayLabels = ['2' => 'Thá»© 2', '3' => 'Thá»© 3', '4' => 'Thá»© 4', '5' => 'Thá»© 5', '6' => 'Thá»© 6', '7' => 'Thá»© 7', 'CN' => 'Chá»§ nháº­t'];
+        $weekdayLabels = ['2' => 'Thứ 2', '3' => 'Thứ 3', '4' => 'Thứ 4', '5' => 'Thứ 5', '6' => 'Thứ 6', '7' => 'Thứ 7', 'CN' => 'Chủ nhật'];
 
         return $schedules
             ->sortBy(function ($item) use ($weekdayOrder) {
@@ -166,11 +166,11 @@ class CourseClass extends Model
                         }
 
                         if ($schedule->start_time) {
-                            return 'Báº¯t Ä‘áº§u ' . date('H:i', strtotime($schedule->start_time));
+                            return 'Bắt đầu ' . date('H:i', strtotime($schedule->start_time));
                         }
 
                         if ($schedule->end_time) {
-                            return 'Káº¿t thÃºc ' . date('H:i', strtotime($schedule->end_time));
+                            return 'Kết thúc ' . date('H:i', strtotime($schedule->end_time));
                         }
 
                         return null;

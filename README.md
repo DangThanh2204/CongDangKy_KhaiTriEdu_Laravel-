@@ -1,6 +1,6 @@
 # Khai Tri Edu
 
-Khai Tri Edu là hệ thống cổng đăng ký khóa học trực tuyến phục vụ đề tài đồ án tốt nghiệp. Phiên bản hiện tại của project đang vận hành theo kiến trúc Laravel 12 + MongoDB, hỗ trợ triển khai trên Render bằng Docker và có thêm các module thanh toán, ví nội bộ, trợ lý AI, thông báo portal và tích hợp blockchain consortium qua Hyperledger FireFly.
+Khai Tri Edu là hệ thống đăng ký và quản lý khóa học trực tuyến được xây dựng cho đồ án tốt nghiệp. Hệ thống hỗ trợ quản lý khóa học, ghi danh, thanh toán và theo dõi quá trình học tập.
 
 Demo đang dùng:
 - Public site: `https://khai-tri-edu.onrender.com`
@@ -16,13 +16,13 @@ Demo đang dùng:
 - Xác thực xã hội: Google, Facebook
 - Thanh toán: VNPay + ví nội bộ
 - AI assistant: Gemini
-- Blockchain audit / token flow: Hyperledger FireFly
 - PDF documents: `barryvdh/laravel-dompdf`
 
 Lưu ý quan trọng:
-- Hệ thống hiện tại dùng MongoDB làm nguồn dữ liệu chính.
-- File `khaitriedu.sql` và các migration archive chỉ còn vai trò dữ liệu lịch sử / dữ liệu nguồn để import sang Mongo khi cần.
-- Các lệnh bootstrap và import Mongo nằm trong `routes/console.php`.
+- Hệ thống hiện tại vận hành hoàn toàn trên MongoDB.
+- Flow cài đặt, bootstrap và deploy chuẩn trong README này không còn dùng MySQL hoặc SQLite.
+- Các lệnh bootstrap Mongo nằm trong `routes/console.php`.
+- `khaitriedu.sql` và `database/migrations_archive/` chỉ còn là dữ liệu lưu trữ tham chiếu, không phải một phần của luồng chạy chính.
 
 ## Chức năng chính
 
@@ -39,13 +39,13 @@ Lưu ý quan trọng:
 - Quên mật khẩu bằng OTP
 - Đăng nhập bằng Google / Facebook
 - Hồ sơ cá nhân, đổi mật khẩu
-- Phân quyền theo vai trò: admin, staff, instructor, student
+- Phân quyền theo vai trò: admin, instructor, student
 
 ### Ghi danh, lớp học và học tập
 - Ghi danh khóa học online / offline
 - Giữ chỗ và xác nhận giữ chỗ cho một số flow đăng ký
 - Theo dõi trạng thái hồ sơ đăng ký
-- Dashboard học viên / giảng viên / staff / admin
+- Dashboard học viên / giảng viên / admin
 - Theo dõi tiến độ học, tài liệu, quiz attempt, chứng chỉ
 
 ### Thanh toán và ví
@@ -68,7 +68,6 @@ Lưu ý quan trọng:
 - Quản lý bài viết và danh mục tin tức
 - Quản lý khuyến mãi, mã giảm giá
 - Quản lý backup, system logs, settings
-- Dashboard blockchain và đồng bộ dữ liệu FireFly
 
 ## Kiến trúc dữ liệu hiện tại
 
@@ -112,7 +111,6 @@ Danh sách bootstrap đầy đủ được định nghĩa trong [routes/console.
 | PDF | `barryvdh/laravel-dompdf` |
 | AI | Gemini API |
 | Thanh toán | VNPay |
-| Blockchain | Hyperledger FireFly |
 | Deploy | Render + Docker |
 
 ## Cấu hình môi trường
@@ -143,7 +141,6 @@ Các nhóm biến tùy chọn:
 - Facebook OAuth: `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, `FACEBOOK_REDIRECT_URI`
 - Gemini: `GEMINI_API_KEY`, `GEMINI_BASE_URL`, `GEMINI_ASSISTANT_MODEL`
 - VNPay: `VNPAY_URL`, `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `VNPAY_RETURN_URL`, `VNPAY_IPN_URL`
-- FireFly: `FIREFLY_URL`, `FIREFLY_API_KEY`, `FIREFLY_NAMESPACE`, `FIREFLY_TOKEN_POOL`, ...
 
 ## Chạy local
 
@@ -217,16 +214,7 @@ Nếu muốn nạp demo data:
 php artisan mongodb:bootstrap --fresh --seed-demo
 ```
 
-### 7. Import dữ liệu cũ từ SQL dump (tùy chọn)
-
-Project hiện có hỗ trợ import dữ liệu lịch sử từ `khaitriedu.sql` sang MongoDB:
-
-```bash
-php artisan mongodb:import-sql-dump --dry-run
-php artisan mongodb:import-sql-dump --fresh
-```
-
-### 8. Build frontend
+### 7. Build frontend
 
 ```bash
 npm run build
@@ -238,7 +226,7 @@ Hoặc chạy dev mode:
 composer dev
 ```
 
-### 9. Chạy ứng dụng
+### 8. Chạy ứng dụng
 
 ```bash
 php artisan serve
@@ -251,14 +239,10 @@ composer test
 php artisan optimize:clear
 php artisan route:list
 php artisan mongodb:bootstrap
-php artisan mongodb:import-sql-dump --dry-run
-php artisan mongodb:import-sql-dump --fresh
-php artisan blockchain:sync-pending --limit=20
 ```
 
 Scheduler quan trọng:
 - `portal:dispatch-reminders`
-- `blockchain:sync-pending --limit=20`
 
 ## Deploy Render
 
@@ -293,17 +277,8 @@ Mở Render Shell và chạy:
 php artisan mongodb:bootstrap
 ```
 
-Nếu cần import dữ liệu cũ:
-
-```bash
-php artisan mongodb:import-sql-dump --dry-run
-php artisan mongodb:import-sql-dump --fresh
-```
-
 Tài liệu liên quan:
 - `docs/render-deploy.md`
-- `docs/firefly-consortium.md`
-- `docs/firefly-fabric-local-setup.md`
 
 ## Route chính
 
@@ -344,7 +319,6 @@ Tài liệu liên quan:
 - `/admin/settings`
 - `/admin/system-logs`
 - `/admin/backups`
-- `/admin/blockchain`
 
 ## Cấu trúc chính của project
 
@@ -370,11 +344,19 @@ tests/
 
 ## Ghi chú vận hành
 
-- Hệ thống hiện tối ưu theo MongoDB, không còn coi MySQL là database chạy chính.
+- Hệ thống đã chuyển hoàn toàn sang MongoDB.
 - Một số màn admin/public đã được refactor để tránh `withCount()` kiểu SQL khi chạy Mongo.
 - Nếu dùng Render `free`, request đầu tiên có thể chậm do cold start.
 - Nếu MongoDB Atlas đặt khác region với Render thì thời gian phản hồi có thể tăng rõ rệt.
-- Các env cũ kiểu SQLite / MySQL fallback trên Render không còn là flow chính nữa.
+- Các env cũ kiểu SQLite / MySQL fallback trên Render không còn nằm trong flow vận hành chuẩn.
+
+## Ghi chú chuyển đổi dữ liệu cũ
+
+Nếu cần đối chiếu dữ liệu legacy, project vẫn giữ:
+- `khaitriedu.sql`
+- `database/migrations_archive/`
+
+Tuy nhiên hai phần này chỉ còn phục vụ đối chiếu hoặc migration lịch sử. README này không dùng chúng như một bước setup chính thức nữa.
 
 ## Testing
 

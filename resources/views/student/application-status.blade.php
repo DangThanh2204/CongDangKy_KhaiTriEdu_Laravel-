@@ -16,7 +16,7 @@
             <div class="application-hero-copy">
                 <span class="application-eyebrow">Cổng đăng ký khóa học trực tuyến</span>
                 <h1>Tra cứu trạng thái hồ sơ</h1>
-                <p>Theo dõi nhanh hồ sơ đã nộp, tình trạng duyệt, thanh toán, lớp học đã được ghi nhận và timeline blockchain của từng mốc nghiệp vụ.</p>
+                <p>Theo doi nhanh ho so da nop, tinh trang duyet, thanh toan, lop hoc va cac tai lieu lien quan cho tung dang ky.</p>
             </div>
             <div class="application-hero-actions">
                 <a href="{{ route('student.dashboard') }}" class="btn btn-outline-primary">
@@ -66,7 +66,6 @@
                         $payment = $application['payment'];
                         $payments = $application['payments'];
                         $primaryAction = $application['primary_action'];
-                        $blockchainSummary = $application['blockchain_summary'];
                         $certificate = $enrollment->certificate;
                     @endphp
                     <article class="application-card {{ $application['needs_attention'] ? 'needs-attention' : '' }}">
@@ -215,72 +214,6 @@
                             </div>
                         @endif
 
-                        <section class="application-blockchain-card">
-                            <div class="application-blockchain-header">
-                                <div>
-                                    <span class="application-blockchain-kicker">Blockchain FireFly</span>
-                                    <h3>Timeline blockchain của hồ sơ</h3>
-                                    <p>Theo dõi các mốc như tạo hồ sơ, thanh toán, duyệt, xếp lớp và cấp chứng chỉ đã được ghi nhận hoặc đang chờ đồng bộ lên consortium.</p>
-                                </div>
-                                <div class="application-blockchain-stats">
-                                    <span class="badge text-bg-success-subtle border border-success-subtle">{{ $blockchainSummary['anchored'] }} mục đã neo</span>
-                                    <span class="badge text-bg-warning-subtle border border-warning-subtle">{{ $blockchainSummary['pending'] }} mục chờ đồng bộ</span>
-                                </div>
-                            </div>
-
-                            @if($application['blockchain_timeline']->isNotEmpty())
-                                <div class="application-blockchain-timeline">
-                                    @foreach($application['blockchain_timeline'] as $event)
-                                        <article class="application-blockchain-item is-{{ $event['variant'] }}">
-                                            <div class="application-blockchain-marker">
-                                                <i class="{{ $event['icon'] }}"></i>
-                                            </div>
-                                            <div class="application-blockchain-body">
-                                                <div class="application-blockchain-row">
-                                                    <div>
-                                                        <div class="application-blockchain-title">{{ $event['title'] }}</div>
-                                                        <div class="application-blockchain-copy">{{ $event['description'] }}</div>
-                                                    </div>
-                                                    <span class="badge text-bg-{{ $event['success'] ? 'success' : 'warning' }}">{{ $event['status_label'] }}</span>
-                                                </div>
-
-                                                <div class="application-blockchain-meta">
-                                                    <span><i class="fas fa-diagram-project"></i>Nguồn: {{ $event['source_label'] }}</span>
-                                                    @if($event['occurred_at_label'])
-                                                        <span><i class="fas fa-clock"></i>{{ $event['occurred_at_label'] }}</span>
-                                                    @endif
-                                                    @if($event['state'])
-                                                        <span><i class="fas fa-wave-square"></i>State: {{ $event['state'] }}</span>
-                                                    @endif
-                                                </div>
-
-                                                @if($event['message'])
-                                                    <div class="application-blockchain-note">{{ $event['message'] }}</div>
-                                                @endif
-
-                                                <div class="application-blockchain-proof">
-                                                    @if($event['message_id'])
-                                                        <span class="application-proof-chip"><strong>Message ID</strong>{{ $event['message_id'] }}</span>
-                                                    @endif
-                                                    @if($event['tx_id'])
-                                                        <span class="application-proof-chip"><strong>TX ID</strong>{{ $event['tx_id'] }}</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </article>
-                                    @endforeach
-                                </div>
-                            @else
-                                <div class="application-blockchain-empty">
-                                    <i class="fas fa-link-slash"></i>
-                                    <div>
-                                        <strong>Hồ sơ này chưa có mốc blockchain nào.</strong>
-                                        <p class="mb-0">Khi bạn đi qua các bước như duyệt hồ sơ, thanh toán hoặc cấp chứng chỉ, timeline sẽ hiện ngay tại đây.</p>
-                                    </div>
-                                </div>
-                            @endif
-                        </section>
-
                         <div class="application-card-footer">
                             <a href="{{ $primaryAction['url'] }}" class="btn {{ $primaryAction['class'] }}">
                                 <i class="fas fa-arrow-right me-2"></i>{{ $primaryAction['label'] }}
@@ -318,7 +251,7 @@
                     <i class="fas fa-folder-open"></i>
                 </div>
                 <h2>Bạn chưa có hồ sơ đăng ký nào</h2>
-                <p>Hãy chọn khóa học hoặc lịch khai giảng phù hợp để gửi hồ sơ đầu tiên. Sau khi nộp, bạn có thể quay lại đây để theo dõi toàn bộ trạng thái và timeline blockchain của hồ sơ.</p>
+                <p>Hay chon khoa hoc hoac lich khai giang phu hop de gui ho so dau tien. Sau khi nop, ban co the quay lai day de theo doi toan bo trang thai cua ho so.</p>
                 <div class="d-flex flex-wrap justify-content-center gap-3">
                     <a href="{{ route('courses.index') }}" class="btn btn-primary btn-lg">
                         <i class="fas fa-search me-2"></i>Khám phá khóa học

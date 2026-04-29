@@ -4,10 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CourseEnrollment;
 use App\Models\Payment;
-use App\Services\ApplicationLifecycleBlockchainService;
 use App\Models\WalletTransaction;
-use App\Services\BlockchainAuditService;
-use App\Services\FireflyService;
 use App\Services\SystemLogService;
 use App\Services\VnpayService;
 use Illuminate\Http\Request;
@@ -18,9 +15,6 @@ class PaymentController extends Controller
 {
     public function __construct(
         protected VnpayService $vnpay,
-        protected FireflyService $firefly,
-        protected BlockchainAuditService $blockchainAudit,
-        protected ApplicationLifecycleBlockchainService $lifecycleBlockchain,
     ) {
     }
 
@@ -392,9 +386,7 @@ class PaymentController extends Controller
 
     private function processSuccessfulPayment(Payment $payment, array $payload, Request $request): void
     {
-        $lifecycle = null;
-
-        DB::transaction(function () use ($payment, $payload, &$lifecycle) {
+        DB::transaction(function () use ($payment, $payload) {
             $payment->refresh();
 
             if (! $payment->isPending()) {
@@ -402,39 +394,8 @@ class PaymentController extends Controller
             }
 
             $payment->markCompleted($this->vnpay->gatewaySummary($payload));
-            $lifecycle = $this->ensureEnrollmentForPayment($payment);
+            $this->ensureEnrollmentForPayment($payment);
         });
-
-        if ($lifecycle && isset($lifecycle['enrollment'])) {
-            $enrollment = $lifecycle['enrollment'];
-            $context = $this->paymentLifecycleContext($request, $payment);
-
-            if (! empty($lifecycle['created'])) {
-                $this->lifecycleBlockchain->applicationCreated($enrollment, $context, [
-                    'source' => 'vnpay_return',
-                    'trigger' => 'course_payment_vnpay',
-                ]);
-                $this->lifecycleBlockchain->classAssigned($enrollment, $enrollment->courseClass, $context, [
-                    'source' => 'vnpay_return',
-                    'trigger' => 'course_payment_vnpay',
-                    'assignment_type' => 'initial',
-                ]);
-            }
-
-            $this->lifecycleBlockchain->paymentRecorded($payment->fresh(['user', 'courseClass.course']), $enrollment, $context, [
-                'source' => 'vnpay_return',
-                'trigger' => 'course_payment_vnpay',
-                'gateway' => 'vnpay',
-                'gateway_summary' => $this->vnpay->gatewaySummary($payload),
-            ]);
-
-            if (! empty($lifecycle['approved'])) {
-                $this->lifecycleBlockchain->approved($enrollment, $context, [
-                    'source' => 'vnpay_return',
-                    'trigger' => 'course_payment_vnpay',
-                ]);
-            }
-        }
 
         SystemLogService::record(
             'transaction',
@@ -503,42 +464,6 @@ class PaymentController extends Controller
         }
 
         $walletTransaction->refresh()->loadMissing('wallet.user');
-
-        $fireflyResponse = $this->firefly->mint($walletTransaction->wallet->firefly_identity, (float) $walletTransaction->amount, [
-            'reference' => $walletTransaction->reference,
-            'data' => [
-                'type' => 'wallet_topup',
-                'wallet_transaction_id' => $walletTransaction->id,
-                'wallet_id' => $walletTransaction->wallet_id,
-                'method' => data_get($walletTransaction->metadata, 'method'),
-                'amount' => (float) $walletTransaction->amount,
-                'reference' => $walletTransaction->reference,
-                'gateway' => 'vnpay',
-            ],
-        ]);
-
-        $auditResponse = $this->blockchainAudit->record('wallet.topup_confirmed_via_vnpay', [
-            'wallet_transaction_id' => $walletTransaction->id,
-            'wallet_id' => $walletTransaction->wallet_id,
-            'amount' => (float) $walletTransaction->amount,
-            'method' => data_get($walletTransaction->metadata, 'method'),
-            'reference' => $walletTransaction->reference,
-            'gateway_summary' => $this->vnpay->gatewaySummary($payload),
-            'firefly_identity' => $walletTransaction->wallet->firefly_identity,
-            'firefly_tx_id' => $fireflyResponse['tx_id'] ?? null,
-            'firefly_message_id' => $fireflyResponse['message_id'] ?? null,
-        ], [
-            'reference' => $walletTransaction->reference,
-            'user_id' => $walletTransaction->wallet->user_id,
-            'username' => $walletTransaction->wallet->user->username ?? null,
-            'role' => $walletTransaction->wallet->user->role ?? null,
-            'ip' => $request->ip(),
-        ]);
-
-        $this->appendWalletMetadata($walletTransaction, [
-            'firefly' => $fireflyResponse,
-            'blockchain_audit' => $auditResponse,
-        ]);
 
         SystemLogService::record(
             'transaction',
@@ -714,25 +639,6 @@ class PaymentController extends Controller
             strtoupper($normalized),
             strtolower($normalized),
         ]));
-    }
-
-    private function appendWalletMetadata(WalletTransaction $walletTransaction, array $payload): void
-    {
-        $walletTransaction->metadata = array_merge($walletTransaction->metadata ?? [], $payload);
-        $walletTransaction->save();
-    }
-
-    private function paymentLifecycleContext(Request $request, Payment $payment): array
-    {
-        $payment->loadMissing('user');
-
-        return [
-            'reference' => $payment->reference ?: ('PAYMENT-' . $payment->id),
-            'user_id' => $payment->user_id,
-            'username' => $payment->user?->username,
-            'role' => $payment->user?->role,
-            'ip' => $request->ip(),
-        ];
     }
 
     private function markBrowserSessionGuardBypass(Request $request): void

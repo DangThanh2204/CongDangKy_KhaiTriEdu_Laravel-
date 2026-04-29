@@ -28,8 +28,8 @@
                                     @endif
                                     <h5 class="mb-1">{{ $user->fullname }}</h5>
                                     <p class="text-muted mb-0">{{ $user->username }}</p>
-                                    <span class="badge bg-{{ $user->isAdmin() ? 'danger' : ($user->isStaff() ? 'warning' : 'info') }} mt-2">
-                                        {{ $user->isAdmin() ? 'Admin' : ($user->isStaff() ? 'Staff' : 'Student') }}
+                                    <span class="badge bg-{{ $user->roleBadgeClass() }} mt-2">
+                                        {{ $user->roleLabel() }}
                                     </span>
                                 </div>
                             </div>

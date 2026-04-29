@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Services\BlockchainAuditService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -14,10 +13,6 @@ use Throwable;
 
 class AuthController extends Controller
 {
-    public function __construct(protected BlockchainAuditService $blockchainAudit)
-    {
-    }
-
     public function showRegister()
     {
         $this->purgeExpiredUnverifiedUsers();
@@ -162,8 +157,8 @@ class AuthController extends Controller
             return redirect()->route('admin.dashboard')->with('success', $message);
         }
 
-        if ($user->isStaff()) {
-            return redirect()->route('staff.dashboard')->with('success', $message);
+        if ($user->isInstructor()) {
+            return redirect()->route('instructor.dashboard')->with('success', $message);
         }
 
         return redirect()->route('home')->with('success', $message);
@@ -416,22 +411,6 @@ class AuthController extends Controller
 
             \App\Services\SystemLogService::record('security', 'login_success', ['user_id' => $user->id]);
 
-            try {
-                $this->blockchainAudit->record('security.login_success', [
-                    'user_id' => $user->id,
-                    'email' => $user->email,
-                    'session_id' => $req->session()->getId(),
-                ], [
-                    'reference' => 'LOGIN-' . $user->id . '-' . now()->format('YmdHis'),
-                    'user_id' => $user->id,
-                    'username' => $user->username,
-                    'role' => $user->role,
-                    'ip' => $req->ip(),
-                ]);
-            } catch (Throwable $exception) {
-                report($exception);
-            }
-
             return $this->redirectToRole($user);
         }
 
@@ -468,7 +447,7 @@ class AuthController extends Controller
             'fullname' => 'required|string|max:100',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
-            'role' => 'required|in:admin,staff,student',
+            'role' => 'required|in:admin,instructor,student',
             'avatar' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048',
         ]);
 

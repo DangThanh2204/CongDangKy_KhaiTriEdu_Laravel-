@@ -98,5 +98,3 @@ Write-Host 'Buoc tiep theo:' -ForegroundColor Cyan
 Write-Host '1. Restart neu Windows yeu cau'
 Write-Host '2. Mo Docker Desktop va bat WSL2 integration voi Ubuntu'
 Write-Host '3. Mo Ubuntu lan dau va tao user Linux'
-Write-Host '4. Cai FireFly CLI trong Ubuntu'
-Write-Host '5. Chay ff init fabric va ff start <stack-name>'

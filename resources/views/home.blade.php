@@ -19,11 +19,9 @@
         if (auth()->check()) {
             $portalDashboardUrl = auth()->user()->isAdmin()
                 ? route('admin.dashboard')
-                : (auth()->user()->isStaff()
-                    ? route('staff.dashboard')
-                    : (auth()->user()->isInstructor()
-                        ? route('instructor.dashboard')
-                        : route('student.dashboard')));
+                : (auth()->user()->isInstructor()
+                    ? route('instructor.dashboard')
+                    : route('student.dashboard'));
             $portalDashboardLabel = 'Mở bảng điều khiển';
             $portalDashboardDescription = 'Quay lại dashboard để xem các khóa đã đăng ký, tiến độ học và thông báo mới.';
         }

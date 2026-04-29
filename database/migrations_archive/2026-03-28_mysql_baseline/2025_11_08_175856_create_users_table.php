@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('avatar')->nullable();
             $table->string('otp')->nullable();
-            $table->enum('role', ['admin', 'staff', 'student', 'instructor'])->default('student');
+            $table->enum('role', ['admin', 'student', 'instructor'])->default('student');
             $table->boolean('is_verified')->default(false);
             $table->rememberToken();
             $table->timestamps();

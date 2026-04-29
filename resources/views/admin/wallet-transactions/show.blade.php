@@ -4,13 +4,6 @@
 
 @section('content')
 @php
-    $firefly = data_get($walletTransaction->metadata, 'firefly', []);
-    $audit = data_get($walletTransaction->metadata, 'blockchain_audit', []);
-    $fireflyTxId = data_get($firefly, 'tx_id') ?? data_get($firefly, 'data.tx.id') ?? data_get($firefly, 'data.tx') ?? data_get($firefly, 'data.blockchain.transactionHash');
-    $fireflyMessageId = data_get($firefly, 'message_id') ?? data_get($firefly, 'data.header.id') ?? data_get($firefly, 'data.id');
-    $fireflyState = data_get($firefly, 'state') ?? data_get($firefly, 'data.state') ?? data_get($firefly, 'status');
-    $auditMessageId = data_get($audit, 'message_id') ?? data_get($audit, 'data.header.id') ?? data_get($audit, 'data.id');
-    $auditState = data_get($audit, 'state') ?? data_get($audit, 'data.state') ?? data_get($audit, 'status');
     $method = strtoupper(data_get($walletTransaction->metadata, 'method', '-'));
 @endphp
 
@@ -76,40 +69,6 @@
                     Giao dịch này đang chờ xác nhận tiền mặt. Vui lòng hoàn tất trước <strong>{{ $walletTransaction->expires_at_label }}</strong> để tránh bị hết hạn tự động.
                 </div>
             @endif
-
-            <div class="card border-primary-subtle bg-light mb-4">
-                <div class="card-body">
-                    <h6 class="mb-3">Blockchain Evidence</h6>
-                    <div class="row g-3">
-                        <div class="col-lg-6">
-                            <div class="small text-muted mb-1">FireFly token transaction</div>
-                            <div class="mb-2"><code>{{ $fireflyTxId ?? 'Chưa có' }}</code></div>
-
-                            <div class="small text-muted mb-1">FireFly message</div>
-                            <div class="mb-2"><code>{{ $fireflyMessageId ?? 'Chưa có' }}</code></div>
-
-                            <div class="small text-muted mb-1">Trạng thái FireFly</div>
-                            <div>{{ $fireflyState ?? 'Chưa ghi nhận' }}</div>
-                        </div>
-                        <div class="col-lg-6">
-                            <div class="small text-muted mb-1">Audit message</div>
-                            <div class="mb-2"><code>{{ $auditMessageId ?? 'Chưa có' }}</code></div>
-
-                            <div class="small text-muted mb-1">Audit state</div>
-                            <div class="mb-2">{{ $auditState ?? 'Chưa ghi nhận' }}</div>
-
-                            <div class="small text-muted mb-1">Wallet FireFly identity</div>
-                            <div><code>{{ $walletTransaction->wallet->firefly_identity ?? 'Chưa cấu hình' }}</code></div>
-                        </div>
-                    </div>
-
-                    @if(!data_get($firefly, 'success') && !data_get($audit, 'success'))
-                        <div class="alert alert-warning mb-0 mt-3">
-                            FireFly chưa được cấu hình hoặc giao dịch này được tạo trước khi bật blockchain audit nên hiện chưa có blockchain reference.
-                        </div>
-                    @endif
-                </div>
-            </div>
 
             @if($walletTransaction->isPending())
                 <div class="row g-3">

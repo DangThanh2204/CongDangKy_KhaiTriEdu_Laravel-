@@ -20,10 +20,6 @@
                             <h2 class="card-title mb-2">Ví của tôi</h2>
                             <p class="text-muted mb-0">Số dư hiện tại: <strong>{{ number_format($wallet->balance, 0) }}đ</strong></p>
                         </div>
-                        <form action="{{ route('wallet.sync') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Đồng bộ với FireFly</button>
-                        </form>
                     </div>
 
                     @if(session('success'))

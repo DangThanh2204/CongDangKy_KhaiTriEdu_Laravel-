@@ -63,7 +63,6 @@
                     <select name="role" class="form-select">
                         <option value="">Tất cả vai trò</option>
                         <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Quản trị</option>
-                        <option value="staff" {{ request('role') === 'staff' ? 'selected' : '' }}>Nhân viên</option>
                         <option value="instructor" {{ request('role') === 'instructor' ? 'selected' : '' }}>Giảng viên</option>
                         <option value="student" {{ request('role') === 'student' ? 'selected' : '' }}>Học viên</option>
                     </select>
@@ -117,6 +116,12 @@
                             @php
                                 $studentLevel = $user->student_level_summary;
                                 $level = data_get($studentLevel, 'level');
+                                $roleKey = $user->roleKey();
+                                $roleBadgeClass = match ($roleKey) {
+                                    'admin' => 'bg-danger',
+                                    'instructor' => 'bg-info text-dark',
+                                    default => 'bg-primary',
+                                };
                             @endphp
                             <tr>
                                 <td class="ps-4">
@@ -137,8 +142,8 @@
                                 <td><strong>{{ $user->username }}</strong></td>
                                 <td>{{ $user->email }}</td>
                                 <td>
-                                    <span class="badge @if($user->role === 'admin') bg-danger @elseif($user->role === 'staff') bg-warning text-dark @elseif($user->role === 'instructor') bg-info text-dark @else bg-primary @endif">
-                                        {{ ucfirst($user->role) }}
+                                    <span class="badge {{ $roleBadgeClass }}">
+                                        {{ $user->roleLabel() }}
                                     </span>
                                 </td>
                                 <td>
@@ -167,7 +172,7 @@
                                         <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-outline-warning" title="Chỉnh sửa">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        @if(!$user->is_verified)
+                                        @if(! $user->is_verified)
                                             <form method="POST" action="{{ route('admin.users.verify', $user) }}" class="d-inline">
                                                 @csrf
                                                 @method('PATCH')

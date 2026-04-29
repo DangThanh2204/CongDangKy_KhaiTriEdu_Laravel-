@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
-use App\Models\CourseCertificate;
 use App\Models\CourseClass;
 use App\Models\CourseEnrollment;
 use App\Models\Payment;
@@ -13,9 +12,6 @@ use App\Models\PostCategory;
 use App\Models\SystemLog;
 use App\Models\User;
 use App\Models\WalletTransaction;
-use App\Services\BlockchainSyncService;
-use App\Services\FireflyService;
-use App\Services\FireflyConsortiumService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
@@ -24,12 +20,6 @@ use Illuminate\Support\Collection;
 
 class AdminController extends Controller
 {
-    public function __construct(
-        protected FireflyService $firefly,
-        protected FireflyConsortiumService $consortium,
-    ) {
-    }
-
     /**
      * Hi?n th? dashboard admin.
      */
@@ -45,7 +35,6 @@ class AdminController extends Controller
             'published_courses' => 0,
             'total_enrollments' => 0,
             'total_admins' => 0,
-            'total_staff' => 0,
             'total_instructors' => 0,
             'total_students' => 0,
             'verified_users' => 0,
@@ -82,7 +71,6 @@ class AdminController extends Controller
         $monthlyEnrollmentTrend = $this->buildMonthlyTrend(CourseEnrollment::class, 12);
         $monthlyCourseTrend = $this->buildMonthlyTrend(Course::class, 12);
         $securitySnapshot = $this->securityAlertSnapshot();
-        $blockchainSummary = $this->buildBlockchainSummary();
 
         try {
             $userTable = (new User())->getTable();
@@ -97,8 +85,7 @@ class AdminController extends Controller
                 $users = User::query()->get();
 
                 $stats['total_users'] = User::count();
-                $stats['total_admins'] = User::where('role', 'admin')->count();
-                $stats['total_staff'] = User::where('role', 'staff')->count();
+                $stats['total_admins'] = User::admins()->count();
                 $stats['total_instructors'] = User::where('role', 'instructor')->count();
                 $stats['total_students'] = User::where('role', 'student')->count();
                 $stats['today_registrations'] = User::whereDate('created_at', $today)->count();
@@ -107,7 +94,7 @@ class AdminController extends Controller
                 $stats['unverified_users'] = $hasVerifiedColumn ? User::where('is_verified', false)->count() : 0;
 
                 $usersByRole = $users
-                    ->groupBy('role')
+                    ->groupBy(fn (User $user) => $user->roleKey())
                     ->map(fn (Collection $group) => $group->count())
                     ->sortKeys();
 
@@ -285,8 +272,7 @@ class AdminController extends Controller
             'monthlyRegistrations',
             'dashboardTrend',
             'securityAlertsCount',
-            'latestSecurityAlert',
-            'blockchainSummary'
+            'latestSecurityAlert'
         ));
     }
 
@@ -381,7 +367,7 @@ class AdminController extends Controller
 
         if ($request->filled('current_password')) {
             if (! Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'Mật khẩu hiện tại không đúng']);
+                return back()->withErrors(['current_password' => 'Máº­t kháº©u hiá»‡n táº¡i khÃ´ng Ä‘Ãºng']);
             }
 
             $data['password'] = Hash::make($request->new_password);
@@ -399,7 +385,7 @@ class AdminController extends Controller
 
         return redirect()
             ->route('admin.profile')
-            ->with('success', 'Cập nhật thông tin thành công!');
+            ->with('success', 'Cáº­p nháº­t thÃ´ng tin thÃ nh cÃ´ng!');
     }
 
     /**
@@ -427,167 +413,8 @@ class AdminController extends Controller
         return response()->json(['count' => $count]);
     }
 
-    public function blockchainDashboard()
+    private function securityAlertSnapshot(): array
     {
-        $blockchainSummary = $this->buildBlockchainSummary();
-
-        return view('admin.blockchain.index', compact('blockchainSummary'));
-    }
-
-
-public function syncBlockchain(BlockchainSyncService $syncService)
-{
-    $summary = $syncService->syncPendingRecords(20);
-    $message = trim(($summary['message'] ?? 'Đã xử lý đồng bộ blockchain.') . ' Chứng chỉ: ' . ($summary['certificates_synced'] ?? 0) . ', giao dịch: ' . ($summary['transactions_synced'] ?? 0) . ', lỗi: ' . ($summary['failed'] ?? 0) . '.');
-
-    return redirect()
-        ->route('admin.blockchain.dashboard')
-        ->with(($summary['success'] ?? false) ? 'success' : 'error', $message);
-}
-
-private function buildBlockchainSummary(): array
-{
-    $health = $this->consortium->summary();
-    $summary = [
-        'firefly_configured' => $this->consortium->isConfigured(),
-        'firefly_health' => $health,
-        'firefly_connected' => (bool) data_get($health, 'success', false),
-        'consortium_enabled' => (bool) data_get($health, 'consortium_enabled', false),
-        'consortium_quorum' => (int) data_get($health, 'required_quorum', 1),
-        'healthy_members' => (int) data_get($health, 'healthy_members', 0),
-        'configured_members' => (int) data_get($health, 'configured_members', 0),
-        'members_total' => (int) data_get($health, 'members_total', 0),
-        'member_statuses' => data_get($health, 'members', []),
-        'token_ready' => (bool) data_get($health, 'token_ready', $this->firefly->canManageTokens()),
-        'platform_identity' => (string) data_get($health, 'platform_identity', $this->firefly->getPlatformIdentity()),
-        'namespace' => (string) data_get($health, 'namespace', config('services.firefly.namespace', '-')),
-        'audit_topic' => (string) config('services.firefly.audit_topic', 'audit'),
-        'primary_endpoint' => (string) data_get($health, 'endpoint', ''),
-        'anchored_certificates' => 0,
-        'pending_certificates' => 0,
-        'anchored_transactions' => 0,
-        'pending_transactions' => 0,
-        'recent_certificates' => [],
-        'recent_transactions' => [],
-    ];
-
-    try {
-        $certificateTable = (new CourseCertificate())->getTable();
-        if (Schema::hasTable($certificateTable)) {
-            $certificates = CourseCertificate::query()->with(['course:id,title', 'user:id,fullname,username', 'enrollment.courseClass:id,name'])->latest('issued_at')->get();
-            $summary['anchored_certificates'] = $certificates->filter(fn (CourseCertificate $certificate) => $this->isBlockchainAnchored($certificate->meta ?? []))->count();
-            $summary['pending_certificates'] = max($certificates->count() - $summary['anchored_certificates'], 0);
-            $summary['recent_certificates'] = $certificates->take(8)->map(function (CourseCertificate $certificate) {
-                return [
-                    'code' => $certificate->certificate_no,
-                    'user' => $certificate->user?->fullname ?: $certificate->user?->username ?: 'Không rõ',
-                    'course' => $certificate->course?->title ?? 'Không xác định',
-                    'issued_at' => $certificate->issued_at,
-                    'anchored' => $this->isBlockchainAnchored($certificate->meta ?? []),
-                    'message_id' => $this->extractBlockchainMessageId($certificate->meta ?? []),
-                    'tx_id' => $this->extractBlockchainTxId($certificate->meta ?? []),
-                    'state' => $this->extractBlockchainState($certificate->meta ?? []),
-                    'member_success_count' => $this->extractBlockchainSuccessCount($certificate->meta ?? []),
-                    'required_quorum' => $this->extractBlockchainRequiredQuorum($certificate->meta ?? []),
-                    'proof_ratio' => $this->buildProofRatio($certificate->meta ?? []),
-                ];
-            })->values()->all();
-        }
-    } catch (\Throwable $exception) {
-        report($exception);
-    }
-
-    try {
-        $walletTransactionTable = (new WalletTransaction())->getTable();
-        if (Schema::hasTable($walletTransactionTable)) {
-            $transactions = WalletTransaction::query()->with('wallet.user:id,fullname,username')->where('status', 'completed')->latest('created_at')->get();
-            $summary['anchored_transactions'] = $transactions->filter(fn (WalletTransaction $transaction) => $this->isBlockchainAnchored($transaction->metadata ?? []))->count();
-            $summary['pending_transactions'] = max($transactions->count() - $summary['anchored_transactions'], 0);
-            $summary['recent_transactions'] = $transactions->take(8)->map(function (WalletTransaction $transaction) {
-                return [
-                    'reference' => $transaction->reference ?: ('WTX-' . $transaction->id),
-                    'user' => $transaction->wallet?->user?->fullname ?: $transaction->wallet?->user?->username ?: 'Không rõ',
-                    'method' => $transaction->method_label,
-                    'amount' => (float) $transaction->amount,
-                    'created_at' => $transaction->created_at,
-                    'anchored' => $this->isBlockchainAnchored($transaction->metadata ?? []),
-                    'message_id' => $this->extractBlockchainMessageId($transaction->metadata ?? []),
-                    'tx_id' => $this->extractBlockchainTxId($transaction->metadata ?? []),
-                    'state' => $this->extractBlockchainState($transaction->metadata ?? []),
-                    'member_success_count' => $this->extractBlockchainSuccessCount($transaction->metadata ?? []),
-                    'required_quorum' => $this->extractBlockchainRequiredQuorum($transaction->metadata ?? []),
-                    'proof_ratio' => $this->buildProofRatio($transaction->metadata ?? []),
-                ];
-            })->values()->all();
-        }
-    } catch (\Throwable $exception) {
-        report($exception);
-    }
-
-    return $summary;
-}
-
-private function isBlockchainAnchored(array $payload): bool
-{
-    $audit = $this->extractBlockchainAudit($payload);
-    $successCount = (int) data_get($audit, 'success_count', data_get($audit, 'success') ? 1 : 0);
-    $requiredQuorum = max((int) data_get($audit, 'required_quorum', $successCount > 0 ? 1 : 0), 1);
-
-    return (bool) data_get($audit, 'success', false) || $successCount >= $requiredQuorum;
-}
-
-private function extractBlockchainAudit(array $payload): array
-{
-    return is_array(data_get($payload, 'blockchain_audit')) ? data_get($payload, 'blockchain_audit') : $payload;
-}
-
-private function extractBlockchainSuccessCount(array $payload): int
-{
-    $audit = $this->extractBlockchainAudit($payload);
-
-    return (int) data_get($audit, 'success_count', data_get($audit, 'success') ? 1 : 0);
-}
-
-private function extractBlockchainRequiredQuorum(array $payload): int
-{
-    $audit = $this->extractBlockchainAudit($payload);
-
-    return max((int) data_get($audit, 'required_quorum', $this->extractBlockchainSuccessCount($payload) > 0 ? 1 : 0), 1);
-}
-
-private function buildProofRatio(array $payload): string
-{
-    $audit = $this->extractBlockchainAudit($payload);
-    $successCount = $this->extractBlockchainSuccessCount($payload);
-    $membersTotal = max((int) data_get($audit, 'members_total', $successCount), 1);
-
-    return $successCount . '/' . $membersTotal;
-}
-
-private function extractBlockchainMessageId(array $payload): ?string
-{
-    $audit = $this->extractBlockchainAudit($payload);
-
-    return data_get($audit, 'message_id') ?? data_get($audit, 'data.header.id') ?? data_get($audit, 'data.id');
-}
-
-private function extractBlockchainTxId(array $payload): ?string
-{
-    $audit = $this->extractBlockchainAudit($payload);
-
-    return data_get($audit, 'tx_id') ?? data_get($audit, 'data.tx.id') ?? data_get($audit, 'data.tx') ?? data_get($audit, 'data.blockchain.id') ?? data_get($audit, 'data.blockchain.transactionHash');
-}
-
-private function extractBlockchainState(array $payload): ?string
-{
-    $audit = $this->extractBlockchainAudit($payload);
-
-    return data_get($audit, 'state') ?? data_get($audit, 'data.state') ?? data_get($audit, 'status') ?? data_get($audit, 'message');
-}
-
-private function securityAlertSnapshot(): array
-{
-
         try {
             if (! Schema::hasTable((new SystemLog())->getTable())) {
                 return [
@@ -649,7 +476,7 @@ private function securityAlertSnapshot(): array
             'labels' => $labels,
             'data' => $data,
             'total' => array_sum($data),
-            'range_label' => $days . ' ngày gần nhất',
+            'range_label' => $days . ' ngÃ y gáº§n nháº¥t',
         ];
     }
 
@@ -687,13 +514,13 @@ private function securityAlertSnapshot(): array
             'labels' => $labels,
             'data' => $data,
             'total' => array_sum($data),
-            'range_label' => $months . ' tháng gần nhất',
+            'range_label' => $months . ' thÃ¡ng gáº§n nháº¥t',
         ];
     }
 
 
     /**
-     * Đọc file log.
+     * Äá»c file log.
      */
     private function readLogFile($filePath, $lines = 100)
     {
@@ -743,7 +570,7 @@ private function securityAlertSnapshot(): array
     }
 
     /**
-     * Xóa hệ thống logs.
+     * XÃ³a há»‡ thá»‘ng logs.
      */
     public function clearLogs()
     {
@@ -755,7 +582,7 @@ private function securityAlertSnapshot(): array
 
         return redirect()
             ->route('admin.system.logs')
-            ->with('success', 'Đã xóa tất cả logs!');
+            ->with('success', 'ÄÃ£ xÃ³a táº¥t cáº£ logs!');
     }
 
     /**
@@ -768,7 +595,7 @@ private function securityAlertSnapshot(): array
         if (! file_exists($logFile)) {
             return redirect()
                 ->route('admin.system.logs')
-                ->with('error', 'Log file không tồn tại!');
+                ->with('error', 'Log file khÃ´ng tá»“n táº¡i!');
         }
 
         return response()->download($logFile, 'laravel-log-' . date('Y-m-d') . '.log');
@@ -813,7 +640,7 @@ private function securityAlertSnapshot(): array
     }
 
     /**
-     * Quick actions - xử lý các hành động nhanh.
+     * Quick actions - xá»­ lÃ½ cÃ¡c hÃ nh Ä‘á»™ng nhanh.
      */
     public function quickAction(Request $request)
     {
@@ -822,28 +649,28 @@ private function securityAlertSnapshot(): array
         switch ($action) {
             case 'clear_cache':
                 \Artisan::call('cache:clear');
-                $message = 'Đã xóa cache hệ thống!';
+                $message = 'ÄÃ£ xÃ³a cache há»‡ thá»‘ng!';
                 break;
 
             case 'clear_view':
                 \Artisan::call('view:clear');
-                $message = 'Đã xóa cached views!';
+                $message = 'ÄÃ£ xÃ³a cached views!';
                 break;
 
             case 'migrate':
                 \Artisan::call('migrate', ['--force' => true]);
-                $message = 'Đã chạy migrations!';
+                $message = 'ÄÃ£ cháº¡y migrations!';
                 break;
 
             default:
-                return back()->with('error', 'Hành động không hợp lệ!');
+                return back()->with('error', 'HÃ nh Ä‘á»™ng khÃ´ng há»£p lá»‡!');
         }
 
         return back()->with('success', $message);
     }
 
     /**
-     * Quản lý tin tức.
+     * Quáº£n lÃ½ tin tá»©c.
      */
     public function newsIndex(Request $request)
     {

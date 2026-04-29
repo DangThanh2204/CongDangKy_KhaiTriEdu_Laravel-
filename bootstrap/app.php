@@ -21,7 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // Đăng ký middleware aliases
         $middleware->alias([
             'admin' => App\Http\Middleware\AdminMiddleware::class,
-            'staff' => App\Http\Middleware\StaffMiddleware::class,
             'student' => App\Http\Middleware\StudentMiddleware::class,
             'instructor' => App\Http\Middleware\InstructorMiddleware::class,
         ]);

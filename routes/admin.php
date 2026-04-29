@@ -26,8 +26,6 @@ Route::middleware(['web', 'auth', 'admin'])->group(function () {
         ->group(function () {
             Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
             Route::get('/alerts-count', [AdminController::class, 'alertsCount'])->name('alerts.count');
-            Route::get('/blockchain', [AdminController::class, 'blockchainDashboard'])->name('blockchain.dashboard');
-            Route::post('/blockchain/sync', [AdminController::class, 'syncBlockchain'])->name('blockchain.sync');
 
             Route::prefix('users')->as('users.')->group(function () {
                 Route::get('/', [UserController::class, 'index'])->name('index');

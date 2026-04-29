@@ -9,10 +9,7 @@ use App\Models\CourseEnrollment;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Notifications\RefundIssuedNotification;
-use App\Services\ApplicationLifecycleBlockchainService;
-use App\Services\BlockchainAuditService;
 use App\Services\EnrollmentQueueService;
-use App\Services\FireflyService;
 use App\Services\PortalNotificationService;
 use App\Services\PromotionService;
 use Illuminate\Http\Request;
@@ -22,12 +19,9 @@ use Illuminate\Support\Facades\Schema;
 class EnrollmentController extends Controller
 {
     public function __construct(
-        protected FireflyService $firefly,
-        protected BlockchainAuditService $blockchainAudit,
         protected EnrollmentQueueService $enrollmentQueue,
         protected PortalNotificationService $notificationService,
         protected PromotionService $promotionService,
-        protected ApplicationLifecycleBlockchainService $lifecycleBlockchain,
     ) {
     }
 
@@ -101,9 +95,7 @@ class EnrollmentController extends Controller
             $waitlistEnrollment = $this->enrollmentQueue->joinWaitlist(
                 Auth::id(),
                 $class,
-                'waitlist_joined',
-                $this->lifecycleContext($request),
-                ['source' => 'student_portal', 'trigger' => 'course_checkout']
+                'waitlist_joined'
             );
             $this->notificationService->notifyWaitlistJoined($waitlistEnrollment);
             $position = $waitlistEnrollment->waitlist_position;
@@ -135,14 +127,6 @@ class EnrollmentController extends Controller
                     ],
                 ]);
                 $enrollment->approve();
-                $this->syncEnrollmentCreationLifecycle($enrollment, $request, [
-                    'source' => 'student_portal',
-                    'trigger' => 'series_unlock',
-                ]);
-                $this->syncEnrollmentApprovedLifecycle($enrollment, $request, [
-                    'source' => 'student_portal',
-                    'trigger' => 'series_unlock',
-                ]);
                 $this->sendRegistrationSuccessMail($enrollment);
 
                 return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
@@ -206,17 +190,6 @@ class EnrollmentController extends Controller
             $this->buildPricingAttributes($pricing)
         );
 
-        $this->syncEnrollmentCreationLifecycle($enrollment, $request, [
-            'source' => 'student_portal',
-            'trigger' => 'course_checkout',
-        ]);
-        if ($paymentRecord) {
-            $this->syncPaymentLifecycle($paymentRecord, $enrollment, $request, [
-                'source' => 'student_portal',
-                'trigger' => 'course_checkout',
-            ]);
-        }
-
         if ($requiresManualApproval) {
             $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
@@ -226,10 +199,6 @@ class EnrollmentController extends Controller
         }
 
         $enrollment->approve();
-        $this->syncEnrollmentApprovedLifecycle($enrollment, $request, [
-            'source' => 'student_portal',
-            'trigger' => 'course_checkout',
-        ]);
         $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
         return back()->with('success', $walletPaid
@@ -314,22 +283,6 @@ class EnrollmentController extends Controller
             ])
         );
 
-        $this->syncEnrollmentCreationLifecycle($enrollment, $request, [
-            'source' => 'seat_hold_confirmation',
-            'trigger' => 'seat_hold_confirmation',
-        ]);
-        $this->lifecycleBlockchain->seatHoldConfirmed($enrollment, $this->lifecycleContext($request), [
-            'source' => 'seat_hold_confirmation',
-            'trigger' => 'seat_hold_confirmation',
-            'wallet_paid' => $walletPaid,
-        ]);
-        if ($paymentRecord) {
-            $this->syncPaymentLifecycle($paymentRecord, $enrollment, $request, [
-                'source' => 'seat_hold_confirmation',
-                'trigger' => 'seat_hold_confirmation',
-            ]);
-        }
-
         if ($requiresManualApproval) {
             $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
@@ -337,10 +290,6 @@ class EnrollmentController extends Controller
         }
 
         $enrollment->approve();
-        $this->syncEnrollmentApprovedLifecycle($enrollment, $request, [
-            'source' => 'seat_hold_confirmation',
-            'trigger' => 'seat_hold_confirmation',
-        ]);
         $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
         return back()->with('success', 'Bạn đã xác nhận giữ chỗ thành công và có thể bắt đầu học ngay.');
@@ -393,54 +342,6 @@ class EnrollmentController extends Controller
                             'refund_tx_id' => $refundTx->id,
                             'amount' => $refundTx->amount,
                         ], $refundTx->reference ?? null);
-
-                        $refundReference = $refundTx->reference ?: ('REFUND-' . $refundTx->id);
-                        $platformIdentity = $this->firefly->getPlatformIdentity();
-                        $refundFireflyResult = $this->firefly->transfer(
-                            $platformIdentity,
-                            $wallet->firefly_identity,
-                            (float) $refundTx->amount,
-                            [
-                                'reference' => $refundReference,
-                                'data' => [
-                                    'type' => 'course_refund',
-                                    'refund_transaction_id' => $refundTx->id,
-                                    'purchase_transaction_id' => $purchase->id,
-                                    'course_id' => $course->id,
-                                    'class_id' => $class->id,
-                                    'user_id' => Auth::id(),
-                                    'amount' => (float) $refundTx->amount,
-                                ],
-                            ]
-                        );
-
-                        $refundAudit = $this->blockchainAudit->record('wallet.refund_issued', [
-                            'refund_transaction_id' => $refundTx->id,
-                            'purchase_transaction_id' => $purchase->id,
-                            'course_id' => $course->id,
-                            'course_title' => $course->title,
-                            'class_id' => $class->id,
-                            'class_name' => $class->name,
-                            'user_id' => Auth::id(),
-                            'amount' => (float) $refundTx->amount,
-                            'wallet_firefly_identity' => $wallet->firefly_identity,
-                            'platform_identity' => $platformIdentity,
-                            'firefly_tx_id' => $refundFireflyResult['tx_id'] ?? null,
-                            'firefly_message_id' => $refundFireflyResult['message_id'] ?? null,
-                        ], [
-                            'reference' => $refundReference,
-                            'user_id' => Auth::id(),
-                            'username' => Auth::user()?->username,
-                            'role' => Auth::user()?->role,
-                            'ip' => request()->ip(),
-                        ]);
-
-                        $refundTx->update([
-                            'metadata' => array_merge($refundTx->metadata ?? [], [
-                                'firefly' => $refundFireflyResult,
-                                'blockchain_audit' => $refundAudit,
-                            ]),
-                        ]);
                     }
 
                     try {
@@ -455,12 +356,6 @@ class EnrollmentController extends Controller
         }
 
         $enrollment->cancel($hadSeatHold ? 'student_cancelled_held_seat' : ($wasWaitlisted ? 'student_left_waitlist' : 'student_cancelled'));
-        $this->lifecycleBlockchain->cancelled($enrollment->fresh(['user', 'courseClass.course']), $this->lifecycleContext($request), [
-            'source' => 'student_portal',
-            'trigger' => 'unenroll',
-            'was_waitlisted' => $wasWaitlisted,
-            'had_seat_hold' => $hadSeatHold,
-        ]);
 
         if ($class && $course->isOffline()) {
             $this->enrollmentQueue->syncClassQueue($class);
@@ -557,10 +452,6 @@ class EnrollmentController extends Controller
         ]);
 
         $enrollment->refresh()->loadMissing(['user', 'courseClass.course']);
-        $this->lifecycleBlockchain->classChanged($enrollment, $currentClass, $newClass, $this->lifecycleContext($request), [
-            'source' => 'student_portal',
-            'trigger' => 'change_class',
-        ]);
 
         if (Schema::hasTable('class_change_logs')) {
             ClassChangeLog::create([
@@ -617,59 +508,9 @@ class EnrollmentController extends Controller
         }
 
         $purchaseReference = $transaction->reference ?: ('COURSE-' . $course->id . '-' . Auth::id() . '-' . now()->format('YmdHis'));
-        $fireflyResult = null;
-        $auditResponse = null;
-
-        try {
-            $platformIdentity = $this->firefly->getPlatformIdentity();
-            $fireflyResult = $this->firefly->transfer(
-                $wallet->firefly_identity,
-                $platformIdentity,
-                $payableAmount,
-                [
-                    'reference' => $purchaseReference,
-                    'data' => [
-                        'type' => 'course_purchase',
-                        'wallet_transaction_id' => $transaction->id,
-                        'course_id' => $course->id,
-                        'class_id' => $class->id,
-                        'user_id' => Auth::id(),
-                        'amount' => $payableAmount,
-                        'discount_amount' => $pricing['discount_amount'] ?? 0,
-                    ],
-                ]
-            );
-
-            $auditResponse = $this->blockchainAudit->record('wallet.course_purchase', [
-                'wallet_transaction_id' => $transaction->id,
-                'course_id' => $course->id,
-                'course_title' => $course->title,
-                'class_id' => $class->id,
-                'class_name' => $class->name,
-                'user_id' => Auth::id(),
-                'amount' => $payableAmount,
-                'discount_amount' => $pricing['discount_amount'] ?? 0,
-                'wallet_firefly_identity' => $wallet->firefly_identity,
-                'platform_identity' => $platformIdentity,
-                'firefly_tx_id' => $fireflyResult['tx_id'] ?? null,
-                'firefly_message_id' => $fireflyResult['message_id'] ?? null,
-            ], [
-                'reference' => $purchaseReference,
-                'user_id' => Auth::id(),
-                'username' => Auth::user()?->username,
-                'role' => Auth::user()?->role,
-                'ip' => $request->ip(),
-            ]);
-        } catch (\Throwable $exception) {
-            report($exception);
-        }
 
         $transaction->update([
             'reference' => $purchaseReference,
-            'metadata' => array_merge($transaction->metadata ?? [], array_filter([
-                'firefly' => $fireflyResult,
-                'blockchain_audit' => $auditResponse,
-            ])),
         ]);
 
 $payment = Payment::create([
@@ -801,42 +642,4 @@ $payment = Payment::create([
     }
 
 
-    private function lifecycleContext(Request $request): array
-    {
-        return [
-            'user_id' => Auth::id(),
-            'username' => Auth::user()?->username,
-            'role' => Auth::user()?->role,
-            'ip' => $request->ip(),
-        ];
-    }
-
-    private function syncEnrollmentCreationLifecycle(CourseEnrollment $enrollment, Request $request, array $extra = []): void
-    {
-        try {
-            $context = $this->lifecycleContext($request);
-            $this->lifecycleBlockchain->applicationCreated($enrollment, $context, $extra);
-            $this->lifecycleBlockchain->classAssigned($enrollment, $enrollment->courseClass, $context, $extra);
-        } catch (\Throwable $exception) {
-            report($exception);
-        }
-    }
-
-    private function syncEnrollmentApprovedLifecycle(CourseEnrollment $enrollment, Request $request, array $extra = []): void
-    {
-        try {
-            $this->lifecycleBlockchain->approved($enrollment, $this->lifecycleContext($request), $extra);
-        } catch (\Throwable $exception) {
-            report($exception);
-        }
-    }
-
-    private function syncPaymentLifecycle(Payment $payment, CourseEnrollment $enrollment, Request $request, array $extra = []): void
-    {
-        try {
-            $this->lifecycleBlockchain->paymentRecorded($payment->fresh(['user', 'courseClass.course']), $enrollment, $this->lifecycleContext($request), $extra);
-        } catch (\Throwable $exception) {
-            report($exception);
-        }
-    }
 }

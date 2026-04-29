@@ -184,41 +184,6 @@
                 </article>
             </div>
         </section>
-
-
-        <section class="chart-card dashboard-admissions-card mb-4" id="blockchain-insights">
-    <div class="dashboard-card-header">
-        <div>
-            <h5 class="chart-title">Blockchain FireFly Consortium</h5>
-            <p class="dashboard-card-copy mb-0">Theo dõi nhanh số chứng chỉ, giao dịch và tình trạng quorum của mạng blockchain nhiều thành viên phục vụ xác thực công khai.</p>
-        </div>
-        <a href="{{ route('admin.blockchain.dashboard') }}" class="btn btn-sm btn-outline-primary">M? dashboard blockchain</a>
-    </div>
-
-    <div class="dashboard-admissions-grid">
-        <article class="dashboard-kpi-card is-blue">
-            <span class="dashboard-kpi-eyebrow">Thành viên online</span>
-            <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['healthy_members']) }}/{{ number_format(max($blockchainSummary['configured_members'], 1)) }}</strong>
-            <small class="dashboard-kpi-note">Số endpoint FireFly đang phản hồi thành công</small>
-        </article>
-        <article class="dashboard-kpi-card is-orange">
-            <span class="dashboard-kpi-eyebrow">Quorum yêu cầu</span>
-            <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['consortium_quorum']) }}</strong>
-            <small class="dashboard-kpi-note">Số proof tối thiểu để một bản ghi được xem là hợp lệ</small>
-        </article>
-        <article class="dashboard-kpi-card is-green">
-            <span class="dashboard-kpi-eyebrow">Chứng chỉ đạt quorum</span>
-            <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['anchored_certificates']) }}</strong>
-            <small class="dashboard-kpi-note">Chứng chỉ đã có đủ proof từ consortium</small>
-        </article>
-        <article class="dashboard-kpi-card is-slate">
-            <span class="dashboard-kpi-eyebrow">Giao dịch đạt quorum</span>
-            <strong class="dashboard-kpi-value">{{ number_format($blockchainSummary['anchored_transactions']) }}</strong>
-            <small class="dashboard-kpi-note">Topup hoặc chi tiêu ví đã được neo đa bản</small>
-        </article>
-    </div>
-</section>
-
         <div class="charts-section dashboard-main-grid mb-4">
             <section class="chart-card dashboard-trend-card" data-admin-trend-root>
                 <div class="dashboard-card-header dashboard-trend-header">
