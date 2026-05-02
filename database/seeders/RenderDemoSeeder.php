@@ -38,6 +38,9 @@ class RenderDemoSeeder extends Seeder
         $this->seedPosts($users);
         $this->seedSettings();
         $this->syncCourseMetrics($catalog['courses']);
+
+        // Mở rộng catalog cho website trông giống site thật.
+        $this->call(ExpandedCatalogSeeder::class);
     }
 
     private function seedUsers(): array
