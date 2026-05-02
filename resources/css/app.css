@@ -555,13 +555,22 @@ textarea.form-control {
     color: white !important;
 }
 
+/* Google logo is a 4-colour SVG; keep the button white so the brand
+   colours show through, with a subtle border like Google's own UI. */
 .social-links a.google {
-    background: linear-gradient(45deg, #4285F4 0%, #34A853 100%) !important; /* Google gradient */
-    color: white !important;
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .social-links a.google:hover {
-    background: linear-gradient(45deg, #3a7cda 0%, #2f8b48 100%) !important;
+    background: #f8f9fa !important;
+    border-color: rgba(0, 0, 0, 0.18) !important;
+}
+
+.social-links a.google svg {
+    width: 22px;
+    height: 22px;
 }
 
 .social-links a:hover {
