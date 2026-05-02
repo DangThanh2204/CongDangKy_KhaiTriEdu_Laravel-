@@ -7,6 +7,7 @@ use App\Models\AssistantMessage;
 use App\Services\GeminiChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AssistantController extends Controller
 {
@@ -41,64 +42,92 @@ class AssistantController extends Controller
             'page_title' => 'nullable|string|max:255',
         ]);
 
-        $conversation = $this->resolveConversation($request);
-        $conversation->messages()->create([
-            'role' => 'user',
-            'message' => $data['message'],
-            'meta' => [
-                'current_url' => $data['current_url'] ?? null,
-                'page_title' => $data['page_title'] ?? null,
-            ],
-        ]);
+        $meta = [
+            'current_url' => $data['current_url'] ?? null,
+            'page_title' => $data['page_title'] ?? null,
+        ];
 
-        $history = $conversation->messages()
-            ->latest('id')
-            ->take(12)
-            ->get()
-            ->sortBy('id')
-            ->values()
-            ->map(fn (AssistantMessage $message) => [
-                'role' => $message->role,
-                'message' => $message->message,
-            ])
-            ->all();
+        $conversation = null;
+        $history = [];
 
-        $result = $this->assistant->chat(
-            $data['message'],
-            null,
-            [
-                'current_url' => $data['current_url'] ?? null,
-                'page_title' => $data['page_title'] ?? null,
-                'history' => $history,
-            ]
-        );
+        try {
+            $conversation = $this->resolveConversation($request);
+            $conversation->messages()->create([
+                'role' => 'user',
+                'message' => $data['message'],
+                'meta' => $meta,
+            ]);
 
-        if (! ($result['success'] ?? false)) {
-            return response()->json([
-                'success' => false,
-                'message' => $result['message'] ?? 'Không thể trả lời lúc này.',
-            ], 500);
+            $history = $conversation->messages()
+                ->latest('id')
+                ->take(12)
+                ->get()
+                ->sortBy('id')
+                ->values()
+                ->map(fn (AssistantMessage $message) => [
+                    'role' => $message->role,
+                    'message' => $message->message,
+                ])
+                ->all();
+        } catch (\Throwable $exception) {
+            Log::error('AssistantController failed to persist user message.', [
+                'message' => $exception->getMessage(),
+                'class' => get_class($exception),
+            ]);
         }
 
-        $assistantMessage = $conversation->messages()->create([
-            'role' => 'assistant',
-            'message' => $result['message'],
-            'recommended_courses' => $result['recommended_courses'] ?? [],
-            'meta' => [
-                'source' => $result['source'] ?? 'assistant',
-                'status' => $result['status'] ?? null,
-            ],
-        ]);
+        try {
+            $result = $this->assistant->chat(
+                $data['message'],
+                null,
+                $meta + ['history' => $history],
+            );
+        } catch (\Throwable $exception) {
+            Log::error('AssistantController: assistant service threw.', [
+                'message' => $exception->getMessage(),
+                'class' => get_class($exception),
+            ]);
 
-        $conversation->forceFill([
-            'last_message_at' => now(),
-        ])->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Trợ lý đang gặp sự cố tạm thời. Bạn vui lòng thử lại sau ít phút hoặc liên hệ trung tâm để được hỗ trợ.',
+                'recommended_courses' => [],
+                'source' => 'fallback_exception',
+            ]);
+        }
+
+        $assistantText = $result['message'] ?? 'Mình chưa thể trả lời ngay lúc này, bạn thử lại sau ít phút nhé.';
+        $recommended = $result['recommended_courses'] ?? [];
+        $source = $result['source'] ?? 'assistant';
+
+        if ($conversation) {
+            try {
+                $conversation->messages()->create([
+                    'role' => 'assistant',
+                    'message' => $assistantText,
+                    'recommended_courses' => $recommended,
+                    'meta' => [
+                        'source' => $source,
+                        'status' => $result['status'] ?? null,
+                    ],
+                ]);
+
+                $conversation->forceFill([
+                    'last_message_at' => now(),
+                ])->save();
+            } catch (\Throwable $exception) {
+                Log::error('AssistantController failed to persist assistant message.', [
+                    'message' => $exception->getMessage(),
+                    'class' => get_class($exception),
+                ]);
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'message' => $assistantMessage->message,
-            'recommended_courses' => $assistantMessage->recommended_courses ?? [],
-            'source' => $assistantMessage->meta['source'] ?? 'assistant',
+            'message' => $assistantText,
+            'recommended_courses' => $recommended,
+            'source' => $source,
         ]);
     }
 
