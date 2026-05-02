@@ -1711,7 +1711,7 @@ html.dark, body.dark {
 }
 
 /* Responsive Design */
-@media (max-width: 1199.98px) {
+@media (max-width: 1399.98px) {
     .navbar-collapse {
         background: white;
         border-radius: 15px;
@@ -1719,12 +1719,12 @@ html.dark, body.dark {
         padding: 20px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     }
-    
+
     .navbar-nav .nav-link {
         margin: 5px 0;
         text-align: center;
     }
-    
+
     .navbar-nav.ms-3 {
         margin-left: 0 !important;
         border-top: 1px solid #eee;
@@ -1937,12 +1937,21 @@ html.dark .navbar-dropdown-menu .dropdown-item,
 body.dark .navbar-dropdown-menu .dropdown-item {
     color: #e2e8f0;
 }
-@media (max-width: 1199.98px) {
+@media (min-width: 1400px) {
+    .navbar-main-nav .nav-link {
+        padding: 0.5rem 0.78rem;
+    }
+}
+
+@media (max-width: 1399.98px) {
     .navbar-main-nav {
         gap: 0.15rem;
         width: 100%;
         flex-wrap: wrap;
         align-items: stretch !important;
+        max-height: calc(100vh - 88px);
+        overflow-y: auto;
+        padding-right: 0.25rem;
     }
 
     .navbar-main-nav > .nav-item {
@@ -1953,11 +1962,13 @@ body.dark .navbar-dropdown-menu .dropdown-item {
         width: 100%;
         justify-content: flex-start;
         margin: 0;
+        padding: 0.7rem 0.85rem;
     }
     .navbar-main-nav .navbar-ghost-link,
     .navbar-main-nav .navbar-primary-link,
     .navbar-main-nav .navbar-cta-link {
         justify-content: center;
+        margin-top: 0.35rem;
     }
     .navbar-dropdown-menu {
         position: static !important;
@@ -1971,6 +1982,10 @@ body.dark .navbar-dropdown-menu .dropdown-item {
         border: 0;
         box-shadow: none;
         background: transparent;
+    }
+    .notification-dropdown {
+        width: 100% !important;
+        max-width: 100%;
     }
 
     .navbar-dropdown-menu.show {
@@ -2118,7 +2133,7 @@ body.dark .navbar-dropdown-menu .dropdown-item {
     background: rgba(44, 90, 160, 0.06);
 }
 
-@media (max-width: 1199.98px) {
+@media (max-width: 1399.98px) {
     .notification-nav-item {
         margin: 0.5rem 0;
         width: 100%;

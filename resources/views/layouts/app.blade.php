@@ -38,7 +38,7 @@
     @endauth
 </head>
 <body class="@yield('page-class')">
-    <nav class="navbar navbar-expand-xl navbar-light fixed-top">
+    <nav class="navbar navbar-expand-xxl navbar-light fixed-top">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
                 @if($siteLogo)
@@ -49,12 +49,12 @@
                 {{ $siteName }}
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Mở menu">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
             <div class="collapse navbar-collapse portal-navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center navbar-main-nav">
+                <ul class="navbar-nav ms-auto align-items-xxl-center navbar-main-nav">
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">
                             <i class="fas fa-home me-1"></i>Trang chủ
@@ -469,7 +469,7 @@
                 return;
             }
 
-            const hoverableCollapsedNavbar = window.matchMedia('(max-width: 1199.98px) and (hover: hover) and (pointer: fine)');
+            const hoverableCollapsedNavbar = window.matchMedia('(max-width: 1399.98px) and (hover: hover) and (pointer: fine)');
             const collapse = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
             let closeTimer = null;
 
