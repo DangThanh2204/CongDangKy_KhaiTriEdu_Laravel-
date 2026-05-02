@@ -33,6 +33,37 @@ Route::prefix('/assistant')->name('assistant.')->middleware('throttle:40,1')->gr
     Route::get('/health', [AssistantController::class, 'health'])->name('health');
 });
 
+Route::get('/_diag/ping', function () {
+    return response()->json(['ok' => true, 'time' => now()->toIso8601String()]);
+});
+
+Route::get('/_diag/svc', function () {
+    $report = function (\Closure $probe) {
+        try {
+            return ['ok' => true, 'value' => $probe()];
+        } catch (\Throwable $e) {
+            return [
+                'ok' => false,
+                'class' => get_class($e),
+                'message' => $e->getMessage(),
+                'where' => basename($e->getFile()) . ':' . $e->getLine(),
+            ];
+        }
+    };
+
+    return response()->json([
+        'env' => app()->environment(),
+        'config' => $report(fn () => [
+            'has_api_key' => filled(config('services.gemini.api_key')),
+            'guides' => count((array) config('assistant_guides.guides', [])),
+        ]),
+        'setting' => $report(fn () => gettype(\App\Models\Setting::get('ai_assistant_prompt', ''))),
+        'course_count' => $report(fn () => \App\Models\Course::query()->count()),
+        'conversation_count' => $report(fn () => \App\Models\AssistantConversation::query()->count()),
+        'gemini_service' => $report(fn () => app(\App\Services\GeminiChatService::class)->isConfigured()),
+    ]);
+});
+
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
