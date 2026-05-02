@@ -25,8 +25,25 @@ class GeminiChatService
         $this->apiKey = config('services.gemini.api_key');
         $this->model = config('services.gemini.assistant_model', 'gemini-2.5-flash-lite');
         $this->extraContext = trim((string) config('services.gemini.assistant_context', ''));
-        $this->adminTrainingPrompt = trim((string) Setting::get('ai_assistant_prompt', ''));
-        $this->guides = (array) config('assistant_guides.guides', []);
+
+        try {
+            $this->adminTrainingPrompt = trim((string) Setting::get('ai_assistant_prompt', ''));
+        } catch (\Throwable $exception) {
+            $this->adminTrainingPrompt = '';
+            Log::warning('GeminiChatService: failed to load admin training prompt from Setting.', [
+                'message' => $exception->getMessage(),
+                'class' => get_class($exception),
+            ]);
+        }
+
+        try {
+            $this->guides = (array) config('assistant_guides.guides', []);
+        } catch (\Throwable $exception) {
+            $this->guides = [];
+            Log::warning('GeminiChatService: failed to load guides config.', [
+                'message' => $exception->getMessage(),
+            ]);
+        }
     }
 
     public function isConfigured(): bool
