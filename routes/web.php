@@ -37,6 +37,12 @@ Route::get('/_diag/ping', function () {
     return response()->json(['ok' => true, 'time' => now()->toIso8601String()]);
 });
 
+Route::get('/_diag/health', [AssistantController::class, 'health']);
+
+Route::get('/_diag/throttle', function () {
+    return response()->json(['ok' => true, 'note' => 'throttle middleware OK']);
+})->middleware('throttle:40,1');
+
 Route::get('/_diag/svc', function () {
     $report = function (\Closure $probe) {
         try {
