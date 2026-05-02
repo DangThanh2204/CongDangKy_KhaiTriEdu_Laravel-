@@ -7,6 +7,7 @@ use App\Models\CourseCategory;
 use App\Models\Setting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class GeminiChatService
@@ -40,6 +41,12 @@ class GeminiChatService
         $matchedGuides = $this->matchGuides($message, $meta);
 
         if (! $this->isConfigured()) {
+            Log::warning('GeminiChatService falling back: GEMINI_API_KEY is empty.', [
+                'env' => app()->environment(),
+                'has_base_url' => $this->baseUrl !== '',
+                'model' => $this->model,
+            ]);
+
             return [
                 'success' => true,
                 'message' => $this->buildFallbackReply($message, $recommendations, 'missing_api_key', $shouldRecommendCourses, $matchedGuides),
@@ -69,14 +76,35 @@ class GeminiChatService
             ],
         ];
 
-        $response = $this->client()->post(
-            sprintf('/models/%s:generateContent?key=%s', $this->model, $this->apiKey),
-            $payload
-        );
+        try {
+            $response = $this->client()->post(
+                sprintf('/models/%s:generateContent?key=%s', $this->model, $this->apiKey),
+                $payload
+            );
+        } catch (\Throwable $exception) {
+            Log::error('GeminiChatService HTTP call failed.', [
+                'model' => $this->model,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return [
+                'success' => true,
+                'message' => $this->buildFallbackReply($message, $recommendations, 'api_error', $shouldRecommendCourses, $matchedGuides),
+                'response_id' => null,
+                'recommended_courses' => $recommendations,
+                'source' => 'fallback_local',
+            ];
+        }
 
         if (! $response->successful()) {
             $details = $response->json() ?: $response->body();
             $status = $response->status();
+
+            Log::warning('GeminiChatService API error.', [
+                'model' => $this->model,
+                'status' => $status,
+                'details' => is_array($details) ? array_slice($details, 0, 5, true) : Str::limit((string) $details, 500),
+            ]);
 
             return [
                 'success' => true,
