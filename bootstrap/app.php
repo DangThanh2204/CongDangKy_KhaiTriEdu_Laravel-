@@ -18,6 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
+        // Trợ lý chat dùng AJAX và đã có throttle 40 request/phút.
+        // Bỏ CSRF cho route này để tránh 419 khi session file bị xoá
+        // trên môi trường có filesystem ephemeral (vd: Render free tier).
+        $middleware->validateCsrfTokens(except: [
+            'assistant/chat',
+        ]);
+
         // Đăng ký middleware aliases
         $middleware->alias([
             'admin' => App\Http\Middleware\AdminMiddleware::class,
