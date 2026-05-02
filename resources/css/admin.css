@@ -746,6 +746,49 @@ body.dark .sidebar-subnav,
   box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
 }
 
+/* Submenu items kế thừa color: var(--primary-color) (xanh đậm) — đè
+   để chữ sáng trên nền tối, hover làm sáng thêm; active giữ gradient. */
+body.dark .sidebar-subnav .nav-link,
+[data-bs-theme="dark"] .sidebar-subnav .nav-link {
+  color: rgba(226, 232, 240, 0.85) !important;
+  border-color: transparent !important;
+}
+
+body.dark .sidebar-subnav .nav-link i,
+[data-bs-theme="dark"] .sidebar-subnav .nav-link i {
+  color: rgba(226, 232, 240, 0.7);
+}
+
+body.dark .sidebar-subnav .nav-link:hover,
+[data-bs-theme="dark"] .sidebar-subnav .nav-link:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+}
+
+body.dark .sidebar-subnav .nav-link:hover i,
+[data-bs-theme="dark"] .sidebar-subnav .nav-link:hover i {
+  color: #ffffff;
+}
+
+body.dark .sidebar-subnav .nav-link.active,
+[data-bs-theme="dark"] .sidebar-subnav .nav-link.active {
+  color: #ffffff !important;
+}
+
+/* Group header (Người dùng, Đào tạo, ...) — cùng vấn đề. */
+body.dark .sidebar-group-header,
+[data-bs-theme="dark"] .sidebar-group-header {
+  color: rgba(226, 232, 240, 0.92) !important;
+}
+
+body.dark .sidebar-group-header:hover,
+[data-bs-theme="dark"] .sidebar-group-header:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #ffffff !important;
+}
+
 body.dark .sidebar-footer,
 [data-bs-theme="dark"] .sidebar-footer {
   background: transparent !important;
