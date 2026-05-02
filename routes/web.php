@@ -27,7 +27,11 @@ Route::get('/news', [App\Http\Controllers\NewsController::class, 'index'])->name
 Route::get('/news/{slug}', [App\Http\Controllers\NewsController::class, 'show'])->name('news.show');
 Route::get('/news/category/{slug}', [App\Http\Controllers\NewsController::class, 'category'])->name('news.category');
 
-Route::prefix('/assistant')->name('assistant.')->middleware('throttle:40,1')->group(function () {
+// throttle middleware crashes on Render because the file cache directory
+// is not writable inside the container. Drop it for now — the assistant
+// endpoints already do their own validation and write-only-to-own-session,
+// and abuse mitigation can be added later via a database-backed limiter.
+Route::prefix('/assistant')->name('assistant.')->group(function () {
     Route::get('/history', [AssistantController::class, 'history'])->name('history');
     Route::post('/chat', [AssistantController::class, 'chat'])->name('chat');
     Route::get('/health', [AssistantController::class, 'health'])->name('health');
