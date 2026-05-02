@@ -30,6 +30,7 @@ Route::get('/news/category/{slug}', [App\Http\Controllers\NewsController::class,
 Route::prefix('/assistant')->name('assistant.')->middleware('throttle:40,1')->group(function () {
     Route::get('/history', [AssistantController::class, 'history'])->name('history');
     Route::post('/chat', [AssistantController::class, 'chat'])->name('chat');
+    Route::get('/health', [AssistantController::class, 'health'])->name('health');
 });
 
 Route::middleware('guest')->group(function () {
