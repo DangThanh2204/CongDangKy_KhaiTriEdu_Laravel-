@@ -38,5 +38,33 @@ return Application::configure(basePath: dirname(__DIR__))
         // ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Render free tier wipes session files on every container restart, which
+        // invalidates the CSRF token already on the page. Without this handler
+        // the user sees a raw 419 "Page Expired" — particularly on the logout
+        // POST since that's the form most likely to be open across a deploy.
+        // Redirect them to login with a friendly message instead.
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Phiên làm việc đã hết hạn. Vui lòng tải lại trang.',
+                ], 419);
+            }
+
+            // If the user is already trying to logout, just send them home as if
+            // it succeeded — the session is gone anyway.
+            if ($request->is('logout') || $request->is('logout/*')) {
+                try {
+                    auth()->logout();
+                    $request->session()->invalidate();
+                } catch (\Throwable $t) {
+                    // session may already be unusable; ignore.
+                }
+
+                return redirect()->route('home');
+            }
+
+            return redirect()
+                ->route('login')
+                ->with('warning', 'Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.');
+        });
     })->create();
