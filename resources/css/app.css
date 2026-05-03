@@ -2237,15 +2237,15 @@ html.dark .stat-tile-label {
     color: #94a3b8;
 }
 
-/* ===== Student dashboard hero ===== */
-.page-student-dashboard .student-hero-card {
+/* ===== Student gradient hero card (shared by dashboard, application-status, profile) ===== */
+.student-hero-card {
     background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
     border-radius: 16px;
     overflow: hidden;
     position: relative;
 }
 
-.page-student-dashboard .student-hero-card::before {
+.student-hero-card::before {
     content: '';
     position: absolute;
     top: -40px;
@@ -2256,7 +2256,7 @@ html.dark .stat-tile-label {
     pointer-events: none;
 }
 
-.page-student-dashboard .student-hero-card .card-body {
+.student-hero-card .card-body {
     position: relative;
     z-index: 1;
 }
@@ -2313,6 +2313,45 @@ html.dark .page-student-dashboard .student-wallet-card {
 
 .min-w-0 {
     min-width: 0;
+}
+
+/* ===== Profile show page ===== */
+.profile-avatar-wrap {
+    flex-shrink: 0;
+}
+
+.profile-avatar-image,
+.profile-avatar-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+}
+
+.profile-avatar-image {
+    object-fit: cover;
+}
+
+.profile-avatar-placeholder {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    backdrop-filter: blur(8px);
+}
+
+.profile-info-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
 }
 
 /* ===== Wallet balance hero card ===== */
