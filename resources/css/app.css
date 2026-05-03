@@ -2166,3 +2166,151 @@ body.dark .navbar-dropdown-menu .dropdown-item {
         width: 100%;
     }
 }
+
+/* ===== Shared stat tile (student & instructor dashboards) ===== */
+.stat-tile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    height: 100%;
+}
+
+.stat-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.stat-tile-icon {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: #fff;
+}
+
+.stat-tile-body {
+    min-width: 0;
+}
+
+.stat-tile-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #0f172a;
+}
+
+.stat-tile-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.stat-tile-blue .stat-tile-icon { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.stat-tile-amber .stat-tile-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.stat-tile-green .stat-tile-icon { background: linear-gradient(135deg, #10b981, #059669); }
+.stat-tile-purple .stat-tile-icon { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+.stat-tile-red .stat-tile-icon { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+[data-bs-theme="dark"] .stat-tile,
+html.dark .stat-tile {
+    background: #0b0b0b;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-bs-theme="dark"] .stat-tile-value,
+html.dark .stat-tile-value {
+    color: #e6eef6;
+}
+
+[data-bs-theme="dark"] .stat-tile-label,
+html.dark .stat-tile-label {
+    color: #94a3b8;
+}
+
+/* ===== Student dashboard hero ===== */
+.page-student-dashboard .student-hero-card {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #06b6d4 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+}
+
+.page-student-dashboard .student-hero-card::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 280px;
+    height: 280px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.page-student-dashboard .student-hero-card .card-body {
+    position: relative;
+    z-index: 1;
+}
+
+.page-student-dashboard .student-wallet-card {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+[data-bs-theme="dark"] .page-student-dashboard .student-wallet-card,
+html.dark .page-student-dashboard .student-wallet-card {
+    background: linear-gradient(135deg, #0c1f3a 0%, #0a2540 100%);
+}
+
+/* Compact leaderboard */
+.page-student-dashboard .student-leaderboard-list-compact .list-group-item {
+    border-left: 0;
+    border-right: 0;
+    padding: 0.85rem 1rem;
+}
+
+.page-student-dashboard .student-leaderboard-list-compact .list-group-item.is-current {
+    background: rgba(59, 130, 246, 0.06);
+    border-left: 3px solid #3b82f6;
+}
+
+.page-student-dashboard .leaderboard-rank {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+    background: rgba(15, 23, 42, 0.06);
+    color: #475569;
+}
+
+.page-student-dashboard .leaderboard-rank.rank-1 {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #fff;
+}
+
+.page-student-dashboard .leaderboard-rank.rank-2 {
+    background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+    color: #fff;
+}
+
+.page-student-dashboard .leaderboard-rank.rank-3 {
+    background: linear-gradient(135deg, #fb923c, #ea580c);
+    color: #fff;
+}
+
+.min-w-0 {
+    min-width: 0;
+}
