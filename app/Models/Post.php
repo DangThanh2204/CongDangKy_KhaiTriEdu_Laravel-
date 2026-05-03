@@ -78,6 +78,11 @@ class Post extends Model
         if ($this->featured_image) {
             return asset('storage/' . $this->featured_image);
         }
+
+        if ($this->slug && file_exists(public_path("images/news/{$this->slug}.jpg"))) {
+            return asset("images/news/{$this->slug}.jpg");
+        }
+
         return asset('images/default-news.jpg');
     }
 

@@ -214,6 +214,10 @@ class Course extends Model
 
     private function resolveCategoryImagePath(): ?string
     {
+        if ($this->slug && file_exists(public_path("images/courses/{$this->slug}.jpg"))) {
+            return "images/courses/{$this->slug}.jpg";
+        }
+
         $categorySlug = $this->category?->slug;
         if (! $categorySlug) {
             return null;
