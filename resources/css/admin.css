@@ -154,18 +154,18 @@ html.dark, [data-bs-theme="dark"] {
   position: absolute;
   left: 100%;
   top: 0;
-  width: 240px;
+  width: 220px;
   background: var(--card-bg, white);
   border: 1px solid var(--border-color, #e9ecef);
-  border-radius: 14px;
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(15, 23, 42, 0.08);
-  padding: 0.5rem 0;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 0.75rem 0;
   opacity: 0;
   visibility: hidden;
-  transform: translateX(-8px);
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+  transform: translateX(-10px);
+  transition: all 0.25s ease;
   z-index: 1400;
-  margin-left: 4px;
+  margin-left: 8px;
 }
 
 .sidebar-subnav.open {
@@ -174,18 +174,15 @@ html.dark, [data-bs-theme="dark"] {
   transform: translateX(0);
 }
 
-/* Group title header on top of subnav — always shown so user knows which group */
-.sidebar-subnav::before {
+.sidebar-collapsed .sidebar-subnav.open::before {
   content: attr(data-group-title);
   display: block;
-  padding: 0.85rem 1rem 0.6rem;
-  margin: 0;
+  padding: 0.75rem 1.25rem 0.5rem;
+  margin: 0 0.5rem 0.5rem;
   border-bottom: 1px solid var(--border-color, #e9ecef);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--primary-color);
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 0.9rem;
 }
 
 .sidebar-subnav .nav-item {
@@ -1070,6 +1067,11 @@ body.dark .admin-alert-item strong,
   pointer-events: auto;
 }
 
+.admin-layout.sidebar-collapsed .sidebar-subnav.open::before {
+  display: none;
+  content: none;
+}
+
 .admin-layout.sidebar-collapsed .sidebar-subnav .nav-text {
   display: inline;
 }
@@ -1077,14 +1079,12 @@ body.dark .admin-alert-item strong,
 .admin-layout.sidebar-collapsed .sidebar-subnav .nav-link {
   justify-content: flex-start;
   text-align: left;
-  padding: 0.6rem 1rem;
+  padding: 0.75rem 1.25rem;
 }
 
 .admin-layout.sidebar-collapsed .sidebar-subnav .nav-link i {
-  margin-right: 0.65rem;
-  font-size: 0.95rem;
-  width: 18px;
-  text-align: center;
+  margin-right: 0.75rem;
+  font-size: 1rem;
 }
 
 .sidebar-subnav.fixed {
@@ -1092,32 +1092,20 @@ body.dark .admin-alert-item strong,
   left: var(--sidebar-subnav-left, 96px);
   top: var(--sidebar-subnav-top, 100px);
   margin-left: 0;
-  width: 240px;
-  max-width: min(260px, calc(100vw - 2rem));
+  width: 220px;
+  max-width: min(220px, calc(100vw - 2rem));
   max-height: var(--sidebar-subnav-max-height, min(70vh, 420px));
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-/* Pseudo-bridge so cursor can travel from sidebar item to subnav without
-   crossing dead space (was previously losing hover halfway across the gap). */
-.sidebar-subnav.fixed::after {
-  content: '';
-  position: fixed;
-  top: var(--sidebar-subnav-top, 100px);
-  left: calc(var(--sidebar-subnav-left, 96px) - 12px);
-  width: 12px;
-  height: var(--sidebar-subnav-max-height, 240px);
-  background: transparent;
-}
-
-/* Dark mode: keep subnav legible */
-[data-bs-theme="dark"] .sidebar-subnav,
-html.dark .sidebar-subnav,
-body.dark .sidebar-subnav {
-  background: #0b0b0b;
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+/* Hide the broken native ::after tooltip — replaced by Bootstrap tooltip
+   (which uses position:fixed + Popper, escaping the sidebar's overflow:hidden
+   that was clipping the right edge of every tooltip). */
+.admin-layout.sidebar-collapsed .nav-link::after,
+.admin-layout.sidebar-collapsed .sidebar-btn::after {
+  content: none !important;
+  display: none !important;
 }
 
 [data-bs-theme="dark"] .sidebar-subnav::before,

@@ -448,8 +448,6 @@
                     return;
                 }
 
-                let hideTimer = null;
-
                 const positionSubnav = () => {
                     subnav.style.removeProperty('--sidebar-subnav-top');
                     subnav.style.removeProperty('--sidebar-subnav-left');
@@ -458,13 +456,11 @@
                     const sidebar = document.querySelector('.admin-sidebar');
                     const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : null;
                     const headerRect = header.getBoundingClientRect();
-                    const estimatedWidth = Math.max(subnav.offsetWidth || 0, 240);
+                    const estimatedWidth = Math.max(subnav.offsetWidth || 0, 250);
                     const estimatedHeight = Math.min(Math.max(subnav.scrollHeight || 0, 240), 420);
-                    const preferredLeft = (sidebarRect ? sidebarRect.right : headerRect.right) + 12;
+                    const preferredLeft = (sidebarRect ? sidebarRect.right : headerRect.right) + 18;
                     const left = Math.min(preferredLeft, window.innerWidth - estimatedWidth - 16);
-                    // Keep top below the topbar (80px) and within viewport bounds.
-                    const minTop = 92;
-                    const top = Math.min(Math.max(minTop, headerRect.top), window.innerHeight - estimatedHeight - 16);
+                    const top = Math.min(Math.max(16, headerRect.top), window.innerHeight - estimatedHeight - 16);
                     const maxHeight = Math.max(220, window.innerHeight - top - 16);
 
                     subnav.classList.add('fixed');
@@ -473,43 +469,64 @@
                     subnav.style.setProperty('--sidebar-subnav-max-height', `${maxHeight}px`);
                 };
 
-                const showSubnav = () => {
-                    if (hideTimer) {
-                        clearTimeout(hideTimer);
-                        hideTimer = null;
-                    }
+                group.addEventListener('mouseenter', () => {
                     header.classList.add('open');
                     positionSubnav();
                     subnav.classList.add('open');
-                };
+                });
 
-                const hideSubnav = () => {
-                    hideTimer = setTimeout(() => {
-                        const isActiveGroup = subnav.querySelector('.nav-link.active');
-                        subnav.classList.remove('open');
-                        if (!isActiveGroup) {
-                            header.classList.remove('open');
-                        }
-                        hideTimer = null;
-                    }, 180);
-                };
+                group.addEventListener('mouseleave', () => {
+                    const isActiveGroup = subnav.querySelector('.nav-link.active');
+                    subnav.classList.remove('open');
 
-                group.addEventListener('mouseenter', showSubnav);
-                group.addEventListener('mouseleave', hideSubnav);
-                // Keep open while pointer is inside the subnav itself.
-                subnav.addEventListener('mouseenter', () => {
-                    if (hideTimer) {
-                        clearTimeout(hideTimer);
-                        hideTimer = null;
+                    if (!isActiveGroup) {
+                        header.classList.remove('open');
                     }
                 });
-                subnav.addEventListener('mouseleave', hideSubnav);
 
                 window.addEventListener('resize', () => {
                     if (subnav.classList.contains('open')) {
                         positionSubnav();
                     }
                 });
+            });
+
+            // Bootstrap tooltips for individual icons (Dashboard, Home, Logout, etc.)
+            // when the sidebar is collapsed. Bootstrap uses position:fixed via Popper,
+            // so the tooltip escapes the sidebar's overflow:hidden and stays fully
+            // visible on the right side. We toggle init/dispose on collapse changes.
+            function refreshSidebarTooltips() {
+                if (!window.bootstrap || !bootstrap.Tooltip) return;
+
+                const collapsed = document.body.classList.contains('sidebar-collapsed');
+                const targets = document.querySelectorAll(
+                    '.admin-sidebar .nav-item > .nav-link[title], .admin-sidebar .sidebar-btn[title]'
+                );
+
+                targets.forEach((el) => {
+                    const existing = bootstrap.Tooltip.getInstance(el);
+                    if (collapsed) {
+                        if (!existing) {
+                            bootstrap.Tooltip.getOrCreateInstance(el, {
+                                placement: 'right',
+                                trigger: 'hover',
+                                delay: { show: 80, hide: 50 },
+                                container: 'body',
+                            });
+                        }
+                    } else if (existing) {
+                        existing.dispose();
+                    }
+                });
+            }
+
+            refreshSidebarTooltips();
+            // Also re-evaluate when the toggle button is clicked.
+            sidebarToggle?.addEventListener('click', () => {
+                setTimeout(refreshSidebarTooltips, 50);
+            });
+            window.addEventListener('resize', () => {
+                setTimeout(refreshSidebarTooltips, 100);
             });
         });
     </script>
