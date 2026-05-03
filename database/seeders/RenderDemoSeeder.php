@@ -46,27 +46,27 @@ class RenderDemoSeeder extends Seeder
     private function seedUsers(): array
     {
         return [
-            'admin' => $this->upsertUser('admin@khaitri.edu.vn', 'admin', 'Khai Tri Admin', 'admin'),
-            'instructor' => $this->upsertUser('giangvien@khaitri.edu.vn', 'giangvien', 'Nguyen Minh An', 'instructor'),
-            'student_one' => $this->upsertUser('hocvien1@khaitri.edu.vn', 'hocvien1', 'Tran Gia Han', 'student'),
-            'student_two' => $this->upsertUser('hocvien2@khaitri.edu.vn', 'hocvien2', 'Le Quoc Bao', 'student'),
-            'student_three' => $this->upsertUser('hocvien3@khaitri.edu.vn', 'hocvien3', 'Pham Khanh Linh', 'student'),
+            'admin' => $this->upsertUser('admin@khaitri.edu.vn', 'admin', 'Khai Trí Admin', 'admin'),
+            'instructor' => $this->upsertUser('giangvien@khaitri.edu.vn', 'giangvien', 'Nguyễn Minh An', 'instructor'),
+            'student_one' => $this->upsertUser('hocvien1@khaitri.edu.vn', 'hocvien1', 'Trần Gia Hân', 'student'),
+            'student_two' => $this->upsertUser('hocvien2@khaitri.edu.vn', 'hocvien2', 'Lê Quốc Bảo', 'student'),
+            'student_three' => $this->upsertUser('hocvien3@khaitri.edu.vn', 'hocvien3', 'Phạm Khánh Linh', 'student'),
         ];
     }
 
     private function seedCatalog(array $users): array
     {
         $categories = [
-            'it' => $this->upsertCategory('cong-nghe-thong-tin', 'Cong nghe thong tin', 'Lap trinh va chuyen doi so', '#1d4ed8', 1),
-            'marketing' => $this->upsertCategory('marketing-kinh-doanh', 'Marketing - Kinh doanh', 'Noi dung, tang truong va ban hang hien dai', '#f97316', 2),
-            'english' => $this->upsertCategory('tieng-anh', 'Tieng Anh', 'Ngoai ngu phuc vu hoc tap va cong viec', '#0f766e', 3),
+            'it' => $this->upsertCategory('cong-nghe-thong-tin', 'Công nghệ thông tin', 'Lập trình và chuyển đổi số', '#1d4ed8', 1),
+            'marketing' => $this->upsertCategory('marketing-kinh-doanh', 'Marketing - Kinh doanh', 'Nội dung, tăng trưởng và bán hàng hiện đại', '#f97316', 2),
+            'english' => $this->upsertCategory('tieng-anh', 'Tiếng Anh', 'Ngoại ngữ phục vụ học tập và công việc', '#0f766e', 3),
         ];
 
         $courses = [
             'fullstack' => $this->upsertCourse('lap-trinh-web-fullstack-can-ban', [
-                'title' => 'Lap trinh Web Fullstack can ban',
-                'description' => 'Lo trinh tu HTML/CSS den JavaScript va Laravel.',
-                'short_description' => 'Hoc online theo module, co video, quiz va bai tap.',
+                'title' => 'Lập trình Web Fullstack căn bản',
+                'description' => 'Lộ trình từ HTML/CSS đến JavaScript và Laravel.',
+                'short_description' => 'Học online theo module, có video, quiz và bài tập.',
                 'category_id' => $categories['it']->id,
                 'instructor_id' => $users['instructor']->id,
                 'price' => 2490000,
@@ -76,14 +76,14 @@ class RenderDemoSeeder extends Seeder
                 'is_featured' => true,
                 'is_popular' => true,
                 'learning_type' => 'online',
-                'announcement' => 'Dang ky xong co the vao hoc ngay tren he thong.',
+                'announcement' => 'Đăng ký xong có thể vào học ngay trên hệ thống.',
                 'students_count' => 0,
                 'created_at' => now()->subDays(24),
             ]),
             'marketing' => $this->upsertCourse('digital-marketing-thuc-chien-4-tuan', [
-                'title' => 'Digital Marketing thuc chien 4 tuan',
-                'description' => 'Tu duy noi dung, quang cao va phan tich hieu qua chien dich.',
-                'short_description' => 'Khoa online ngan han cho nguoi moi bat dau.',
+                'title' => 'Digital Marketing thực chiến 4 tuần',
+                'description' => 'Tư duy nội dung, quảng cáo và phân tích hiệu quả chiến dịch.',
+                'short_description' => 'Khóa online ngắn hạn cho người mới bắt đầu.',
                 'category_id' => $categories['marketing']->id,
                 'instructor_id' => $users['instructor']->id,
                 'price' => 1890000,
@@ -93,14 +93,14 @@ class RenderDemoSeeder extends Seeder
                 'is_featured' => true,
                 'is_popular' => false,
                 'learning_type' => 'online',
-                'announcement' => 'Co workshop live qua Meet moi tuan.',
+                'announcement' => 'Có workshop live qua Meet mỗi tuần.',
                 'students_count' => 0,
                 'created_at' => now()->subDays(15),
             ]),
             'english' => $this->upsertCourse('tieng-anh-giao-tiep-b1', [
-                'title' => 'Tieng Anh giao tiep B1',
-                'description' => 'Khoa hoc offline tai trung tam, co lich hoc va xet duyet ho so.',
-                'short_description' => 'Khoa offline co lich hoc va so cho ro rang.',
+                'title' => 'Tiếng Anh giao tiếp B1',
+                'description' => 'Khóa học offline tại trung tâm, có lịch học và xét duyệt hồ sơ.',
+                'short_description' => 'Khóa offline có lịch học và số chỗ rõ ràng.',
                 'category_id' => $categories['english']->id,
                 'instructor_id' => $users['instructor']->id,
                 'price' => 3200000,
@@ -110,7 +110,7 @@ class RenderDemoSeeder extends Seeder
                 'is_featured' => false,
                 'is_popular' => true,
                 'learning_type' => 'offline',
-                'announcement' => 'Khoa offline can admin duyet ho so truoc khi vao hoc.',
+                'announcement' => 'Khóa offline cần admin duyệt hồ sơ trước khi vào học.',
                 'students_count' => 0,
                 'created_at' => now()->subDays(7),
             ]),
@@ -118,48 +118,48 @@ class RenderDemoSeeder extends Seeder
 
         $classes = [
             'fullstack_main' => $this->upsertClass($courses['fullstack'], [
-                'name' => 'Hoc ngay - Ky thang 04',
+                'name' => 'Học ngay - Kỳ tháng 04',
                 'instructor_id' => $users['instructor']->id,
                 'start_date' => now()->subDays(10)->toDateString(),
                 'end_date' => now()->addDays(50)->toDateString(),
-                'schedule' => 'Tu hoc linh hoat tren he thong',
-                'meeting_info' => 'Workshop thu 7 luc 20:00',
+                'schedule' => 'Tự học linh hoạt trên hệ thống',
+                'meeting_info' => 'Workshop thứ 7 lúc 20:00',
                 'max_students' => 0,
                 'price_override' => null,
                 'status' => 'active',
                 'created_at' => now()->subDays(10),
             ]),
             'marketing_main' => $this->upsertClass($courses['marketing'], [
-                'name' => 'Hoc ngay - Ky thang 04',
+                'name' => 'Học ngay - Kỳ tháng 04',
                 'instructor_id' => $users['instructor']->id,
                 'start_date' => now()->subDays(6)->toDateString(),
                 'end_date' => now()->addDays(28)->toDateString(),
-                'schedule' => 'Tu hoc + workshop live toi thu 5',
-                'meeting_info' => 'Google Meet luc 19:30 thu 5',
+                'schedule' => 'Tự học + workshop live tối thứ 5',
+                'meeting_info' => 'Google Meet lúc 19:30 thứ 5',
                 'max_students' => 0,
                 'price_override' => null,
                 'status' => 'active',
                 'created_at' => now()->subDays(6),
             ]),
             'english_april' => $this->upsertClass($courses['english'], [
-                'name' => 'Khoa 01 - Thang 04',
+                'name' => 'Khóa 01 - Tháng 04',
                 'instructor_id' => $users['instructor']->id,
                 'start_date' => now()->addDays(5)->toDateString(),
                 'end_date' => now()->addDays(65)->toDateString(),
-                'schedule' => 'Thu 2, 4, 6 | 18:30 - 20:00',
-                'meeting_info' => 'Phong B203 - Co so Long Xuyen',
+                'schedule' => 'Thứ 2, 4, 6 | 18:30 - 20:00',
+                'meeting_info' => 'Phòng B203 - Cơ sở Long Xuyên',
                 'max_students' => 18,
                 'price_override' => null,
                 'status' => 'active',
                 'created_at' => now()->subDays(4),
             ]),
             'english_may' => $this->upsertClass($courses['english'], [
-                'name' => 'Khoa 02 - Thang 05',
+                'name' => 'Khóa 02 - Tháng 05',
                 'instructor_id' => $users['instructor']->id,
                 'start_date' => now()->addDays(28)->toDateString(),
                 'end_date' => now()->addDays(88)->toDateString(),
-                'schedule' => 'Thu 3, 5, 7 | 18:30 - 20:00',
-                'meeting_info' => 'Phong A105 - Co so Long Xuyen',
+                'schedule' => 'Thứ 3, 5, 7 | 18:30 - 20:00',
+                'meeting_info' => 'Phòng A105 - Cơ sở Long Xuyên',
                 'max_students' => 20,
                 'price_override' => null,
                 'status' => 'active',
@@ -168,26 +168,26 @@ class RenderDemoSeeder extends Seeder
         ];
 
         $modules = [
-            'fullstack_html' => $this->upsertModule($courses['fullstack'], 'HTML va CSS nen tang', 'Dung giao dien co ban.', 1),
-            'fullstack_js' => $this->upsertModule($courses['fullstack'], 'JavaScript thuc chien', 'DOM, event va bai toan frontend.', 2),
-            'fullstack_laravel' => $this->upsertModule($courses['fullstack'], 'Laravel can ban', 'Route, controller, blade va xu ly request.', 3),
-            'marketing_content' => $this->upsertModule($courses['marketing'], 'Content Strategy', 'Lap ke hoach noi dung theo tuan.', 1),
-            'marketing_ads' => $this->upsertModule($courses['marketing'], 'Ads and Performance', 'Doc chi so va toi uu chien dich.', 2),
-            'english_listening' => $this->upsertModule($courses['english'], 'Nghe', 'Luyen nghe tinh huong giao tiep.', 1),
-            'english_speaking' => $this->upsertModule($courses['english'], 'Noi', 'Tang phan xa giao tiep.', 2),
+            'fullstack_html' => $this->upsertModule($courses['fullstack'], 'HTML và CSS nền tảng', 'Dựng giao diện cơ bản.', 1),
+            'fullstack_js' => $this->upsertModule($courses['fullstack'], 'JavaScript thực chiến', 'DOM, event và bài toán frontend.', 2),
+            'fullstack_laravel' => $this->upsertModule($courses['fullstack'], 'Laravel căn bản', 'Route, controller, blade và xử lý request.', 3),
+            'marketing_content' => $this->upsertModule($courses['marketing'], 'Content Strategy', 'Lập kế hoạch nội dung theo tuần.', 1),
+            'marketing_ads' => $this->upsertModule($courses['marketing'], 'Ads and Performance', 'Đọc chỉ số và tối ưu chiến dịch.', 2),
+            'english_listening' => $this->upsertModule($courses['english'], 'Nghe', 'Luyện nghe tình huống giao tiếp.', 1),
+            'english_speaking' => $this->upsertModule($courses['english'], 'Nói', 'Tăng phản xạ giao tiếp.', 2),
         ];
 
         $materials = [
-            'fullstack_video' => $this->upsertMaterial($courses['fullstack'], $modules['fullstack_html'], 'video', 'Khoi dong voi HTML va CSS', 'Video dinh huong lo trinh.', 1, 25, ['url' => 'https://www.youtube.com/watch?v=ysz5S6PUM-U']),
-            'fullstack_assignment' => $this->upsertMaterial($courses['fullstack'], $modules['fullstack_html'], 'assignment', 'Bai tap landing page ca nhan', 'Dung landing page responsive co ban.', 2, 20, ['content' => 'Hoan thien landing page voi 3 section.']),
-            'fullstack_quiz' => $this->upsertMaterial($courses['fullstack'], $modules['fullstack_js'], 'quiz', 'Quiz JavaScript can ban', 'On tap DOM va event.', 3, 15, ['passing_score' => 70, 'questions' => [['question' => 'DOM viet tat cua gi?', 'answer' => 'Document Object Model'], ['question' => 'Su kien bam nut la gi?', 'answer' => 'click']]]),
-            'fullstack_laravel_video' => $this->upsertMaterial($courses['fullstack'], $modules['fullstack_laravel'], 'video', 'Laravel route controller blade', 'Tong quan xu ly request.', 4, 35, ['url' => 'https://www.youtube.com/watch?v=ImtZ5yENzgE']),
-            'marketing_video' => $this->upsertMaterial($courses['marketing'], $modules['marketing_content'], 'video', 'Tu duy content chuyen doi', 'Xac dinh insight, hook va CTA.', 1, 22, ['url' => 'https://www.youtube.com/watch?v=jNQXAC9IVRw']),
-            'marketing_assignment' => $this->upsertMaterial($courses['marketing'], $modules['marketing_content'], 'assignment', 'Lap ke hoach noi dung 7 ngay', 'Thiet ke lich noi dung ngan han.', 2, 18, ['content' => 'Xay dung lich noi dung 7 ngay cho fanpage.']),
-            'marketing_quiz' => $this->upsertMaterial($courses['marketing'], $modules['marketing_ads'], 'quiz', 'Quiz chi so quang cao', 'On tap CTR, CPC va conversion rate.', 3, 12, ['passing_score' => 75, 'questions' => [['question' => 'CTR viet tat cua gi?', 'answer' => 'Click Through Rate'], ['question' => 'CPC la gi?', 'answer' => 'Cost Per Click']]]),
-            'marketing_meeting' => $this->upsertMaterial($courses['marketing'], $modules['marketing_ads'], 'meeting', 'Workshop toi uu chien dich', 'Buoi live phan tich case thuc te.', 4, 90, ['meeting_url' => 'https://meet.google.com/abc-demo-khai-tri', 'meeting_starts_at' => now()->subDays(2)->setTime(19, 30)->toDateTimeString(), 'meeting_ends_at' => now()->subDays(2)->setTime(21, 0)->toDateTimeString()]),
-            'english_listening_video' => $this->upsertMaterial($courses['english'], $modules['english_listening'], 'video', 'Nghe giao tiep co ban', 'Tinh huong nghe giao tiep thuc te.', 1, 30, ['url' => 'https://www.youtube.com/watch?v=ysz5S6PUM-U']),
-            'english_speaking_assignment' => $this->upsertMaterial($courses['english'], $modules['english_speaking'], 'assignment', 'Thuc hanh speaking theo cap', 'Tap noi theo tinh huong co san.', 2, 25, ['content' => 'Ghi am va nop bai thuc hanh.']),
+            'fullstack_video' => $this->upsertMaterial($courses['fullstack'], $modules['fullstack_html'], 'video', 'Khởi động với HTML và CSS', 'Video định hướng lộ trình.', 1, 25, ['url' => 'https://www.youtube.com/watch?v=ysz5S6PUM-U']),
+            'fullstack_assignment' => $this->upsertMaterial($courses['fullstack'], $modules['fullstack_html'], 'assignment', 'Bài tập landing page cá nhân', 'Dựng landing page responsive cơ bản.', 2, 20, ['content' => 'Hoàn thiện landing page với 3 section.']),
+            'fullstack_quiz' => $this->upsertMaterial($courses['fullstack'], $modules['fullstack_js'], 'quiz', 'Quiz JavaScript căn bản', 'Ôn tập DOM và event.', 3, 15, ['passing_score' => 70, 'questions' => [['question' => 'DOM viết tắt của gì?', 'answer' => 'Document Object Model'], ['question' => 'Sự kiện bấm nút là gì?', 'answer' => 'click']]]),
+            'fullstack_laravel_video' => $this->upsertMaterial($courses['fullstack'], $modules['fullstack_laravel'], 'video', 'Laravel route controller blade', 'Tổng quan xử lý request.', 4, 35, ['url' => 'https://www.youtube.com/watch?v=ImtZ5yENzgE']),
+            'marketing_video' => $this->upsertMaterial($courses['marketing'], $modules['marketing_content'], 'video', 'Tư duy content chuyển đổi', 'Xác định insight, hook và CTA.', 1, 22, ['url' => 'https://www.youtube.com/watch?v=jNQXAC9IVRw']),
+            'marketing_assignment' => $this->upsertMaterial($courses['marketing'], $modules['marketing_content'], 'assignment', 'Lập kế hoạch nội dung 7 ngày', 'Thiết kế lịch nội dung ngắn hạn.', 2, 18, ['content' => 'Xây dựng lịch nội dung 7 ngày cho fanpage.']),
+            'marketing_quiz' => $this->upsertMaterial($courses['marketing'], $modules['marketing_ads'], 'quiz', 'Quiz chỉ số quảng cáo', 'Ôn tập CTR, CPC và conversion rate.', 3, 12, ['passing_score' => 75, 'questions' => [['question' => 'CTR viết tắt của gì?', 'answer' => 'Click Through Rate'], ['question' => 'CPC là gì?', 'answer' => 'Cost Per Click']]]),
+            'marketing_meeting' => $this->upsertMaterial($courses['marketing'], $modules['marketing_ads'], 'meeting', 'Workshop tối ưu chiến dịch', 'Buổi live phân tích case thực tế.', 4, 90, ['meeting_url' => 'https://meet.google.com/abc-demo-khai-tri', 'meeting_starts_at' => now()->subDays(2)->setTime(19, 30)->toDateTimeString(), 'meeting_ends_at' => now()->subDays(2)->setTime(21, 0)->toDateTimeString()]),
+            'english_listening_video' => $this->upsertMaterial($courses['english'], $modules['english_listening'], 'video', 'Nghe giao tiếp cơ bản', 'Tình huống nghe giao tiếp thực tế.', 1, 30, ['url' => 'https://www.youtube.com/watch?v=ysz5S6PUM-U']),
+            'english_speaking_assignment' => $this->upsertMaterial($courses['english'], $modules['english_speaking'], 'assignment', 'Thực hành speaking theo cặp', 'Tập nói theo tình huống có sẵn.', 2, 25, ['content' => 'Ghi âm và nộp bài thực hành.']),
         ];
 
         return [
@@ -201,11 +201,11 @@ class RenderDemoSeeder extends Seeder
     private function seedEnrollments(array $users, array $catalog): array
     {
         return [
-            'student_one_fullstack' => $this->upsertEnrollment($users['student_one'], $catalog['classes']['fullstack_main'], 'completed', now()->subDays(18), now()->subDays(18), now()->subDays(5), 'Hoan thanh khoa hoc va du dieu kien cap chung chi.'),
-            'student_two_marketing' => $this->upsertEnrollment($users['student_two'], $catalog['classes']['marketing_main'], 'approved', now()->subDays(8), now()->subDays(8), null, 'Dang hoc giua ky va da mo quyen hoc ngay.'),
-            'student_two_english_pending' => $this->upsertEnrollment($users['student_two'], $catalog['classes']['english_april'], 'pending', now()->subDays(1), null, null, 'Cho admin duyet ho so cho dot hoc offline.'),
-            'student_three_fullstack' => $this->upsertEnrollment($users['student_three'], $catalog['classes']['fullstack_main'], 'completed', now()->subDays(20), now()->subDays(20), now()->subDays(7), 'Da hoan thanh khoa Fullstack.'),
-            'student_three_marketing' => $this->upsertEnrollment($users['student_three'], $catalog['classes']['marketing_main'], 'completed', now()->subDays(12), now()->subDays(12), now()->subDays(2), 'Da hoan thanh khoa Marketing.'),
+            'student_one_fullstack' => $this->upsertEnrollment($users['student_one'], $catalog['classes']['fullstack_main'], 'completed', now()->subDays(18), now()->subDays(18), now()->subDays(5), 'Hoàn thành khóa học và đủ điều kiện cấp chứng chỉ.'),
+            'student_two_marketing' => $this->upsertEnrollment($users['student_two'], $catalog['classes']['marketing_main'], 'approved', now()->subDays(8), now()->subDays(8), null, 'Đang học giữa kỳ và đã mở quyền học ngay.'),
+            'student_two_english_pending' => $this->upsertEnrollment($users['student_two'], $catalog['classes']['english_april'], 'pending', now()->subDays(1), null, null, 'Chờ admin duyệt hồ sơ cho đợt học offline.'),
+            'student_three_fullstack' => $this->upsertEnrollment($users['student_three'], $catalog['classes']['fullstack_main'], 'completed', now()->subDays(20), now()->subDays(20), now()->subDays(7), 'Đã hoàn thành khóa Fullstack.'),
+            'student_three_marketing' => $this->upsertEnrollment($users['student_three'], $catalog['classes']['marketing_main'], 'completed', now()->subDays(12), now()->subDays(12), now()->subDays(2), 'Đã hoàn thành khóa Marketing.'),
         ];
     }
 
@@ -236,9 +236,9 @@ class RenderDemoSeeder extends Seeder
 
     private function seedPayments(array $users, array $catalog): void
     {
-        $this->upsertPayment('RDR-VNPAY-001', $users['student_one']->id, $catalog['classes']['fullstack_main'], 1990000, 'vnpay', 'completed', now()->subDays(18), 'Thanh toan sandbox thanh cong qua VNPay.');
-        $this->upsertPayment('RDR-BANK-001', $users['student_two']->id, $catalog['classes']['english_april'], 2890000, 'bank_transfer', 'pending', null, 'Hoc vien da gui yeu cau chuyen khoan cho khoa offline.');
-        $this->upsertPayment('RDR-WALLET-001', $users['student_three']->id, $catalog['classes']['marketing_main'], 1490000, 'wallet', 'completed', now()->subDays(12), 'Thanh toan bang vi noi bo.');
+        $this->upsertPayment('RDR-VNPAY-001', $users['student_one']->id, $catalog['classes']['fullstack_main'], 1990000, 'vnpay', 'completed', now()->subDays(18), 'Thanh toán sandbox thành công qua VNPay.');
+        $this->upsertPayment('RDR-BANK-001', $users['student_two']->id, $catalog['classes']['english_april'], 2890000, 'bank_transfer', 'pending', null, 'Học viên đã gửi yêu cầu chuyển khoản cho khóa offline.');
+        $this->upsertPayment('RDR-WALLET-001', $users['student_three']->id, $catalog['classes']['marketing_main'], 1490000, 'wallet', 'completed', now()->subDays(12), 'Thanh toán bằng ví nội bộ.');
     }
 
     private function seedWallets(array $users, array $catalog): void
@@ -272,8 +272,8 @@ class RenderDemoSeeder extends Seeder
                 'status' => 'pending',
                 'metadata' => [
                     'method' => 'direct',
-                    'sender_name' => 'Le Quoc Bao',
-                    'note' => 'Nap de giu cho khoa offline',
+                    'sender_name' => 'Lê Quốc Bảo',
+                    'note' => 'Nạp để giữ chỗ khóa offline',
                 ],
                 'expires_at' => now()->addHours(36),
                 'expired_at' => null,
@@ -291,8 +291,8 @@ class RenderDemoSeeder extends Seeder
         $category = PostCategory::updateOrCreate(
             ['slug' => 'thong-bao-tuyen-sinh'],
             [
-                'name' => 'Thong bao tuyen sinh',
-                'description' => 'Tin moi ve khai giang, lich hoc va uu dai.',
+                'name' => 'Thông báo tuyển sinh',
+                'description' => 'Tin mới về khai giảng, lịch học và ưu đãi.',
                 'color' => '#2563eb',
                 'order' => 1,
                 'is_active' => true,
@@ -302,9 +302,9 @@ class RenderDemoSeeder extends Seeder
         $postOne = Post::updateOrCreate(
             ['slug' => 'khai-giang-dot-thang-4'],
             [
-                'title' => 'Khai giang dot hoc thang 4 cho cac khoa online va offline',
-                'excerpt' => 'Cap nhat lich khai giang moi nhat cho dot thang 4 cung nhieu uu dai hoc phi.',
-                'content' => '<p>Trung tam Khai Tri mo dang ky cho dot hoc thang 4 voi cac khoa online co the hoc ngay va cac khoa offline can admin duyet.</p>',
+                'title' => 'Khai giảng đợt học tháng 4 cho các khóa online và offline',
+                'excerpt' => 'Cập nhật lịch khai giảng mới nhất cho đợt tháng 4 cùng nhiều ưu đãi học phí.',
+                'content' => '<p>Trung tâm Khai Trí mở đăng ký cho đợt học tháng 4 với các khóa online có thể học ngay và các khóa offline cần admin duyệt.</p>',
                 'author_id' => $users['admin']->id,
                 'category_id' => $category->id,
                 'status' => 'published',
@@ -322,9 +322,9 @@ class RenderDemoSeeder extends Seeder
         $postTwo = Post::updateOrCreate(
             ['slug' => 'huong-dan-dang-ky-thanh-toan-vnpay'],
             [
-                'title' => 'Huong dan dang ky va thanh toan khoa hoc qua VNPay sandbox',
-                'excerpt' => 'Mo phong quy trinh thanh toan truc tuyen ngay tren cong dang ky khoa hoc.',
-                'content' => '<p>Moi truong demo cho phep hoc vien thanh toan bang VNPay sandbox de mo phong giao dich truc tuyen.</p>',
+                'title' => 'Hướng dẫn đăng ký và thanh toán khóa học qua VNPay sandbox',
+                'excerpt' => 'Mô phỏng quy trình thanh toán trực tuyến ngay trên cổng đăng ký khóa học.',
+                'content' => '<p>Môi trường demo cho phép học viên thanh toán bằng VNPay sandbox để mô phỏng giao dịch trực tuyến.</p>',
                 'author_id' => $users['admin']->id,
                 'category_id' => $category->id,
                 'status' => 'published',
@@ -343,12 +343,12 @@ class RenderDemoSeeder extends Seeder
     private function seedSettings(): void
     {
         foreach ([
-            'site_name' => 'Khai Tri Edu',
-            'site_tagline' => 'Cong dang ky khoa hoc truc tuyen',
+            'site_name' => 'Khai Trí Edu',
+            'site_tagline' => 'Cổng đăng ký khóa học trực tuyến',
             'contact_email' => 'contact@khaitri.edu.vn',
             'contact_phone' => '0867 852 853',
-            'contact_address' => 'Long Xuyen, An Giang',
-            'footer_text' => 'Khai Tri Edu - Cong dang ky khoa hoc truc tuyen',
+            'contact_address' => 'Long Xuyên, An Giang',
+            'footer_text' => 'Khai Trí Edu - Cổng đăng ký khóa học trực tuyến',
             'allow_class_change' => '1',
             'class_change_deadline_days' => '3',
         ] as $key => $value) {
