@@ -2354,6 +2354,63 @@ html.dark .page-student-dashboard .student-wallet-card {
     flex-shrink: 0;
 }
 
+/* Profile edit avatar preview */
+.profile-edit-avatar {
+    width: 140px;
+    height: 140px;
+    position: relative;
+}
+
+.profile-edit-avatar-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(15, 23, 42, 0.05);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+.profile-edit-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+/* Password strength meter */
+.password-strength-bar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.password-strength-fill {
+    height: 100%;
+    width: 0;
+    background: #e2e8f0;
+    border-radius: 999px;
+    transition: width 0.25s ease, background 0.25s ease;
+}
+
+.password-strength-label {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+}
+
+[data-bs-theme="dark"] .password-strength-bar,
+html.dark .password-strength-bar,
+body.dark .password-strength-bar {
+    background: rgba(255, 255, 255, 0.08);
+}
+
 /* ===== Wallet balance hero card ===== */
 .wallet-balance-card {
     background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #7c3aed 100%);
