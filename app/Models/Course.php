@@ -192,6 +192,11 @@ class Course extends Model
             return asset('storage/' . $this->thumbnail);
         }
 
+        $categorySlug = $this->category?->slug;
+        if ($categorySlug && file_exists(public_path("images/categories/{$categorySlug}.jpg"))) {
+            return asset("images/categories/{$categorySlug}.jpg");
+        }
+
         return asset('images/default-course.jpg');
     }
 
@@ -199,6 +204,11 @@ class Course extends Model
     {
         if ($this->banner_image) {
             return asset('storage/' . $this->banner_image);
+        }
+
+        $categorySlug = $this->category?->slug;
+        if ($categorySlug && file_exists(public_path("images/categories/{$categorySlug}.jpg"))) {
+            return asset("images/categories/{$categorySlug}.jpg");
         }
 
         return asset('images/default-banner.jpg');
