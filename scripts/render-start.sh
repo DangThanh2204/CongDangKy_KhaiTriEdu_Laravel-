@@ -66,6 +66,10 @@ if [ "${#bootstrap_args[@]}" -gt 0 ]; then
   php artisan mongodb:bootstrap "${bootstrap_args[@]}"
 fi
 
+# Re-run the demo seeder on every boot. Uses updateOrCreate so it only refreshes
+# the demo records (slug-keyed) without touching admin-created content.
+php artisan db:seed --class='Database\Seeders\RenderDemoSeeder' --force || true
+
 php artisan storage:link || true
 
 php artisan config:cache || true

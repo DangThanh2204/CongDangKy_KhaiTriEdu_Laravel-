@@ -55,7 +55,7 @@ class Post extends Model
 
     public function scopeFeatured($query)
     {
-        return $query->whereJsonContains('meta->is_featured', true);
+        return $query->where('meta.is_featured', true);
     }
 
     public function scopeByCategory($query, $categorySlug)
