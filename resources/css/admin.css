@@ -1099,3 +1099,21 @@ body.dark .admin-alert-item strong,
   overflow-y: auto;
   overflow-x: hidden;
 }
+
+/* Filter rows: pad button-only columns so buttons line up with labeled inputs.
+   Labeled-input columns push their input down by ~label-height + label-margin;
+   button-only columns have no label, so we inject an invisible spacer of the
+   same height. Scoped to align-items-end rows so non-filter forms aren't affected. */
+@media (min-width: 768px) {
+  form.row.align-items-end > [class*="col-"]:not(:has(> .form-label, > label)):has(> .btn, > .d-grid > .btn, > a.btn)::before {
+    content: '';
+    display: block;
+    height: calc(1.5rem + 0.5rem);
+    margin-bottom: 0;
+  }
+}
+
+/* Buttons in filter rows: keep heights consistent with form-control / form-select. */
+form.row.align-items-end .btn {
+  min-height: calc(1.5em + 0.75rem + 2px);
+}
