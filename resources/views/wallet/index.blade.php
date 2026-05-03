@@ -13,15 +13,23 @@
 <div class="container py-5">
     <div class="row">
         <div class="col-lg-10 mx-auto">
-            <div class="card mb-4 shadow-sm border-0">
+            <div class="card mb-4 shadow-sm border-0 wallet-balance-card">
                 <div class="card-body p-4">
-                    <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                         <div>
-                            <h2 class="card-title mb-2">Ví của tôi</h2>
-                            <p class="text-muted mb-0">Số dư hiện tại: <strong>{{ number_format($wallet->balance, 0) }}đ</strong></p>
+                            <div class="text-white-50 small mb-1">Ví của tôi</div>
+                            <h2 class="text-white fw-bold mb-1">Số dư hiện tại</h2>
+                            <div class="display-5 fw-bold text-white">{{ number_format($wallet->balance, 0) }}đ</div>
+                        </div>
+                        <div class="wallet-balance-icon">
+                            <i class="fas fa-wallet"></i>
                         </div>
                     </div>
+                </div>
+            </div>
 
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-body p-4">
                     @if(session('success'))
                         <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
@@ -30,11 +38,13 @@
                         <div class="alert alert-danger">{{ session('error') }}</div>
                     @endif
 
-                    <form action="{{ route('wallet.topup') }}" method="POST" class="row g-3" id="wallet-topup-form">
+                    <h5 class="fw-bold mb-3"><i class="fas fa-coins text-warning me-2"></i>Nạp tiền vào ví</h5>
+
+                    <form action="{{ route('wallet.topup') }}" method="POST" id="wallet-topup-form">
                         @csrf
 
-                        <div class="col-12">
-                            <label class="form-label">Phương thức nạp tiền</label>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Phương thức nạp tiền</label>
                             <div class="d-flex flex-wrap gap-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="method" id="method_direct" value="direct" {{ $selectedMethod === 'direct' ? 'checked' : '' }}>
@@ -57,20 +67,22 @@
                             </div>
                         </div>
 
-                        <div class="col-md-8">
-                            <label for="amount" class="form-label">Số tiền nạp (VNĐ)</label>
-                            <input type="number" name="amount" id="amount" class="form-control" min="1000" max="10000000" value="{{ old('amount') }}" required placeholder="Ví dụ: 100000">
+                        <div class="mb-3">
+                            <label for="amount" class="form-label fw-semibold">Số tiền nạp (VNĐ)</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-light"><i class="fas fa-money-bill-wave text-success"></i></span>
+                                <input type="number" name="amount" id="amount" class="form-control" min="1000" max="10000000" value="{{ old('amount') }}" required placeholder="Ví dụ: 100000">
+                                <button type="submit" class="btn btn-primary px-4" id="wallet-submit-button">
+                                    <i class="fas fa-arrow-right me-1"></i>Tạo yêu cầu
+                                </button>
+                            </div>
                             <small class="text-muted">Số tiền tối thiểu 1.000đ, tối đa 10.000.000đ.</small>
                             @error('amount')
                                 <div class="text-danger mt-1">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        <div class="col-md-4 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100" id="wallet-submit-button">Tạo yêu cầu nạp tiền</button>
-                        </div>
-
-                        <div class="col-12" id="direct-instructions" style="display:none;">
+                        <div id="direct-instructions" style="display:none;">
                             <div class="alert alert-warning mb-0">
                                 <h5 class="mb-2">Nạp trực tiếp tại quầy</h5>
                                 <p class="mb-2">Hệ thống sẽ tạo một mã nạp tiền. Bạn mang mã đó tới quầy thu hộ hoặc trung tâm để nhân viên xác nhận.</p>
@@ -78,7 +90,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12" id="bank-instructions" style="display:none;">
+                        <div id="bank-instructions" style="display:none;">
                             <div class="alert alert-info mb-0">
                                 <h5 class="mb-2">Chuyển khoản ngân hàng</h5>
                                 <p class="mb-2">Sau khi tạo yêu cầu, hệ thống sẽ khóa sẵn nội dung chuyển khoản theo mã riêng của bạn để admin đối soát đúng tài khoản.</p>
@@ -86,7 +98,7 @@
                             </div>
                         </div>
 
-                        <div class="col-12" id="vnpay-instructions" style="display:none;">
+                        <div id="vnpay-instructions" style="display:none;">
                             <div class="alert alert-primary mb-0">
                                 <h5 class="mb-2">Nạp tiền qua VNPay</h5>
                                 <p class="mb-2">Sau khi tạo yêu cầu, hệ thống sẽ chuyển bạn sang cổng VNPay để quét QR bằng app ngân hàng hoặc chọn phương thức thanh toán phù hợp.</p>
@@ -340,9 +352,9 @@
             }
 
             if (submitButton) {
-                submitButton.textContent = selected === 'vnpay'
-                    ? 'Tiếp tục tới VNPay'
-                    : 'Tạo yêu cầu nạp tiền';
+                submitButton.innerHTML = selected === 'vnpay'
+                    ? '<i class="fas fa-arrow-right me-1"></i>Tiếp tục tới VNPay'
+                    : '<i class="fas fa-arrow-right me-1"></i>Tạo yêu cầu';
             }
         }
 

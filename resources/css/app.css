@@ -2314,3 +2314,40 @@ html.dark .page-student-dashboard .student-wallet-card {
 .min-w-0 {
     min-width: 0;
 }
+
+/* ===== Wallet balance hero card ===== */
+.wallet-balance-card {
+    background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 50%, #7c3aed 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+}
+
+.wallet-balance-card::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.18) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.wallet-balance-card .card-body {
+    position: relative;
+    z-index: 1;
+}
+
+.wallet-balance-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 2.25rem;
+    backdrop-filter: blur(8px);
+}
