@@ -236,11 +236,7 @@
                     <div class="col-md-6 col-xl-3">
                         <div class="card course-card h-100">
                             <div class="course-image home-course-media">
-                                @if($course->thumbnail)
-                                    <img src="{{ $course->thumbnail_url }}" alt="{{ $course->title }}" class="home-course-thumb">
-                                @else
-                                    <i class="fas fa-book fa-2x"></i>
-                                @endif
+                                <img src="{{ $course->thumbnail_url }}" alt="{{ $course->title }}" class="home-course-thumb">
 
                                 @if($course->is_featured)
                                     <div class="course-badge">Nổi bật</div>
