@@ -56,14 +56,8 @@
                             <div class="row g-0">
                                 <div class="col-md-4">
                                     <div class="course-image h-100 position-relative">
-                                        @if($post->featured_image)
-                                            <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" 
-                                                 class="img-fluid w-100 h-100" style="object-fit: cover;">
-                                        @else
-                                            <div class="d-flex align-items-center justify-content-center w-100 h-100 bg-primary text-white">
-                                                <i class="fas fa-graduation-cap fa-3x"></i>
-                                            </div>
-                                        @endif
+                                        <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}"
+                                             class="img-fluid w-100 h-100" style="object-fit: cover;">
                                         <div class="position-absolute top-0 start-0 m-3">
                                             <span class="badge bg-white text-primary">{{ $post->category->name ?? 'Tin tức' }}</span>
                                         </div>
@@ -176,15 +170,8 @@
                         <div class="d-flex align-items-start mb-3 pb-3 {{ !$loop->last ? 'border-bottom' : '' }}">
                             <div class="flex-shrink-0 me-3">
                                 <div class="position-relative">
-                                    @if($post->featured_image)
-                                    <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" 
+                                    <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}"
                                          class="rounded" style="width: 60px; height: 60px; object-fit: cover;">
-                                    @else
-                                    <div class="rounded d-flex align-items-center justify-content-center bg-primary text-white" 
-                                         style="width: 60px; height: 60px;">
-                                        <i class="fas fa-graduation-cap"></i>
-                                    </div>
-                                    @endif
                                     @if($index < 3)
                                     <span class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill">
                                         {{ $index + 1 }}

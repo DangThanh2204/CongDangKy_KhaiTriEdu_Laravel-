@@ -192,9 +192,8 @@ class Course extends Model
             return asset('storage/' . $this->thumbnail);
         }
 
-        $categorySlug = $this->category?->slug;
-        if ($categorySlug && file_exists(public_path("images/categories/{$categorySlug}.jpg"))) {
-            return asset("images/categories/{$categorySlug}.jpg");
+        if ($path = $this->resolveCategoryImagePath()) {
+            return asset($path);
         }
 
         return asset('images/default-course.jpg');
@@ -206,12 +205,34 @@ class Course extends Model
             return asset('storage/' . $this->banner_image);
         }
 
-        $categorySlug = $this->category?->slug;
-        if ($categorySlug && file_exists(public_path("images/categories/{$categorySlug}.jpg"))) {
-            return asset("images/categories/{$categorySlug}.jpg");
+        if ($path = $this->resolveCategoryImagePath()) {
+            return asset($path);
         }
 
         return asset('images/default-banner.jpg');
+    }
+
+    private function resolveCategoryImagePath(): ?string
+    {
+        $categorySlug = $this->category?->slug;
+        if (! $categorySlug) {
+            return null;
+        }
+
+        $variant = (crc32((string) ($this->slug ?? $this->id)) % 3) + 1;
+        $candidates = [
+            "images/categories/{$categorySlug}-{$variant}.jpg",
+            "images/categories/{$categorySlug}-1.jpg",
+            "images/categories/{$categorySlug}.jpg",
+        ];
+
+        foreach ($candidates as $path) {
+            if (file_exists(public_path($path))) {
+                return $path;
+            }
+        }
+
+        return null;
     }
 
     public function getFinalPriceAttribute()

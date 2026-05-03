@@ -384,11 +384,7 @@
                     <div class="col-lg-4 col-md-6">
                         <div class="card course-card h-100">
                             <div class="course-image home-news-media">
-                                @if($post->featured_image)
-                                    <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="home-news-thumb">
-                                @else
-                                    <i class="fas fa-newspaper fa-2x"></i>
-                                @endif
+                                <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" class="home-news-thumb">
 
                                 @if($post->is_featured)
                                     <div class="course-badge home-news-badge">Nổi bật</div>

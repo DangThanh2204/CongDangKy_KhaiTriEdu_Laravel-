@@ -48,18 +48,10 @@
                         </header>
 
                         <!-- Featured Image -->
-                        @if($post->featured_image)
                         <div class="mb-4">
-                            <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}" 
+                            <img src="{{ $post->featured_image_url }}" alt="{{ $post->title }}"
                                  class="img-fluid rounded w-100" style="max-height: 400px; object-fit: cover;">
                         </div>
-                        @else
-                        <div class="mb-4">
-                            <div class="d-flex align-items-center justify-content-center rounded w-100" style="height: 300px; background: var(--gradient-primary);">
-                                <i class="fas fa-graduation-cap fa-5x text-white"></i>
-                            </div>
-                        </div>
-                        @endif
 
                         <!-- Article Content -->
                         <div class="article-content">
@@ -93,13 +85,7 @@
                         <div class="col-md-6">
                             <div class="card course-card h-100">
                                 <div class="course-image" style="height: 180px;">
-                                    @if($relatedPost->featured_image)
-                                        <img src="{{ $relatedPost->featured_image_url }}" alt="{{ $relatedPost->title }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                                    @else
-                                        <div class="d-flex align-items-center justify-content-center w-100 h-100">
-                                            <i class="fas fa-graduation-cap fa-2x text-white"></i>
-                                        </div>
-                                    @endif
+                                    <img src="{{ $relatedPost->featured_image_url }}" alt="{{ $relatedPost->title }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
                                 </div>
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
