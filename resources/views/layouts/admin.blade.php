@@ -448,6 +448,8 @@
                     return;
                 }
 
+                let hideTimer = null;
+
                 const positionSubnav = () => {
                     subnav.style.removeProperty('--sidebar-subnav-top');
                     subnav.style.removeProperty('--sidebar-subnav-left');
@@ -456,11 +458,13 @@
                     const sidebar = document.querySelector('.admin-sidebar');
                     const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : null;
                     const headerRect = header.getBoundingClientRect();
-                    const estimatedWidth = Math.max(subnav.offsetWidth || 0, 250);
+                    const estimatedWidth = Math.max(subnav.offsetWidth || 0, 240);
                     const estimatedHeight = Math.min(Math.max(subnav.scrollHeight || 0, 240), 420);
-                    const preferredLeft = (sidebarRect ? sidebarRect.right : headerRect.right) + 18;
+                    const preferredLeft = (sidebarRect ? sidebarRect.right : headerRect.right) + 12;
                     const left = Math.min(preferredLeft, window.innerWidth - estimatedWidth - 16);
-                    const top = Math.min(Math.max(16, headerRect.top), window.innerHeight - estimatedHeight - 16);
+                    // Keep top below the topbar (80px) and within viewport bounds.
+                    const minTop = 92;
+                    const top = Math.min(Math.max(minTop, headerRect.top), window.innerHeight - estimatedHeight - 16);
                     const maxHeight = Math.max(220, window.innerHeight - top - 16);
 
                     subnav.classList.add('fixed');
@@ -469,20 +473,37 @@
                     subnav.style.setProperty('--sidebar-subnav-max-height', `${maxHeight}px`);
                 };
 
-                group.addEventListener('mouseenter', () => {
+                const showSubnav = () => {
+                    if (hideTimer) {
+                        clearTimeout(hideTimer);
+                        hideTimer = null;
+                    }
                     header.classList.add('open');
                     positionSubnav();
                     subnav.classList.add('open');
-                });
+                };
 
-                group.addEventListener('mouseleave', () => {
-                    const isActiveGroup = subnav.querySelector('.nav-link.active');
-                    subnav.classList.remove('open');
+                const hideSubnav = () => {
+                    hideTimer = setTimeout(() => {
+                        const isActiveGroup = subnav.querySelector('.nav-link.active');
+                        subnav.classList.remove('open');
+                        if (!isActiveGroup) {
+                            header.classList.remove('open');
+                        }
+                        hideTimer = null;
+                    }, 180);
+                };
 
-                    if (!isActiveGroup) {
-                        header.classList.remove('open');
+                group.addEventListener('mouseenter', showSubnav);
+                group.addEventListener('mouseleave', hideSubnav);
+                // Keep open while pointer is inside the subnav itself.
+                subnav.addEventListener('mouseenter', () => {
+                    if (hideTimer) {
+                        clearTimeout(hideTimer);
+                        hideTimer = null;
                     }
                 });
+                subnav.addEventListener('mouseleave', hideSubnav);
 
                 window.addEventListener('resize', () => {
                     if (subnav.classList.contains('open')) {
