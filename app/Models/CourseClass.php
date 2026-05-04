@@ -53,6 +53,10 @@ class CourseClass extends Model
 
     public function getCurrentStudentsCountAttribute()
     {
+        if ($this->relationLoaded('enrollments')) {
+            return $this->enrollments->whereIn('status', ['approved', 'completed'])->count();
+        }
+
         return $this->enrollments()->whereIn('status', ['approved', 'completed'])->count();
     }
 
@@ -60,6 +64,10 @@ class CourseClass extends Model
     {
         if (array_key_exists('enrollments_count', $this->attributes)) {
             return (int) $this->attributes['enrollments_count'];
+        }
+
+        if ($this->relationLoaded('enrollments')) {
+            return $this->enrollments->count();
         }
 
         return $this->enrollments()->count();
@@ -71,6 +79,15 @@ class CourseClass extends Model
             return 0;
         }
 
+        if ($this->relationLoaded('enrollments')) {
+            return $this->enrollments->filter(function ($enrollment) {
+                return $enrollment->status === 'pending'
+                    && $enrollment->waitlist_promoted_at !== null
+                    && $enrollment->seat_hold_expires_at !== null
+                    && $enrollment->seat_hold_expires_at->greaterThan(now());
+            })->count();
+        }
+
         return $this->enrollments()
             ->holdingSeat()
             ->count();
@@ -78,6 +95,14 @@ class CourseClass extends Model
 
     public function getWaitlistCountAttribute(): int
     {
+        if ($this->relationLoaded('enrollments')) {
+            return $this->enrollments->filter(function ($enrollment) {
+                return $enrollment->status === 'pending'
+                    && $enrollment->waitlist_joined_at !== null
+                    && $enrollment->waitlist_promoted_at === null;
+            })->count();
+        }
+
         return $this->enrollments()
             ->pending()
             ->waitlisted()

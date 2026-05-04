@@ -14,7 +14,7 @@ class ClassroomController extends Controller
         $instructorId = auth()->id();
 
         $classes = CourseClass::query()
-            ->with(['course.category', 'enrollments.user'])
+            ->with(['course.category', 'enrollments.user', 'schedules'])
             ->where('instructor_id', $instructorId)
             ->orderBy('start_date')
             ->get()
