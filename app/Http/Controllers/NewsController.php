@@ -6,9 +6,12 @@ use App\Models\Post;
 use App\Models\PostCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class NewsController extends Controller
 {
+    private const SIDEBAR_CACHE_TTL = 600; // 10 minutes
+
     public function index(Request $request)
     {
         $query = Post::published()->with(['author', 'category']);
@@ -36,19 +39,25 @@ class NewsController extends Controller
 
         $posts = $query->paginate(12);
 
-        $categories = $this->attachPublishedPostCounts(
-            PostCategory::active()
-                ->ordered()
-                ->with('posts')
-                ->get()
-        );
+        $categories = Cache::remember('news.categories_with_counts', self::SIDEBAR_CACHE_TTL, function () {
+            return $this->attachPublishedPostCounts(
+                PostCategory::active()
+                    ->ordered()
+                    ->with('posts')
+                    ->get()
+            );
+        });
 
-        $featuredPosts = Post::published()->featured()->latest()->take(3)->get();
+        $featuredPosts = Cache::remember('news.featured_posts', self::SIDEBAR_CACHE_TTL, function () {
+            return Post::published()->featured()->latest()->take(3)->get();
+        });
 
-        $popularPosts = Post::published()
-            ->orderBy('view_count', 'desc')
-            ->take(5)
-            ->get();
+        $popularPosts = Cache::remember('news.popular_posts', self::SIDEBAR_CACHE_TTL, function () {
+            return Post::published()
+                ->orderBy('view_count', 'desc')
+                ->take(5)
+                ->get();
+        });
 
         return view('news.index', compact(
             'posts',
@@ -88,12 +97,14 @@ class NewsController extends Controller
             ->orderBy('published_at', 'desc')
             ->paginate(12);
 
-        $categories = $this->attachPublishedPostCounts(
-            PostCategory::active()
-                ->ordered()
-                ->with('posts')
-                ->get()
-        );
+        $categories = Cache::remember('news.categories_with_counts', self::SIDEBAR_CACHE_TTL, function () {
+            return $this->attachPublishedPostCounts(
+                PostCategory::active()
+                    ->ordered()
+                    ->with('posts')
+                    ->get()
+            );
+        });
 
         return view('news.category', compact('category', 'posts', 'categories'));
     }

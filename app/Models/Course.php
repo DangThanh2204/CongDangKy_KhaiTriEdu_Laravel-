@@ -5,11 +5,22 @@ namespace App\Models;
 use App\Support\StudyDuration;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\MongoModel as Model;
+use Illuminate\Support\Facades\Cache;
 use MongoDB\Laravel\Eloquent\SoftDeletes;
 
 class Course extends Model
 {
     use HasFactory, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        $flushPublicCaches = function (): void {
+            Cache::forget('home.featured_courses');
+        };
+
+        static::saved($flushPublicCaches);
+        static::deleted($flushPublicCaches);
+    }
 
     protected $fillable = [
         'title',
@@ -302,14 +313,18 @@ class Course extends Model
 
     public function updateRating()
     {
-        $reviews = $this->reviews();
-        $this->rating = $reviews->avg('rating') ?? 0;
-        $this->total_rating = $reviews->count();
+        $ratings = $this->reviews()->pluck('rating');
+        $this->rating = $ratings->isEmpty() ? 0 : $ratings->avg();
+        $this->total_rating = $ratings->count();
         $this->save();
     }
 
     public function getTotalDurationAttribute()
     {
+        if ($this->relationLoaded('lessons')) {
+            return $this->lessons->sum('duration');
+        }
+
         return $this->lessons()->sum('duration');
     }
 
@@ -319,7 +334,9 @@ class Course extends Model
             return collect([$this->instructor]);
         }
 
-        return User::whereIn('id', $this->classes()->pluck('instructor_id')->filter()->unique())->get();
+        $classes = $this->relationLoaded('classes') ? $this->classes : $this->classes()->get(['instructor_id']);
+
+        return User::whereIn('id', $classes->pluck('instructor_id')->filter()->unique())->get();
     }
 
     public function getEstimatedDurationMinutesAttribute(): int
@@ -328,15 +345,17 @@ class Course extends Model
             return max(0, (int) ($this->attributes['duration'] ?? 0));
         }
 
-        $calculatedDuration = (int) $this->materials()
-            ->get()
-            ->sum(fn (CourseMaterial $material) => (int) $material->estimated_duration_minutes);
+        $storedDuration = max(0, (int) ($this->getRawOriginal('duration') ?? 0));
 
-        if ($calculatedDuration > 0) {
-            return $calculatedDuration;
+        // Fast path: trust the stored value if it's been synced and we don't have materials in memory.
+        if (! $this->relationLoaded('materials') && $storedDuration > 0) {
+            return $storedDuration;
         }
 
-        return max(0, (int) ($this->getRawOriginal('duration') ?? 0));
+        $materials = $this->relationLoaded('materials') ? $this->materials : $this->materials()->get(['estimated_duration_minutes']);
+        $calculatedDuration = (int) $materials->sum(fn (CourseMaterial $material) => (int) $material->estimated_duration_minutes);
+
+        return $calculatedDuration > 0 ? $calculatedDuration : $storedDuration;
     }
 
     public function getEstimatedDurationLabelAttribute(): string

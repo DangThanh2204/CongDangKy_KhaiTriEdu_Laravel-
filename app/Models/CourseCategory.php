@@ -47,11 +47,19 @@ class CourseCategory extends Model
             return (int) $this->attributes['courses_count'];
         }
 
+        if ($this->relationLoaded('courses')) {
+            return $this->courses->count();
+        }
+
         return $this->courses()->count();
     }
 
     public function getActiveCoursesCountAttribute()
     {
+        if ($this->relationLoaded('courses')) {
+            return $this->courses->where('status', 'published')->count();
+        }
+
         return $this->courses()->where('status', 'published')->count();
     }
 

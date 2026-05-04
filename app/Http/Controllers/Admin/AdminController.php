@@ -84,14 +84,19 @@ class AdminController extends Controller
             if (Schema::hasTable($userTable)) {
                 $users = User::query()->get();
 
-                $stats['total_users'] = User::count();
-                $stats['total_admins'] = User::admins()->count();
-                $stats['total_instructors'] = User::where('role', 'instructor')->count();
-                $stats['total_students'] = User::where('role', 'student')->count();
-                $stats['today_registrations'] = User::whereDate('created_at', $today)->count();
-                $stats['weekly_registrations'] = User::whereBetween('created_at', [$today->copy()->startOfWeek(), $today->copy()->endOfWeek()])->count();
-                $stats['verified_users'] = $hasVerifiedColumn ? User::where('is_verified', true)->count() : 0;
-                $stats['unverified_users'] = $hasVerifiedColumn ? User::where('is_verified', false)->count() : 0;
+                $weekStart = $today->copy()->startOfWeek();
+                $weekEnd = $today->copy()->endOfWeek();
+                $sevenDaysAgo = $today->copy()->subDays(7);
+                $currentYear = (int) $today->format('Y');
+
+                $stats['total_users'] = $users->count();
+                $stats['total_admins'] = $users->where('role', 'admin')->count();
+                $stats['total_instructors'] = $users->where('role', 'instructor')->count();
+                $stats['total_students'] = $users->where('role', 'student')->count();
+                $stats['today_registrations'] = $users->filter(fn (User $user) => $user->created_at && $user->created_at->isSameDay($today))->count();
+                $stats['weekly_registrations'] = $users->filter(fn (User $user) => $user->created_at && $user->created_at->between($weekStart, $weekEnd))->count();
+                $stats['verified_users'] = $hasVerifiedColumn ? $users->where('is_verified', true)->count() : 0;
+                $stats['unverified_users'] = $hasVerifiedColumn ? $users->where('is_verified', false)->count() : 0;
 
                 $usersByRole = $users
                     ->groupBy(fn (User $user) => $user->roleKey())
@@ -99,22 +104,19 @@ class AdminController extends Controller
                     ->sortKeys();
 
                 $recentRegistrations = $users
-                    ->filter(function (User $user) use ($today) {
-                        return $user->created_at && $user->created_at->gte($today->copy()->subDays(7));
-                    })
+                    ->filter(fn (User $user) => $user->created_at && $user->created_at->gte($sevenDaysAgo))
                     ->groupBy(fn (User $user) => $user->created_at->format('Y-m-d'))
                     ->map(fn (Collection $group) => $group->count())
                     ->sortKeys();
 
-                $recentUsers = User::query()
-                    ->latest('created_at')
+                $recentUsers = $users
+                    ->filter(fn (User $user) => $user->created_at !== null)
+                    ->sortByDesc(fn (User $user) => $user->created_at->timestamp)
                     ->take(6)
-                    ->get();
+                    ->values();
 
                 $monthlyRegistrations = $users
-                    ->filter(function (User $user) {
-                        return $user->created_at && (int) $user->created_at->format('Y') === (int) date('Y');
-                    })
+                    ->filter(fn (User $user) => $user->created_at && (int) $user->created_at->format('Y') === $currentYear)
                     ->groupBy(fn (User $user) => (int) $user->created_at->format('n'))
                     ->map(fn (Collection $group) => $group->count())
                     ->sortKeys();

@@ -12,7 +12,7 @@ class AdminQuizController extends Controller
 {
     public function index()
     {
-        $quizzes = Quiz::with('course')->paginate(15);
+        $quizzes = Quiz::with(['course', 'questions'])->paginate(15);
         return view('admin.quizzes.index', compact('quizzes'));
     }
 

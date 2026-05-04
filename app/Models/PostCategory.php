@@ -32,12 +32,19 @@ class PostCategory extends Model
     // Accessors
     public function getPostsCountAttribute()
     {
+        if ($this->relationLoaded('posts')) {
+            return $this->posts->count();
+        }
+
         return $this->posts()->count();
     }
 
-    // Thêm vào PostCategory.php
     public function getActivePostsCountAttribute()
     {
+        if ($this->relationLoaded('posts')) {
+            return $this->posts->where('status', 'published')->count();
+        }
+
         return $this->posts()->where('status', 'published')->count();
     }
 

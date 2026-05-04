@@ -163,9 +163,9 @@ class User extends Authenticatable
 
     public function updateRating()
     {
-        $reviews = $this->instructorReviews();
-        $this->rating = $reviews->avg('instructor_rating') ?? 0;
-        $this->total_rating = $reviews->count();
+        $ratings = $this->instructorReviews()->pluck('instructor_rating');
+        $this->rating = $ratings->isEmpty() ? 0 : $ratings->avg();
+        $this->total_rating = $ratings->count();
         $this->save();
     }
 

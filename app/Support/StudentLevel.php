@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class StudentLevel
@@ -196,49 +197,8 @@ class StudentLevel
     public static function buildLeaderboard(int $limit = 10, ?int $highlightUserId = null): array
     {
         try {
-            $students = User::students()
-                ->select(['id', 'username', 'fullname', 'email', 'avatar', 'created_at'])
-                ->get();
-
-            if ($students->isEmpty()) {
-                return [
-                    'entries' => collect(),
-                    'current_user' => null,
-                    'total_students' => 0,
-                ];
-            }
-
-            self::attachSummaries($students);
-
-            $sorted = $students->sort(function (User $left, User $right) {
-                $leftSummary = $left->getAttribute('student_level_summary') ?? self::emptyProfile();
-                $rightSummary = $right->getAttribute('student_level_summary') ?? self::emptyProfile();
-
-                if ($leftSummary['points'] !== $rightSummary['points']) {
-                    return $rightSummary['points'] <=> $leftSummary['points'];
-                }
-
-                if ($leftSummary['metrics']['completed_courses'] !== $rightSummary['metrics']['completed_courses']) {
-                    return $rightSummary['metrics']['completed_courses'] <=> $leftSummary['metrics']['completed_courses'];
-                }
-
-                if ($leftSummary['metrics']['study_minutes'] !== $rightSummary['metrics']['study_minutes']) {
-                    return $rightSummary['metrics']['study_minutes'] <=> $leftSummary['metrics']['study_minutes'];
-                }
-
-                return strcmp((string) ($left->fullname ?? $left->username), (string) ($right->fullname ?? $right->username));
-            })->values();
-
-            $entries = $sorted->values()->map(function (User $student, int $index) {
-                $summary = $student->getAttribute('student_level_summary') ?? self::emptyProfile();
-
-                return [
-                    'rank' => $index + 1,
-                    'user' => $student,
-                    'summary' => $summary,
-                    'points' => $summary['points'],
-                    'points_label' => $summary['points_label'],
-                ];
+            $entries = Cache::remember('student.leaderboard.entries', 600, function () {
+                return self::computeLeaderboardEntries();
             });
 
             return [
@@ -257,6 +217,50 @@ class StudentLevel
                 'total_students' => 0,
             ];
         }
+    }
+
+    private static function computeLeaderboardEntries(): Collection
+    {
+        $students = User::students()
+            ->select(['id', 'username', 'fullname', 'email', 'avatar', 'created_at'])
+            ->get();
+
+        if ($students->isEmpty()) {
+            return collect();
+        }
+
+        self::attachSummaries($students);
+
+        $sorted = $students->sort(function (User $left, User $right) {
+            $leftSummary = $left->getAttribute('student_level_summary') ?? self::emptyProfile();
+            $rightSummary = $right->getAttribute('student_level_summary') ?? self::emptyProfile();
+
+            if ($leftSummary['points'] !== $rightSummary['points']) {
+                return $rightSummary['points'] <=> $leftSummary['points'];
+            }
+
+            if ($leftSummary['metrics']['completed_courses'] !== $rightSummary['metrics']['completed_courses']) {
+                return $rightSummary['metrics']['completed_courses'] <=> $leftSummary['metrics']['completed_courses'];
+            }
+
+            if ($leftSummary['metrics']['study_minutes'] !== $rightSummary['metrics']['study_minutes']) {
+                return $rightSummary['metrics']['study_minutes'] <=> $leftSummary['metrics']['study_minutes'];
+            }
+
+            return strcmp((string) ($left->fullname ?? $left->username), (string) ($right->fullname ?? $right->username));
+        })->values();
+
+        return $sorted->map(function (User $student, int $index) {
+            $summary = $student->getAttribute('student_level_summary') ?? self::emptyProfile();
+
+            return [
+                'rank' => $index + 1,
+                'user' => $student,
+                'summary' => $summary,
+                'points' => $summary['points'],
+                'points_label' => $summary['points_label'],
+            ];
+        });
     }
 
     public static function emptyProfile(): array

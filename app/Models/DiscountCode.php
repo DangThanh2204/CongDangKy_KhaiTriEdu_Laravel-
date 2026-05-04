@@ -189,6 +189,12 @@ class DiscountCode extends Model
 
     public function getUsageCountAttribute(): int
     {
+        if ($this->relationLoaded('enrollments')) {
+            return $this->enrollments
+                ->whereNotIn('status', ['rejected', 'cancelled'])
+                ->count();
+        }
+
         return $this->enrollments()
             ->whereNotIn('status', ['rejected', 'cancelled'])
             ->count();

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\MongoModel as Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use MongoDB\Laravel\Eloquent\SoftDeletes;
 
@@ -29,6 +30,19 @@ class Post extends Model
         'published_at' => 'datetime',
         'meta' => 'array'
     ];
+
+    protected static function booted(): void
+    {
+        $flushPublicCaches = function (): void {
+            Cache::forget('home.latest_posts');
+            Cache::forget('news.featured_posts');
+            Cache::forget('news.popular_posts');
+            Cache::forget('news.categories_with_counts');
+        };
+
+        static::saved($flushPublicCaches);
+        static::deleted($flushPublicCaches);
+    }
 
     // Relationships
     public function author()
