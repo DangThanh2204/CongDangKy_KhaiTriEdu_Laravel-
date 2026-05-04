@@ -224,10 +224,11 @@
     <nav class="admin-sidebar">
         <div class="sidebar-header">
             <a href="{{ route('admin.dashboard') }}" class="brand">
-                <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.svg') }}"
+                <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.png') }}"
                      alt=""
                      class="admin-brand-logo"
-                     onerror="if(this.dataset.fb!=='1'&&this.src.indexOf('logo.svg')===-1){this.dataset.fb='1';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-block';}">
+                     onerror="if(this.dataset.fb==='0'){this.dataset.fb='1';this.src='{{ asset('images/logo.png') }}';}else if(this.dataset.fb==='1'){this.dataset.fb='2';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-block';}"
+                     data-fb="0">
                 <i class="fas fa-graduation-cap me-2 admin-brand-fallback-icon" style="display:none;"></i>
                 <span class="brand-text">{{ $siteName }}</span>
                 <small class="brand-subtitle">Admin Panel</small>

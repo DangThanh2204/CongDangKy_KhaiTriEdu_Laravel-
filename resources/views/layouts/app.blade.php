@@ -41,10 +41,11 @@
     <nav class="navbar navbar-expand-xxl navbar-light fixed-top">
         <div class="container">
             <a class="navbar-brand d-inline-flex align-items-center" href="{{ route('home') }}">
-                <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.svg') }}"
+                <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.png') }}"
                      alt=""
                      class="site-brand-logo"
-                     onerror="if(this.dataset.fb!=='1'&&this.src.indexOf('logo.svg')===-1){this.dataset.fb='1';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-flex';}">
+                     onerror="if(this.dataset.fb==='0'){this.dataset.fb='1';this.src='{{ asset('images/logo.png') }}';}else if(this.dataset.fb==='1'){this.dataset.fb='2';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-flex';}"
+                     data-fb="0">
                 <span class="navbar-brand-fallback" style="display:none;align-items:center;">
                     <i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}
                 </span>
@@ -242,11 +243,12 @@
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4">
                     <h5 class="fw-bold mb-3 d-inline-flex align-items-center">
-                        <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.svg') }}"
+                        <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.png') }}"
                              alt=""
                              class="footer-brand-logo"
-                             style="height: 36px; width: auto; filter: brightness(0) invert(1);"
-                             onerror="if(this.dataset.fb!=='1'&&this.src.indexOf('logo.svg')===-1){this.dataset.fb='1';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-flex';}">
+                             style="height: 40px; width: auto;"
+                             onerror="if(this.dataset.fb==='0'){this.dataset.fb='1';this.src='{{ asset('images/logo.png') }}';}else if(this.dataset.fb==='1'){this.dataset.fb='2';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-flex';}"
+                             data-fb="0">
                         <span style="display:none;align-items:center;">
                             <i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}
                         </span>
