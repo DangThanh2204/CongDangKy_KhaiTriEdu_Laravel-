@@ -47,7 +47,7 @@ class RenderDemoSeeder extends Seeder
     {
         return [
             'admin' => $this->upsertUser('admin@khaitri.edu.vn', 'admin', 'Khai Trí Admin', 'admin'),
-            'instructor' => $this->upsertUser('giangvien@khaitri.edu.vn', 'giangvien', 'Nguyễn Minh An', 'instructor'),
+            'instructor' => $this->upsertUser('giangvien1@khaitri.edu.vn', 'giangvien1', 'Nguyễn Minh An', 'instructor'),
             'student_one' => $this->upsertUser('hocvien1@khaitri.edu.vn', 'hocvien1', 'Trần Gia Hân', 'student'),
             'student_two' => $this->upsertUser('hocvien2@khaitri.edu.vn', 'hocvien2', 'Lê Quốc Bảo', 'student'),
             'student_three' => $this->upsertUser('hocvien3@khaitri.edu.vn', 'hocvien3', 'Phạm Khánh Linh', 'student'),

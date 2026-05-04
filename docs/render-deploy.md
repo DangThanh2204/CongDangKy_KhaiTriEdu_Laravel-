@@ -115,7 +115,7 @@ mongodb+srv://myuser:mypassword@cluster0.xxxxx.mongodb.net/khai_tri_edu?retryWri
 ## Tai khoan demo sau khi seed
 
 - Admin: `admin@khaitri.edu.vn` / `Demo@123`
-- Giang vien: `giangvien@khaitri.edu.vn` / `Demo@123`
+- Giang vien: `giangvien1@khaitri.edu.vn` / `Demo@123`
 - Hoc vien 1: `hocvien1@khaitri.edu.vn` / `Demo@123`
 - Hoc vien 2: `hocvien2@khaitri.edu.vn` / `Demo@123`
 - Hoc vien 3: `hocvien3@khaitri.edu.vn` / `Demo@123`
