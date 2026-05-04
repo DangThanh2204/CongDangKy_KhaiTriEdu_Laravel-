@@ -225,7 +225,11 @@
         <div class="sidebar-header">
             <a href="{{ route('admin.dashboard') }}" class="brand">
                 @if($siteLogo)
-                    <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ $siteName }}" class="admin-brand-logo">
+                    <img src="{{ asset('storage/' . $siteLogo) }}"
+                         alt=""
+                         class="admin-brand-logo"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
+                    <i class="fas fa-graduation-cap me-2 admin-brand-fallback-icon" style="display:none;"></i>
                 @else
                     <i class="fas fa-graduation-cap me-2"></i>
                 @endif
