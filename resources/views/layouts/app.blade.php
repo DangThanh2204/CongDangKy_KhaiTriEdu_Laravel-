@@ -43,12 +43,11 @@
             <a class="navbar-brand d-inline-flex align-items-center" href="{{ route('home') }}">
                 <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.png') }}"
                      alt=""
-                     class="site-brand-logo"
-                     onerror="if(this.dataset.fb==='0'){this.dataset.fb='1';this.src='{{ asset('images/logo.png') }}';}else if(this.dataset.fb==='1'){this.dataset.fb='2';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-flex';}"
+                     class="site-brand-logo me-2"
+                     onerror="if(this.dataset.fb==='0'){this.dataset.fb='1';this.src='{{ asset('images/logo.png') }}';}else if(this.dataset.fb==='1'){this.dataset.fb='2';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-block';}"
                      data-fb="0">
-                <span class="navbar-brand-fallback" style="display:none;align-items:center;">
-                    <i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}
-                </span>
+                <i class="fas fa-graduation-cap me-2 site-brand-fallback-icon" style="display:none;"></i>
+                <span class="site-brand-text fw-bold">{{ $siteName }}</span>
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Mở menu">
@@ -245,13 +244,12 @@
                     <h5 class="fw-bold mb-3 d-inline-flex align-items-center">
                         <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.png') }}"
                              alt=""
-                             class="footer-brand-logo"
+                             class="footer-brand-logo me-2"
                              style="height: 40px; width: auto;"
-                             onerror="if(this.dataset.fb==='0'){this.dataset.fb='1';this.src='{{ asset('images/logo.png') }}';}else if(this.dataset.fb==='1'){this.dataset.fb='2';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-flex';}"
+                             onerror="if(this.dataset.fb==='0'){this.dataset.fb='1';this.src='{{ asset('images/logo.png') }}';}else if(this.dataset.fb==='1'){this.dataset.fb='2';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-block';}"
                              data-fb="0">
-                        <span style="display:none;align-items:center;">
-                            <i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}
-                        </span>
+                        <i class="fas fa-graduation-cap me-2" style="display:none;"></i>
+                        <span>{{ $siteName }}</span>
                     </h5>
                     <p class="text-light">{{ $siteTagline ?: 'Nơi ươm mầm tri thức, khai sáng tương lai với các chương trình đào tạo chất lượng cao.' }}</p>
                     <div class="social-links mt-4 d-flex gap-3">

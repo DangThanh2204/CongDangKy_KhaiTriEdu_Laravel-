@@ -16,11 +16,16 @@
                                 $siteTagline = \App\Models\Setting::get('site_tagline', 'Nền tảng học tập trực tuyến');
                             @endphp
 
-                            @if($siteLogo)
-                                <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ $siteName }}" class="mb-3" style="max-height: 80px; object-fit: contain;">
-                            @endif
+                            <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.png') }}"
+                                 alt=""
+                                 class="mb-2 auth-brand-logo"
+                                 style="max-height: 80px; object-fit: contain;"
+                                 onerror="if(this.dataset.fb==='0'){this.dataset.fb='1';this.src='{{ asset('images/logo.png') }}';}else if(this.dataset.fb==='1'){this.dataset.fb='2';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='block';}"
+                                 data-fb="0">
+                            <i class="fas fa-graduation-cap fa-3x text-primary mb-3" style="display:none;"></i>
+                            <h3 class="fw-bold text-primary mb-1">{{ $siteName }}</h3>
 
-                            <h2 class="fw-bold text-primary">
+                            <h2 class="fw-bold text-primary mt-3">
                                 <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
                             </h2>
                             <p class="text-muted">{{ $siteTagline }}</p>
