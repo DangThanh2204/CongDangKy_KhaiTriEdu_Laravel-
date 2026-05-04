@@ -40,11 +40,14 @@
 <body class="@yield('page-class')">
     <nav class="navbar navbar-expand-xxl navbar-light fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="{{ route('home') }}">
+            <a class="navbar-brand d-inline-flex align-items-center" href="{{ route('home') }}">
                 <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.svg') }}"
-                     alt="{{ $siteName }}"
+                     alt=""
                      class="site-brand-logo"
-                     onerror="this.onerror=null;this.src='{{ asset('images/logo.svg') }}';">
+                     onerror="if(this.dataset.fb!=='1'&&this.src.indexOf('logo.svg')===-1){this.dataset.fb='1';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-flex';}">
+                <span class="navbar-brand-fallback" style="display:none;align-items:center;">
+                    <i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}
+                </span>
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Mở menu">
@@ -238,12 +241,15 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <h5 class="fw-bold mb-3">
+                    <h5 class="fw-bold mb-3 d-inline-flex align-items-center">
                         <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.svg') }}"
-                             alt="{{ $siteName }}"
+                             alt=""
                              class="footer-brand-logo"
                              style="height: 36px; width: auto; filter: brightness(0) invert(1);"
-                             onerror="this.onerror=null;this.src='{{ asset('images/logo.svg') }}';">
+                             onerror="if(this.dataset.fb!=='1'&&this.src.indexOf('logo.svg')===-1){this.dataset.fb='1';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-flex';}">
+                        <span style="display:none;align-items:center;">
+                            <i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}
+                        </span>
                     </h5>
                     <p class="text-light">{{ $siteTagline ?: 'Nơi ươm mầm tri thức, khai sáng tương lai với các chương trình đào tạo chất lượng cao.' }}</p>
                     <div class="social-links mt-4 d-flex gap-3">

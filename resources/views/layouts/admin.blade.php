@@ -227,7 +227,8 @@
                 <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.svg') }}"
                      alt=""
                      class="admin-brand-logo"
-                     onerror="this.onerror=null;this.src='{{ asset('images/logo.svg') }}';">
+                     onerror="if(this.dataset.fb!=='1'&&this.src.indexOf('logo.svg')===-1){this.dataset.fb='1';this.src='{{ asset('images/logo.svg') }}';}else{this.style.display='none';this.nextElementSibling.style.display='inline-block';}">
+                <i class="fas fa-graduation-cap me-2 admin-brand-fallback-icon" style="display:none;"></i>
                 <span class="brand-text">{{ $siteName }}</span>
                 <small class="brand-subtitle">Admin Panel</small>
             </a>
