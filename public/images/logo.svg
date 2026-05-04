@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 52" role="img" aria-label="Khai Trí Edu">
+    <defs>
+        <linearGradient id="ktCapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#3b82f6"/>
+            <stop offset="100%" stop-color="#1d4ed8"/>
+        </linearGradient>
+    </defs>
+    <g transform="translate(4,6)">
+        <path d="M22,2 L42,12 L22,22 L2,12 Z" fill="url(#ktCapGrad)"/>
+        <path d="M10,16 L10,28 Q22,34 34,28 L34,16 L22,22 Z" fill="url(#ktCapGrad)"/>
+        <path d="M22,6 L36,12 L22,18 L8,12 Z" fill="rgba(255,255,255,0.18)"/>
+        <line x1="42" y1="12" x2="42" y2="28" stroke="#f97316" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="42" cy="30" r="2.5" fill="#f97316"/>
+    </g>
+    <text x="58" y="22" font-family="Segoe UI, system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#1e293b">Khai Trí Edu</text>
+    <text x="58" y="40" font-family="Segoe UI, system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#1d4ed8" letter-spacing="2.6">CỔNG ĐĂNG KÝ HỌC</text>
+</svg>

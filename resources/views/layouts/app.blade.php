@@ -41,17 +41,10 @@
     <nav class="navbar navbar-expand-xxl navbar-light fixed-top">
         <div class="container">
             <a class="navbar-brand" href="{{ route('home') }}">
-                @if($siteLogo)
-                    <img src="{{ asset('storage/' . $siteLogo) }}"
-                         alt="{{ $siteName }}"
-                         class="site-brand-logo"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
-                    <span class="navbar-brand-fallback" style="display:none;align-items:center;">
-                        <i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}
-                    </span>
-                @else
-                    <i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}
-                @endif
+                <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.svg') }}"
+                     alt="{{ $siteName }}"
+                     class="site-brand-logo"
+                     onerror="this.onerror=null;this.src='{{ asset('images/logo.svg') }}';">
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Mở menu">
@@ -246,16 +239,11 @@
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4">
                     <h5 class="fw-bold mb-3">
-                        @if($siteLogo)
-                            <img src="{{ asset('storage/' . $siteLogo) }}"
-                                 alt="{{ $siteName }}"
-                                 class="footer-brand-logo me-2"
-                                 style="height: 28px; width: auto;"
-                                 onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
-                            <span style="display:none;"><i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}</span>
-                        @else
-                            <i class="fas fa-graduation-cap me-2"></i>{{ $siteName }}
-                        @endif
+                        <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.svg') }}"
+                             alt="{{ $siteName }}"
+                             class="footer-brand-logo"
+                             style="height: 36px; width: auto; filter: brightness(0) invert(1);"
+                             onerror="this.onerror=null;this.src='{{ asset('images/logo.svg') }}';">
                     </h5>
                     <p class="text-light">{{ $siteTagline ?: 'Nơi ươm mầm tri thức, khai sáng tương lai với các chương trình đào tạo chất lượng cao.' }}</p>
                     <div class="social-links mt-4 d-flex gap-3">

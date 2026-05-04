@@ -224,15 +224,10 @@
     <nav class="admin-sidebar">
         <div class="sidebar-header">
             <a href="{{ route('admin.dashboard') }}" class="brand">
-                @if($siteLogo)
-                    <img src="{{ asset('storage/' . $siteLogo) }}"
-                         alt=""
-                         class="admin-brand-logo"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block';">
-                    <i class="fas fa-graduation-cap me-2 admin-brand-fallback-icon" style="display:none;"></i>
-                @else
-                    <i class="fas fa-graduation-cap me-2"></i>
-                @endif
+                <img src="{{ $siteLogo ? asset('storage/' . $siteLogo) : asset('images/logo.svg') }}"
+                     alt=""
+                     class="admin-brand-logo"
+                     onerror="this.onerror=null;this.src='{{ asset('images/logo.svg') }}';">
                 <span class="brand-text">{{ $siteName }}</span>
                 <small class="brand-subtitle">Admin Panel</small>
             </a>
