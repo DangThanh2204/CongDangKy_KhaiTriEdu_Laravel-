@@ -117,7 +117,7 @@
                                             <i class="fas fa-eye me-1"></i>{{ $post->view_count }}
                                         </span>
                                         <span>
-                                            <i class="fas fa-user me-1"></i>{{ $post->author->name ?? 'Admin' }}
+                                            <i class="fas fa-user me-1"></i>{{ $post->author?->fullname ?? 'Admin' }}
                                         </span>
                                     </div>
                                     <a href="{{ route('news.show', $post->slug) }}" class="btn btn-primary btn-sm">
@@ -177,7 +177,7 @@
                                                     <i class="fas fa-eye me-1"></i>{{ $post->view_count }} lượt xem
                                                 </span>
                                                 <span>
-                                                    <i class="fas fa-user me-1"></i>{{ $post->author->name ?? 'Admin' }}
+                                                    <i class="fas fa-user me-1"></i>{{ $post->author?->fullname ?? 'Admin' }}
                                                 </span>
                                             </div>
                                             <a href="{{ route('news.show', $post->slug) }}" class="btn btn-primary btn-sm">
@@ -232,12 +232,7 @@
                                     <span>{{ $category->name }}</span>
                                 </div>
                                 <span class="badge bg-primary rounded-pill">
-                                    @php
-                                        $postCount = \App\Models\Post::published()
-                                            ->where('category_id', $category->id)
-                                            ->count();
-                                    @endphp
-                                    {{ $postCount }}
+                                    {{ $category->posts_count ?? 0 }}
                                 </span>
                             </a>
                             @endforeach

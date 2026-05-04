@@ -119,7 +119,7 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge bg-info">{{ $category->posts_count ?? $category->posts()->count() }}</span>
+                            <span class="badge bg-info">{{ $category->posts_count ?? 0 }}</span>
                         </td>
                         <td>
                             <span class="badge bg-secondary">{{ $category->order }}</span>

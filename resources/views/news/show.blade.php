@@ -34,7 +34,7 @@
                             
                             <div class="d-flex align-items-center text-muted mb-4">
                                 <small class="me-3">
-                                    <i class="fas fa-user me-1"></i>{{ $post->author->name ?? 'Admin' }}
+                                    <i class="fas fa-user me-1"></i>{{ $post->author?->fullname ?? 'Admin' }}
                                 </small>
                                 <small class="me-3">
                                     <i class="fas fa-eye me-1"></i>{{ $post->view_count }} lượt xem

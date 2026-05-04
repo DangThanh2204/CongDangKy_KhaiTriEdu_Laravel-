@@ -402,7 +402,7 @@
 
                                 <div class="d-flex justify-content-between align-items-center text-muted small mt-auto mb-3">
                                     <span><i class="fas fa-eye me-1"></i>{{ $post->view_count }} lượt xem</span>
-                                    <span><i class="fas fa-user me-1"></i>{{ $post->author->name ?? 'Admin' }}</span>
+                                    <span><i class="fas fa-user me-1"></i>{{ $post->author?->fullname ?? 'Admin' }}</span>
                                 </div>
 
                                 <a href="{{ route('news.show', $post->slug) }}" class="btn btn-outline-primary btn-sm mt-auto">

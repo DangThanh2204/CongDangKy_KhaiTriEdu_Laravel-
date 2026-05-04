@@ -43,7 +43,7 @@
                                             {{ $quiz->is_active ? 'Active' : 'Inactive' }}
                                         </span>
                                     </td>
-                                    <td>{{ $quiz->questions()->count() }}</td>
+                                    <td>{{ $quiz->questions->count() }}</td>
                                     <td>
                                         <div class="btn-group">
                                             <a href="{{ route('admin.quizzes.questions', $quiz) }}" class="btn btn-sm btn-info">
