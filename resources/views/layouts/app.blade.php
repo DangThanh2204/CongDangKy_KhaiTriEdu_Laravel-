@@ -240,22 +240,29 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 col-md-6 mb-4">
-                    <h5 class="fw-bold mb-3"><i class="fas fa-graduation-cap me-2"></i>Khai Trí Edu</h5>
-                    <p class="text-light">Nơi ươm mầm tri thức, khai sáng tương lai với các chương trình đào tạo chất lượng cao.</p>
+                    <h5 class="fw-bold mb-3">
+                        @if($siteLogo)
+                            <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ $siteName }}" class="footer-brand-logo me-2" style="height: 28px; width: auto;">
+                        @else
+                            <i class="fas fa-graduation-cap me-2"></i>
+                        @endif
+                        {{ $siteName }}
+                    </h5>
+                    <p class="text-light">{{ $siteTagline ?: 'Nơi ươm mầm tri thức, khai sáng tương lai với các chương trình đào tạo chất lượng cao.' }}</p>
                     <div class="social-links mt-4 d-flex gap-3">
-                        <a href="#" class="facebook" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="youtube" title="YouTube"><i class="fab fa-youtube"></i></a>
-                        <a href="#" class="tiktok" title="TikTok"><i class="fab fa-tiktok"></i></a>
-                        <a href="#" class="zalo" title="Zalo"><i class="fab fa-facebook-messenger"></i></a>
+                        <a href="{{ $facebookUrl ?: '#' }}" class="facebook" title="Facebook" @if(!$facebookUrl) aria-disabled="true" @else target="_blank" rel="noopener" @endif><i class="fab fa-facebook-f"></i></a>
+                        <a href="{{ $youtubeUrl ?: '#' }}" class="youtube" title="YouTube" @if(!$youtubeUrl) aria-disabled="true" @else target="_blank" rel="noopener" @endif><i class="fab fa-youtube"></i></a>
+                        <a href="{{ $tiktokUrl ?: '#' }}" class="tiktok" title="TikTok" @if(!$tiktokUrl) aria-disabled="true" @else target="_blank" rel="noopener" @endif><i class="fab fa-tiktok"></i></a>
+                        <a href="{{ $zaloUrl ?: '#' }}" class="zalo" title="Zalo" @if(!$zaloUrl) aria-disabled="true" @else target="_blank" rel="noopener" @endif><i class="fas fa-comment-dots"></i></a>
                     </div>
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-4">
                     <h5 class="fw-bold mb-3">Liên hệ</h5>
                     <div class="contact-info">
-                        <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>ĐƯỜNG UNG VĂN KHIÊM, PHƯỜNG LONG XUYÊN, TỈNH AN GIANG</p>
-                        <p class="mb-2"><i class="fas fa-phone me-2"></i>(028) 1234 5678</p>
-                        <p class="mb-2"><i class="fas fa-envelope me-2"></i>dhthanh2004@gmail.com</p>
+                        <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>{{ $contactAddress ?: 'Đường Ung Văn Khiêm, Phường Long Xuyên, Tỉnh An Giang' }}</p>
+                        <p class="mb-2"><i class="fas fa-phone me-2"></i>{{ $contactPhone ?: '(028) 1234 5678' }}</p>
+                        <p class="mb-2"><i class="fas fa-envelope me-2"></i>{{ $contactEmail ?: 'dhthanh2004@gmail.com' }}</p>
                         <p class="mb-0"><i class="fas fa-clock me-2"></i>Thứ 2 - Thứ 7: 7:00-11:00 13:00-17:00</p>
                     </div>
                 </div>

@@ -165,26 +165,46 @@
                                         @enderror
                                     </div>
 
-                                    <div class="col-md-4">
-                                        <label for="facebook_url" class="form-label">Facebook URL</label>
-                                        <input type="url" class="form-control @error('facebook_url') is-invalid @enderror" id="facebook_url" name="facebook_url" value="{{ old('facebook_url', $settings['facebook_url'] ?? '') }}" placeholder="https://facebook.com/yourpage">
+                                    <div class="col-md-6">
+                                        <label for="facebook_url" class="form-label"><i class="fab fa-facebook-f text-primary me-1"></i>Facebook</label>
+                                        <input type="url" class="form-control @error('facebook_url') is-invalid @enderror" id="facebook_url" name="facebook_url" value="{{ old('facebook_url', $settings['facebook_url'] ?? '') }}" placeholder="https://facebook.com/khaitri">
                                         @error('facebook_url')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
 
-                                    <div class="col-md-4">
-                                        <label for="twitter_url" class="form-label">Twitter URL</label>
-                                        <input type="url" class="form-control @error('twitter_url') is-invalid @enderror" id="twitter_url" name="twitter_url" value="{{ old('twitter_url', $settings['twitter_url'] ?? '') }}" placeholder="https://twitter.com/yourhandle">
-                                        @error('twitter_url')
+                                    <div class="col-md-6">
+                                        <label for="youtube_url" class="form-label"><i class="fab fa-youtube text-danger me-1"></i>YouTube</label>
+                                        <input type="url" class="form-control @error('youtube_url') is-invalid @enderror" id="youtube_url" name="youtube_url" value="{{ old('youtube_url', $settings['youtube_url'] ?? '') }}" placeholder="https://youtube.com/@khaitri">
+                                        @error('youtube_url')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
 
-                                    <div class="col-md-4">
-                                        <label for="instagram_url" class="form-label">Instagram URL</label>
-                                        <input type="url" class="form-control @error('instagram_url') is-invalid @enderror" id="instagram_url" name="instagram_url" value="{{ old('instagram_url', $settings['instagram_url'] ?? '') }}" placeholder="https://instagram.com/yourprofile">
-                                        @error('instagram_url')
+                                    <div class="col-md-6">
+                                        <label for="tiktok_url" class="form-label"><i class="fab fa-tiktok text-dark me-1"></i>TikTok</label>
+                                        <input type="url" class="form-control @error('tiktok_url') is-invalid @enderror" id="tiktok_url" name="tiktok_url" value="{{ old('tiktok_url', $settings['tiktok_url'] ?? '') }}" placeholder="https://tiktok.com/@khaitri">
+                                        @error('tiktok_url')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="zalo_url" class="form-label"><i class="fas fa-comment-dots text-info me-1"></i>Zalo OA</label>
+                                        <input type="url" class="form-control @error('zalo_url') is-invalid @enderror" id="zalo_url" name="zalo_url" value="{{ old('zalo_url', $settings['zalo_url'] ?? '') }}" placeholder="https://zalo.me/...">
+                                        @error('zalo_url')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label for="google_maps_embed" class="form-label"><i class="fas fa-map-marked-alt text-success me-1"></i>Google Maps Embed URL</label>
+                                        <input type="text" class="form-control @error('google_maps_embed') is-invalid @enderror" id="google_maps_embed" name="google_maps_embed" value="{{ old('google_maps_embed', $settings['google_maps_embed'] ?? '') }}" placeholder="https://maps.google.com/maps?q=...&output=embed">
+                                        <div class="form-text">
+                                            Mở Google Maps → tìm địa chỉ → Share → Embed a map → copy phần <code>src</code> trong iframe.
+                                            Để trống sẽ dùng mặc định: Long Xuyên, An Giang.
+                                        </div>
+                                        @error('google_maps_embed')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>

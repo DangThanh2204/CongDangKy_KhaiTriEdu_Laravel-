@@ -54,6 +54,8 @@ class AppServiceProvider extends ServiceProvider
 
     private function resolveSharedSiteSettings(): array
     {
+        $defaultMapsEmbed = 'https://maps.google.com/maps?q=Ung+Van+Khiem,+Long+Xuyen,+An+Giang&t=&z=15&ie=UTF8&iwloc=&output=embed';
+
         $defaults = [
             'siteName' => 'Khai Tri Education',
             'siteTagline' => 'Nen tang hoc tap truc tuyen',
@@ -64,8 +66,10 @@ class AppServiceProvider extends ServiceProvider
             'contactPhone' => '',
             'contactAddress' => '',
             'facebookUrl' => '',
-            'twitterUrl' => '',
-            'instagramUrl' => '',
+            'youtubeUrl' => '',
+            'tiktokUrl' => '',
+            'zaloUrl' => '',
+            'googleMapsEmbed' => $defaultMapsEmbed,
         ];
 
         try {
@@ -79,8 +83,10 @@ class AppServiceProvider extends ServiceProvider
                 'contact_phone' => $defaults['contactPhone'],
                 'contact_address' => $defaults['contactAddress'],
                 'facebook_url' => $defaults['facebookUrl'],
-                'twitter_url' => $defaults['twitterUrl'],
-                'instagram_url' => $defaults['instagramUrl'],
+                'youtube_url' => $defaults['youtubeUrl'],
+                'tiktok_url' => $defaults['tiktokUrl'],
+                'zalo_url' => $defaults['zaloUrl'],
+                'google_maps_embed' => $defaults['googleMapsEmbed'],
             ]);
 
             return [
@@ -93,8 +99,10 @@ class AppServiceProvider extends ServiceProvider
                 'contactPhone' => $values['contact_phone'],
                 'contactAddress' => $values['contact_address'],
                 'facebookUrl' => $values['facebook_url'],
-                'twitterUrl' => $values['twitter_url'],
-                'instagramUrl' => $values['instagram_url'],
+                'youtubeUrl' => $values['youtube_url'],
+                'tiktokUrl' => $values['tiktok_url'],
+                'zaloUrl' => $values['zalo_url'],
+                'googleMapsEmbed' => $values['google_maps_embed'] ?: $defaultMapsEmbed,
             ];
         } catch (\Throwable $exception) {
             report($exception);
