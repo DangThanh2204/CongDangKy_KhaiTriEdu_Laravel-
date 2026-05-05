@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Instructor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Course;
-use App\Models\CourseClass;
 use App\Models\CourseEnrollment;
 use Illuminate\Http\Request;
 
