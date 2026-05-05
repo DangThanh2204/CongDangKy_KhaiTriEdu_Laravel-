@@ -673,28 +673,17 @@ class AuthController extends Controller
         $issues = [];
         $mailer = (string) config('mail.default');
 
-        $required = match ($mailer) {
-            'smtp' => [
-                'mail.mailers.smtp.host' => 'MAIL_HOST',
-                'mail.mailers.smtp.port' => 'MAIL_PORT',
-                'mail.mailers.smtp.username' => 'MAIL_USERNAME',
-                'mail.mailers.smtp.password' => 'MAIL_PASSWORD',
-                'mail.from.address' => 'MAIL_FROM_ADDRESS',
-            ],
-            'resend' => [
-                'services.resend.key' => 'RESEND_API_KEY',
-                'mail.from.address' => 'MAIL_FROM_ADDRESS',
-            ],
-            default => null,
-        };
-
-        if ($required === null) {
-            $issues[] = 'MAIL_MAILER phải là smtp hoặc resend để gửi OTP thật.';
-
-            return $issues;
+        if ($mailer !== 'smtp') {
+            $issues[] = 'MAIL_MAILER phải là smtp để gửi OTP thật.';
         }
 
-        foreach ($required as $configKey => $label) {
+        foreach ([
+            'mail.mailers.smtp.host' => 'MAIL_HOST',
+            'mail.mailers.smtp.port' => 'MAIL_PORT',
+            'mail.mailers.smtp.username' => 'MAIL_USERNAME',
+            'mail.mailers.smtp.password' => 'MAIL_PASSWORD',
+            'mail.from.address' => 'MAIL_FROM_ADDRESS',
+        ] as $configKey => $label) {
             $value = config($configKey);
 
             if ($value === null || trim((string) $value) === '') {
@@ -731,7 +720,7 @@ class AuthController extends Controller
         }
 
         if (str_contains($lower, 'connection') || str_contains($lower, 'timed out') || str_contains($lower, 'timeout') || str_contains($lower, 'could not open') || str_contains($lower, 'getaddrinfo')) {
-            return 'Render đang chặn outbound SMTP (port 465/587). Đăng ký https://resend.com lấy API key, đặt MAIL_MAILER=resend, RESEND_API_KEY=re_..., MAIL_FROM_ADDRESS=onboarding@resend.dev rồi redeploy.';
+            return 'Không kết nối được tới SMTP server. Kiểm tra MAIL_HOST=smtp.gmail.com và MAIL_PORT (465 với MAIL_SCHEME=smtps, hoặc 587 với MAIL_SCHEME để trống). Render có thể đang block port — thử đổi sang port còn lại.';
         }
 
         if (str_contains($lower, 'quota') || str_contains($lower, 'rate limit') || str_contains($lower, 'too many')) {
