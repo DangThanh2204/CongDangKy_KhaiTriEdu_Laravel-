@@ -182,13 +182,6 @@
                 @if($isEnrolled)
                     <div class="card shadow-sm border-0 mb-4">
                         <div class="card-body">
-                            @if(session('success'))
-                                <div class="alert alert-success">{{ session('success') }}</div>
-                            @endif
-                            @if(session('error'))
-                                <div class="alert alert-danger">{{ session('error') }}</div>
-                            @endif
-
                             <h4 class="fw-bold mb-3">Đánh giá khóa học và giảng viên</h4>
                             <form action="{{ route('courses.reviews.store', $course) }}" method="POST">
                                 @csrf
@@ -283,14 +276,6 @@
                                 <a href="{{ route('wallet.index') }}" class="alert-link">Nạp thêm tiền vào ví</a>
                                 rồi quay lại đăng ký.
                             </div>
-                        @endif
-
-                        @if(session('success'))
-                            <div class="alert alert-success">{{ session('success') }}</div>
-                        @endif
-
-                        @if(session('error'))
-                            <div class="alert alert-danger">{{ session('error') }}</div>
                         @endif
 
                         @if(! empty($promotionPreview['automatic_options']))
@@ -388,21 +373,32 @@
                                 @if($currentEnrollmentIsSeatHeld)
                                     <div class="alert alert-primary mb-3">
                                         <i class="fas fa-hourglass-half me-2"></i>
-                                        Bạn đang được giữ chỗ 24h cho đợt học <strong>{{ $pendingClassName }}</strong>
+                                        Bạn đang được giữ chỗ cho đợt học <strong>{{ $pendingClassName }}</strong>
                                         đến <strong>{{ optional($seatHoldEndsAt)->format('d/m/Y H:i') }}</strong>.
+                                        Quá hạn mà chưa thanh toán, hệ thống sẽ tự hủy đăng ký.
                                     </div>
                                     @if($requiresPaidCheckout && ! $walletEnough)
                                         <a href="{{ route('wallet.index') }}" class="btn btn-primary w-100">
-                                            <i class="fas fa-wallet me-2"></i>Nạp ví để giữ chỗ
+                                            <i class="fas fa-wallet me-2"></i>Nạp ví để thanh toán
                                         </a>
                                         <small class="text-muted d-block mt-2">Bạn cần nạp thêm {{ number_format($walletShortage, 0) }}đ trước khi hết hạn giữ chỗ.</small>
                                     @else
-                                        ${1}                                            <input type="hidden" name="discount_code" value="{{ $selectedDiscountCode }}" data-discount-code-target><button type="submit" class="btn btn-primary w-100">
-                                                <i class="fas fa-check-circle me-2"></i>Xác nhận giữ chỗ
+                                        <form action="{{ route('courses.confirm-seat-hold', $course) }}" method="POST" class="d-grid gap-2">
+                                            @csrf
+                                            <input type="hidden" name="discount_code" value="{{ $selectedDiscountCode }}" data-discount-code-target>
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="fas fa-check-circle me-2"></i>Xác nhận thanh toán
                                             </button>
                                         </form>
-                                        <small class="text-muted d-block mt-2">Sau khi xác nhận, yêu cầu đăng ký sẽ tiếp tục vào bước chờ admin duyệt hoặc kích hoạt học ngay tùy loại khóa học.</small>
+                                        <small class="text-muted d-block mt-2">Sau khi xác nhận, hệ thống sẽ trừ tiền từ ví và chuyển yêu cầu sang bước chờ admin duyệt.</small>
                                     @endif
+                                    <form action="{{ route('courses.unenroll', $course) }}" method="POST" class="mt-2">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Bạn có chắc muốn hủy giữ chỗ?')">
+                                            Hủy giữ chỗ
+                                        </button>
+                                    </form>
                                 @elseif($currentEnrollmentIsWaitlisted)
                                     <div class="alert alert-dark mb-3">
                                         <i class="fas fa-list-ol me-2"></i>
@@ -473,7 +469,7 @@
                                                         </div>
                                                     </div>
                                                     @if($isHeldClass)
-                                                        <span class="badge bg-primary">Giữ chỗ 24h</span>
+                                                        <span class="badge bg-primary">Đang giữ chỗ</span>
                                                     @elseif($isWaitlistClass)
                                                         <span class="badge bg-dark">Trong hàng chờ</span>
                                                     @elseif($isThisClass)
@@ -497,11 +493,14 @@
                                                 @if($isHeldClass)
                                                     @if($requiresPaidCheckout && ! $walletEnough)
                                                         <a href="{{ route('wallet.index') }}" class="btn btn-primary btn-sm w-100">
-                                                            <i class="fas fa-wallet me-1"></i>Nạp ví để giữ chỗ
+                                                            <i class="fas fa-wallet me-1"></i>Nạp ví để thanh toán
                                                         </a>
                                                     @else
-                                                        ${1}                                                            <input type="hidden" name="discount_code" value="{{ $selectedDiscountCode }}" data-discount-code-target><button type="submit" class="btn btn-primary btn-sm w-100">
-                                                                Xác nhận giữ chỗ
+                                                        <form action="{{ route('courses.confirm-seat-hold', $course) }}" method="POST" class="d-grid gap-2">
+                                                            @csrf
+                                                            <input type="hidden" name="discount_code" value="{{ $selectedDiscountCode }}" data-discount-code-target>
+                                                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                                Xác nhận thanh toán
                                                             </button>
                                                         </form>
                                                     @endif
@@ -524,10 +523,6 @@
                                                     @if($waitlistCount > 0)
                                                         <div class="small text-muted mt-2">Hiện có {{ $waitlistCount }} học viên đang chờ.</div>
                                                     @endif
-                                                @elseif($requiresPaidCheckout && ! $walletEnough)
-                                                    <a href="{{ route('wallet.index') }}" class="btn btn-primary btn-sm w-100">
-                                                        <i class="fas fa-wallet me-1"></i>Nạp ví rồi đăng ký
-                                                    </a>
                                                 @else
                                                     <form action="{{ route('courses.enroll', $course) }}" method="POST" class="d-grid gap-2">
                                                         @csrf
@@ -535,14 +530,17 @@
                                                         <input type="hidden" name="discount_code" value="{{ $selectedDiscountCode }}" data-discount-code-target>
                                                         <input type="hidden" name="payment_method" value="wallet">
                                                         <button type="submit" class="btn btn-primary btn-sm w-100">
-                                                            {{ $requiresPaidCheckout ? 'Thanh toán ví và gửi yêu cầu' : 'Gửi yêu cầu đăng ký' }}
+                                                            {{ $requiresPaidCheckout ? 'Đăng ký giữ chỗ' : 'Gửi yêu cầu đăng ký' }}
                                                         </button>
                                                     </form>
+                                                    @if($requiresPaidCheckout)
+                                                        <small class="text-muted d-block mt-2">Đăng ký trước, thanh toán sau. Quá hạn giữ chỗ chưa đóng tiền sẽ tự hủy.</small>
+                                                    @endif
                                                 @endif
                                             </div>
                                         @endforeach
                                     </div>
-                                    <small class="text-muted d-block mt-3">Khi lớp đầy, học viên sẽ được đưa vào hàng chờ. Khi có chỗ trống, hệ thống sẽ tự giữ chỗ 24h cho người kế tiếp để xác nhận đăng ký.</small>
+                                    <small class="text-muted d-block mt-3">Đăng ký giữ chỗ trước, thanh toán sau. Khi lớp đầy, học viên được đưa vào hàng chờ và sẽ được giữ chỗ khi có chỗ trống. Quá hạn giữ chỗ chưa thanh toán, hệ thống sẽ tự hủy đăng ký.</small>
                                 @endif
                             @endif
                         @endguest

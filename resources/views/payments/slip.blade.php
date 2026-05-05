@@ -41,14 +41,6 @@
                         <p class="text-muted mb-0">Theo dõi trạng thái giao dịch và tiếp tục hoàn tất thanh toán cho khóa học của bạn.</p>
                     </div>
 
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
-
-                    @if(session('error'))
-                        <div class="alert alert-danger">{{ session('error') }}</div>
-                    @endif
-
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <div class="border rounded-3 p-3 h-100 bg-light-subtle">

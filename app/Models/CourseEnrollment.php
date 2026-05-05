@@ -319,7 +319,7 @@ class CourseEnrollment extends Model
     public function getStatusTextAttribute()
     {
         if ($this->hasActiveSeatHold()) {
-            return 'Giữ chỗ 24h';
+            return 'Đang giữ chỗ';
         }
 
         if ($this->isWaitlisted()) {

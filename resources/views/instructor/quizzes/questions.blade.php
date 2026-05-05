@@ -19,10 +19,6 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
-
                     @if($questions->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-striped">

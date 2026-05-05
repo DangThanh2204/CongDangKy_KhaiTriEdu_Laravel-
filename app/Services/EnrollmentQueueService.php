@@ -144,6 +144,29 @@ class EnrollmentQueueService
         return $enrollment;
     }
 
+    public function offerDirectSeatHold(int $userId, CourseClass $class, array $attributes = []): CourseEnrollment
+    {
+        $enrollment = CourseEnrollment::firstOrNew([
+            'user_id' => $userId,
+            'class_id' => $class->id,
+        ]);
+
+        $enrollment->forceFill(array_merge([
+            'status' => 'pending',
+            'notes' => 'direct_seat_hold',
+            'enrolled_at' => null,
+            'approved_at' => null,
+            'rejected_at' => null,
+            'cancelled_at' => null,
+            'completed_at' => null,
+            'waitlist_joined_at' => null,
+            'waitlist_promoted_at' => now(),
+            'seat_hold_expires_at' => now()->addHours($this->seatHoldHours()),
+        ], $attributes))->save();
+
+        return $enrollment->fresh();
+    }
+
     public function clearQueueState(CourseEnrollment $enrollment): void
     {
         $enrollment->forceFill([
@@ -155,7 +178,7 @@ class EnrollmentQueueService
 
     public function seatHoldHours(): int
     {
-        return max(1, (int) Setting::get('offline_seat_hold_hours', '24'));
+        return max(1, (int) Setting::get('offline_seat_hold_hours', '48'));
     }
 
     private function nextWaitlistedEnrollment(CourseClass $class): ?CourseEnrollment

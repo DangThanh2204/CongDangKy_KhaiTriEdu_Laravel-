@@ -1,6 +1,7 @@
 <?php
 
 use Database\Seeders\RenderDemoSeeder;
+use App\Services\EnrollmentQueueService;
 use App\Services\SqlDumpToMongoImporter;
 use Illuminate\Database\QueryException;
 use App\Services\PortalNotificationService;
@@ -182,6 +183,15 @@ Artisan::command('portal:dispatch-reminders', function (PortalNotificationServic
     $this->line('N?p ti?n s?p h?t h?n: ' . ($summary['topup_expiring'] ?? 0));
 })->purpose('Dispatch automated portal reminders');
 
+Artisan::command('enrollments:expire-seat-holds', function (EnrollmentQueueService $queueService) {
+    $count = $queueService->expireSeatHolds();
+    $this->info("Da huy {$count} luot giu cho het han.");
+})->purpose('Hủy các yêu cầu giữ chỗ offline đã quá hạn thanh toán');
+
 Schedule::command('portal:dispatch-reminders')
     ->everyFifteenMinutes()
+    ->withoutOverlapping();
+
+Schedule::command('enrollments:expire-seat-holds')
+    ->everyFiveMinutes()
     ->withoutOverlapping();

@@ -30,14 +30,6 @@
 
             <div class="card mb-4 shadow-sm border-0">
                 <div class="card-body p-4">
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
-
-                    @if(session('error'))
-                        <div class="alert alert-danger">{{ session('error') }}</div>
-                    @endif
-
                     <h5 class="fw-bold mb-3"><i class="fas fa-coins text-warning me-2"></i>Nạp tiền vào ví</h5>
 
                     <form action="{{ route('wallet.topup') }}" method="POST" id="wallet-topup-form">

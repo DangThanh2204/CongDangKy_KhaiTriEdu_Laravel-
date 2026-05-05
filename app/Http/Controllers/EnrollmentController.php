@@ -65,8 +65,8 @@ class EnrollmentController extends Controller
                 $deadline = optional($existing->seat_hold_expires_at)->format('d/m/Y H:i');
 
                 return back()->with('error', $currentClassName
-                    ? 'Bạn đang được giữ chỗ 24h ở đợt học ' . $currentClassName . ' đến ' . $deadline . '. Vui lòng xác nhận đăng ký trước khi giữ chỗ hết hạn.'
-                    : 'Bạn đang có một chỗ giữ tạm 24h. Vui lòng xác nhận đăng ký trước khi hết hạn.');
+                    ? 'Bạn đang được giữ chỗ ở đợt học ' . $currentClassName . ' đến ' . $deadline . '. Vui lòng xác nhận thanh toán trước khi giữ chỗ hết hạn.'
+                    : 'Bạn đang có một chỗ giữ tạm. Vui lòng xác nhận thanh toán trước khi hết hạn.');
             }
 
             if ($existing->isWaitlisted()) {
@@ -101,7 +101,63 @@ class EnrollmentController extends Controller
             $position = $waitlistEnrollment->waitlist_position;
             $positionLabel = $position ? ' Vị trí hiện tại của bạn là #' . $position . '.' : '';
 
-            return back()->with('success', 'Đợt học này đã đầy, hệ thống đã đưa bạn vào hàng chờ.' . $positionLabel . ' Khi có chỗ trống, bạn sẽ được giữ chỗ trong 24 giờ để xác nhận đăng ký.');
+            $waitlistHours = $this->enrollmentQueue->seatHoldHours();
+
+            return back()->with('success', 'Đợt học này đã đầy, hệ thống đã đưa bạn vào hàng chờ.' . $positionLabel . ' Khi có chỗ trống, bạn sẽ được giữ chỗ trong ' . $waitlistHours . ' giờ để xác nhận đăng ký.');
+        }
+
+        if ($course->isOffline()) {
+            $pricing = $this->promotionService->preview(
+                Auth::user(),
+                $course,
+                $class,
+                $request->input('discount_code')
+            );
+
+            if (filled((string) $request->input('discount_code')) && ($pricing['voucher_error'] ?? null)) {
+                return back()->withInput()->with('error', $pricing['voucher_error']);
+            }
+
+            $payableAmount = (float) ($pricing['payable_amount'] ?? 0);
+
+            if ($payableAmount > 0) {
+                $enrollment = $this->enrollmentQueue->offerDirectSeatHold(
+                    Auth::id(),
+                    $class,
+                    $this->buildPricingAttributes($pricing, [
+                        'notes' => 'direct_seat_hold',
+                    ])
+                );
+
+                $this->sendRegistrationSuccessMail($enrollment);
+                $deadline = optional($enrollment->seat_hold_expires_at)->format('d/m/Y H:i');
+                $hours = $this->enrollmentQueue->seatHoldHours();
+
+                return back()->with('success', 'Đã giữ chỗ cho bạn ở đợt học ' . ($class->name ?? '') . ' trong ' . $hours . ' giờ'
+                    . ($deadline ? ' (đến ' . $deadline . ')' : '')
+                    . '. Vui lòng nạp đủ tiền vào ví và bấm "Xác nhận thanh toán" trước khi hết hạn, nếu không yêu cầu sẽ tự hủy.');
+            }
+
+            if ((float) ($pricing['base_price'] ?? 0) > 0 && (float) ($pricing['discount_amount'] ?? 0) > 0) {
+                $this->recordPromotionOnlyPayment($course, $class, $pricing, $course->requiresManualApproval());
+            }
+
+            $enrollment = $this->storeEnrollmentRequest(
+                Auth::id(),
+                $class,
+                $this->buildPricingAttributes($pricing)
+            );
+
+            if ($course->requiresManualApproval()) {
+                $this->sendRegistrationSuccessMail($enrollment);
+
+                return back()->with('success', 'Đăng ký thành công, vui lòng chờ admin duyệt.');
+            }
+
+            $enrollment->approve();
+            $this->sendRegistrationSuccessMail($enrollment);
+
+            return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
         }
 
         if ($course->isOnline() && $course->series_key) {
@@ -221,7 +277,7 @@ class EnrollmentController extends Controller
         $class = $enrollment->courseClass;
 
         if (! $course->isOffline() || ! $class) {
-            return back()->with('error', 'Yêu cầu này không áp dụng giữ chỗ 24h.');
+            return back()->with('error', 'Yêu cầu này không áp dụng giữ chỗ.');
         }
 
         $this->enrollmentQueue->syncClassQueue($class);
@@ -255,8 +311,8 @@ class EnrollmentController extends Controller
                 $class,
                 $pricing,
                 $requiresManualApproval,
-                'Thanh toán bằng ví nội bộ sau khi được giữ chỗ 24h, chờ admin duyệt đăng ký.',
-                'Thanh toán bằng ví nội bộ sau khi xác nhận giữ chỗ 24h.'
+                'Thanh toán bằng ví nội bộ sau khi được giữ chỗ, chờ admin duyệt đăng ký.',
+                'Thanh toán bằng ví nội bộ sau khi xác nhận giữ chỗ.'
             );
 
             if (isset($purchaseResult['error'])) {
@@ -362,7 +418,7 @@ class EnrollmentController extends Controller
         }
 
         if ($hadSeatHold) {
-            return back()->with('success', 'Bạn đã hủy giữ chỗ 24h. Hệ thống sẽ chuyển chỗ cho người kế tiếp trong hàng chờ.');
+            return back()->with('success', 'Bạn đã hủy giữ chỗ. Hệ thống sẽ chuyển chỗ cho người kế tiếp trong hàng chờ.');
         }
 
         if ($wasWaitlisted) {

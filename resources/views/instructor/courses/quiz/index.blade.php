@@ -12,10 +12,6 @@
         <a href="{{ route('instructor.courses.quiz.create', $course) }}" class="btn btn-primary">Tạo bài kiểm tra mới</a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
     @if($quizzes->count() > 0)
         <div class="row gy-3">
             @foreach($quizzes as $quiz)
