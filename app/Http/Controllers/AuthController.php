@@ -657,7 +657,11 @@ class AuthController extends Controller
             Log::error('OTP mail failed', [
                 'email' => $user->email,
                 'purpose' => $purpose,
+                'exception' => $exception::class,
                 'message' => $exception->getMessage(),
+                'mail_host' => config('mail.mailers.smtp.host'),
+                'mail_port' => config('mail.mailers.smtp.port'),
+                'mail_scheme' => config('mail.mailers.smtp.scheme'),
             ]);
 
             throw new \RuntimeException('Không thể gửi email OTP. Vui lòng kiểm tra cấu hình SMTP hoặc App Password Gmail trên Render.', 0, $exception);
@@ -692,10 +696,35 @@ class AuthController extends Controller
 
     private function friendlyOtpMailErrorMessage(Throwable $exception): string
     {
-        $message = $exception->getMessage();
+        $message = (string) $exception->getMessage();
+        $lower = strtolower($message);
+        $port = (int) config('mail.mailers.smtp.port');
+        $scheme = (string) config('mail.mailers.smtp.scheme');
 
         if (str_contains($message, 'MAIL_MAILER') || str_contains($message, 'MAIL_')) {
             return 'Hệ thống email chưa cấu hình đầy đủ trên Render. Vui lòng kiểm tra lại MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD và MAIL_FROM_ADDRESS.';
+        }
+
+        if (str_contains($lower, 'authentication') || str_contains($lower, '535') || str_contains($lower, 'username and password not accepted')) {
+            return 'Sai App Password Gmail. Vào Google Account → Security → App Passwords tạo mật khẩu mới (16 ký tự, không khoảng trắng) và cập nhật MAIL_PASSWORD trên Render.';
+        }
+
+        if (str_contains($lower, 'starttls') || str_contains($lower, 'tls') || str_contains($lower, 'ssl') || str_contains($lower, 'stream_socket_enable_crypto')) {
+            if ($port === 465 && $scheme !== 'smtps') {
+                return 'Port 465 cần MAIL_SCHEME=smtps trên Render. Hãy đặt MAIL_SCHEME=smtps rồi redeploy.';
+            }
+            if ($port === 587 && $scheme === 'smtps') {
+                return 'Port 587 không dùng smtps. Hãy bỏ trống MAIL_SCHEME (Symfony tự dùng STARTTLS) rồi redeploy.';
+            }
+            return 'Lỗi TLS/SSL khi kết nối SMTP. Với port 465 đặt MAIL_SCHEME=smtps; với port 587 để trống MAIL_SCHEME.';
+        }
+
+        if (str_contains($lower, 'connection') || str_contains($lower, 'timed out') || str_contains($lower, 'timeout') || str_contains($lower, 'could not open') || str_contains($lower, 'getaddrinfo')) {
+            return 'Không kết nối được tới SMTP server. Kiểm tra MAIL_HOST=smtp.gmail.com và MAIL_PORT (465 hoặc 587), Render có thể đang block port hoặc DNS chưa resolve.';
+        }
+
+        if (str_contains($lower, 'quota') || str_contains($lower, 'rate limit') || str_contains($lower, 'too many')) {
+            return 'Gmail đang giới hạn số mail gửi từ tài khoản này. Đợi 1-2 giờ hoặc dùng tài khoản Gmail khác.';
         }
 
         if (app()->environment('local') || config('app.debug')) {
