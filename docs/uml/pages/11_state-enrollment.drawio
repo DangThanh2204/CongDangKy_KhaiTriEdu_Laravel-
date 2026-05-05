@@ -22,7 +22,7 @@
                 <mxCell id="16" value="Từ chối" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="800" y="280" width="150" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="14" value="Giữ chỗ 24h" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                <mxCell id="14" value="Đang giữ chỗ" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="220" y="430" width="150" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="15" value="Đã duyệt" style="rounded=1;whiteSpace=wrap;html=1;" parent="1" vertex="1">
@@ -49,16 +49,19 @@
                 <mxCell id="31" value="[lớp đầy]" style="endArrow=block;html=1;" parent="1" source="11" target="13" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="32" value="[còn chỗ]" style="endArrow=block;html=1;" parent="1" source="11" target="12" edge="1">
+                <mxCell id="32" value="[online hoặc miễn phí]" style="endArrow=block;html=1;" parent="1" source="11" target="12" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="33" value="[đến lượt]" style="endArrow=block;html=1;" parent="1" source="13" target="14" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="34" value="[xác nhận giữ chỗ]" style="endArrow=block;html=1;" parent="1" source="14" target="12" edge="1">
+                <mxCell id="34" value="[xác nhận thanh toán]" style="endArrow=block;html=1;" parent="1" source="14" target="12" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="35" value="[quá 24h]" style="endArrow=block;html=1;" parent="1" source="14" target="18" edge="1">
+                <mxCell id="35" value="[hết hạn giữ chỗ]" style="endArrow=block;html=1;" parent="1" source="14" target="18" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="32b" value="[offline + lớp còn chỗ + có phí]" style="endArrow=block;html=1;" parent="1" source="11" target="14" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="36" value="[duyệt thủ công / tự động duyệt]" style="endArrow=block;html=1;" parent="1" source="12" target="15" edge="1">
