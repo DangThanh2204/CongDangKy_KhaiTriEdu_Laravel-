@@ -681,10 +681,6 @@ class AuthController extends Controller
                 'mail.mailers.smtp.password' => 'MAIL_PASSWORD',
                 'mail.from.address' => 'MAIL_FROM_ADDRESS',
             ],
-            'resend' => [
-                'services.resend.key' => 'RESEND_API_KEY',
-                'mail.from.address' => 'MAIL_FROM_ADDRESS',
-            ],
             'brevo' => [
                 'services.brevo.key' => 'BREVO_API_KEY',
                 'mail.from.address' => 'MAIL_FROM_ADDRESS',
@@ -693,7 +689,7 @@ class AuthController extends Controller
         };
 
         if ($required === null) {
-            $issues[] = 'MAIL_MAILER phải là smtp / resend / brevo để gửi OTP thật.';
+            $issues[] = 'MAIL_MAILER phải là smtp hoặc brevo để gửi OTP thật.';
 
             return $issues;
         }
@@ -735,7 +731,7 @@ class AuthController extends Controller
         }
 
         if (str_contains($lower, 'connection') || str_contains($lower, 'timed out') || str_contains($lower, 'timeout') || str_contains($lower, 'could not open') || str_contains($lower, 'getaddrinfo')) {
-            return 'Render free tier đang chặn outbound SMTP (port 465/587). Đăng ký https://resend.com lấy API key, đổi env: MAIL_MAILER=resend, RESEND_API_KEY=re_..., MAIL_FROM_ADDRESS=onboarding@resend.dev rồi redeploy.';
+            return 'Render free tier đang chặn outbound SMTP (port 465/587). Đăng ký https://brevo.com lấy API key, đổi env: MAIL_MAILER=brevo, BREVO_API_KEY=xkeysib-..., MAIL_FROM_ADDRESS=<email đã verify trên Brevo> rồi redeploy.';
         }
 
         if (str_contains($lower, 'quota') || str_contains($lower, 'rate limit') || str_contains($lower, 'too many')) {
