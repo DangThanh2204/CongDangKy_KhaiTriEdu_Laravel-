@@ -55,13 +55,19 @@
                 <mxCell id="33" value="[đến lượt]" style="endArrow=block;html=1;" parent="1" source="13" target="14" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="34" value="[xác nhận thanh toán]" style="endArrow=block;html=1;" parent="1" source="14" target="12" edge="1">
+                <mxCell id="34" value="[xác nhận thanh toán + auto-approve OFF]" style="endArrow=block;html=1;" parent="1" source="14" target="12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="34b" value="[xác nhận thanh toán + auto-approve ON]" style="endArrow=block;html=1;" parent="1" source="14" target="15" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="35" value="[hết hạn giữ chỗ]" style="endArrow=block;html=1;" parent="1" source="14" target="18" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="32b" value="[offline + lớp còn chỗ + có phí]" style="endArrow=block;html=1;" parent="1" source="11" target="14" edge="1">
+                <mxCell id="32b" value="[offline + lớp còn chỗ + có phí + ví thiếu]" style="endArrow=block;html=1;" parent="1" source="11" target="14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="32c" value="[offline + lớp còn chỗ + có phí + ví đủ — 1-click]" style="endArrow=block;html=1;" parent="1" source="11" target="15" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="36" value="[duyệt thủ công / tự động duyệt]" style="endArrow=block;html=1;" parent="1" source="12" target="15" edge="1">

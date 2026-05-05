@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e" compressed="false">
     <diagram id="deployment-architecture" name="Deployment Tổng Quát">
-        <mxGraphModel dx="923" dy="719" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+        <mxGraphModel dx="958" dy="719" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -32,13 +32,19 @@
                     <mxGeometry x="25" y="48" width="170" height="85" as="geometry"/>
                 </mxCell>
                 <mxCell id="40" value="&lt;&lt;external node&gt;&gt;&#xa;Payment Gateway&#xa;(VNPay)" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;align=center;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
-                    <mxGeometry x="960" y="230" width="200" height="95" as="geometry"/>
+                    <mxGeometry x="950" y="250" width="200" height="95" as="geometry"/>
                 </mxCell>
                 <mxCell id="42" value="&lt;&lt;external node&gt;&gt;&#xa;AI Service&#xa;(Gemini)" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;align=center;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
-                    <mxGeometry x="960" y="510" width="200" height="95" as="geometry"/>
+                    <mxGeometry x="960" y="370" width="200" height="95" as="geometry"/>
                 </mxCell>
                 <mxCell id="43" value="&lt;&lt;external node&gt;&gt;&#xa;OAuth Providers&#xa;(Google / Facebook)" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;align=center;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
-                    <mxGeometry x="960" y="640" width="200" height="95" as="geometry"/>
+                    <mxGeometry x="960" y="495" width="200" height="95" as="geometry"/>
+                </mxCell>
+                <mxCell id="44" value="&lt;&lt;external node&gt;&gt;&#xa;Mail Service&#xa;(Brevo HTTPS API)" style="rounded=0;whiteSpace=wrap;html=1;fontStyle=1;align=center;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="960" y="620" width="200" height="95" as="geometry"/>
+                </mxCell>
+                <mxCell id="60" value="HTTPS (api.brevo.com — port 443)" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;labelBackgroundColor=#ffffff;" parent="1" source="21" target="44" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="50" value="HTTPS" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" parent="1" source="11" target="12" edge="1">
                     <mxGeometry x="0.3759" relative="1" as="geometry">
@@ -69,7 +75,7 @@
                     <mxGeometry x="0.5238" relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="850" y="290"/>
-                            <mxPoint x="850" y="278"/>
+                            <mxPoint x="850" y="290"/>
                         </Array>
                         <mxPoint as="offset"/>
                     </mxGeometry>
@@ -77,8 +83,8 @@
                 <mxCell id="55" value="Webhook callback" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" parent="1" source="40" target="21" edge="1">
                     <mxGeometry x="0.0517" relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="900" y="298"/>
-                            <mxPoint x="900" y="310"/>
+                            <mxPoint x="840" y="320"/>
+                            <mxPoint x="840" y="320"/>
                         </Array>
                         <mxPoint as="offset"/>
                     </mxGeometry>
@@ -87,7 +93,7 @@
                     <mxGeometry x="0.0748" relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="850" y="340"/>
-                            <mxPoint x="850" y="558"/>
+                            <mxPoint x="850" y="418"/>
                         </Array>
                         <mxPoint as="offset"/>
                     </mxGeometry>
@@ -96,7 +102,7 @@
                     <mxGeometry x="0.2044" relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="820" y="360"/>
-                            <mxPoint x="820" y="688"/>
+                            <mxPoint x="820" y="540"/>
                         </Array>
                         <mxPoint as="offset"/>
                     </mxGeometry>

@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e" compressed="false">
     <diagram id="component-architecture" name="Component Tổng Quát">
-        <mxGraphModel dx="2094" dy="599" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+        <mxGraphModel dx="2296" dy="846" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -32,7 +32,7 @@
                     <mxGeometry x="70" y="170" width="130" height="65" as="geometry"/>
                 </mxCell>
                 <mxCell id="14" value="&lt;&lt;API&gt;&gt;&#xa;Payment &amp; Wallet API" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" parent="5" vertex="1">
-                    <mxGeometry x="405" y="247.5" width="130" height="65" as="geometry"/>
+                    <mxGeometry x="405" y="282.5" width="130" height="65" as="geometry"/>
                 </mxCell>
                 <mxCell id="15" value="&lt;&lt;API&gt;&gt;&#xa;Learning &amp; Quiz API" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" parent="5" vertex="1">
                     <mxGeometry x="70" y="271" width="130" height="65" as="geometry"/>
@@ -56,7 +56,12 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="35" value="" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;strokeColor=#000000;strokeWidth=2;" parent="5" source="14" target="19" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="370" y="315"/>
+                            <mxPoint x="370" y="315"/>
+                        </Array>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="36" value="" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;strokeColor=#000000;strokeWidth=2;" parent="5" source="15" target="19" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
@@ -73,16 +78,22 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="20" value="&lt;&lt;Repository&gt;&gt;&#xa;MongoDB" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
-                    <mxGeometry x="890" y="150" width="160" height="80" as="geometry"/>
+                    <mxGeometry x="890" y="280" width="160" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="24" value="&lt;&lt;API&gt;&gt;&#xa;OAuth Provider&#xa;(Google / Facebook)" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
-                    <mxGeometry x="890" y="270" width="160" height="90" as="geometry"/>
+                    <mxGeometry x="890" y="145" width="160" height="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="21" value="&lt;&lt;API&gt;&gt;&#xa;Payment Gateway&#xa;(VNPay)" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
-                    <mxGeometry x="890" y="390" width="160" height="90" as="geometry"/>
+                    <mxGeometry x="890" y="380" width="160" height="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="23" value="&lt;&lt;API&gt;&gt;&#xa;AI Assistant&#xa;(Gemini)" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
-                    <mxGeometry x="890" y="630" width="160" height="80" as="geometry"/>
+                    <mxGeometry x="890" y="562.5" width="160" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="&lt;&lt;API&gt;&gt;&#xa;Mail Provider&#xa;(Brevo HTTPS API)" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" parent="1" vertex="1">
+                    <mxGeometry x="890" y="660" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="44" value="Mail API (gửi OTP, thông báo)" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;labelBackgroundColor=#ffffff;strokeColor=#000000;fontColor=#000000;strokeWidth=2;" parent="1" source="11" target="25" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="30" value="HTTPS" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;strokeColor=#000000;fontColor=#000000;strokeWidth=2;labelBackgroundColor=#ffffff;" parent="1" source="4" target="10" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
@@ -94,36 +105,30 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="43" value="MongoDB Driver" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;labelBackgroundColor=#ffffff;strokeColor=#000000;fontColor=#000000;strokeWidth=2;" parent="1" source="19" target="20" edge="1">
+                <mxCell id="43" value="MongoDB Driver" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;labelBackgroundColor=#ffffff;strokeColor=#000000;fontColor=#000000;strokeWidth=2;entryX=0.099;entryY=0.503;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="19" target="20" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="850" y="280"/>
-                            <mxPoint x="850" y="190"/>
+                            <mxPoint x="740" y="320"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="38" value="OAuth API" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;labelBackgroundColor=#ffffff;strokeColor=#000000;fontColor=#000000;strokeWidth=2;" parent="1" source="11" target="24" edge="1">
-                    <mxGeometry relative="1" as="geometry">
+                    <mxGeometry x="0.0007" relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="830" y="212"/>
-                            <mxPoint x="830" y="315"/>
+                            <mxPoint x="830" y="210"/>
                         </Array>
+                        <mxPoint as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="39" value="Payment API" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;labelBackgroundColor=#ffffff;strokeColor=#000000;fontColor=#000000;strokeWidth=2;" parent="1" source="14" target="21" edge="1">
+                <mxCell id="39" value="Payment API" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;labelBackgroundColor=#ffffff;strokeColor=#000000;fontColor=#000000;strokeWidth=2;entryX=0.113;entryY=0.499;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="14" target="21" edge="1">
                     <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="845" y="337"/>
-                            <mxPoint x="845" y="435"/>
-                        </Array>
+                        <Array as="points"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="41" value="AI Assistant API" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;labelBackgroundColor=#ffffff;strokeColor=#000000;fontColor=#000000;strokeWidth=2;" parent="1" source="17" target="23" edge="1">
+                <mxCell id="41" value="AI Assistant API" style="endArrow=block;html=1;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;labelBackgroundColor=#ffffff;strokeColor=#000000;fontColor=#000000;strokeWidth=2;entryX=0.109;entryY=0.474;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="17" target="23" edge="1">
                     <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="860" y="630"/>
-                            <mxPoint x="860" y="670"/>
-                        </Array>
+                        <Array as="points"/>
                     </mxGeometry>
                 </mxCell>
             </root>

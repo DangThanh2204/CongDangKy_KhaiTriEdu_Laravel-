@@ -31,14 +31,14 @@
                 <mxCell id="21" value="Tính học phí /&#xa;khuyến mãi" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
                     <mxGeometry x="425" y="254.5" width="190" height="55" as="geometry"/>
                 </mxCell>
-                <mxCell id="22" value="Cần thu phí ngay?&#xa;(online + có phí)" style="rhombus;whiteSpace=wrap;html=1;" parent="11" vertex="1">
-                    <mxGeometry x="470" y="343.5" width="100" height="90" as="geometry"/>
+                <mxCell id="22" value="Thu phí được ngay?&#xa;(online có phí, HOẶC&#xa;offline có phí + ví đủ)" style="rhombus;whiteSpace=wrap;html=1;" parent="11" vertex="1">
+                    <mxGeometry x="450" y="335" width="140" height="100" as="geometry"/>
                 </mxCell>
-                <mxCell id="24" value="Ghi nhận payment&#xa;và cập nhật giao dịch" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
+                <mxCell id="24" value="Trừ ví + ghi nhận payment&#xa;(1-click khi ví đủ)" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
                     <mxGeometry x="160" y="460" width="250" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="25" value="Hoãn thanh toán&#xa;(offline có phí: tạo seat hold;&#xa;miễn phí: bỏ qua)" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
-                    <mxGeometry x="630" y="450" width="200" height="80" as="geometry"/>
+                <mxCell id="25" value="Hoãn thanh toán&#xa;(offline có phí + ví thiếu: tạo seat hold;&#xa;miễn phí: bỏ qua)" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
+                    <mxGeometry x="630" y="445" width="220" height="85" as="geometry"/>
                 </mxCell>
                 <mxCell id="26" value="" style="rhombus;whiteSpace=wrap;html=1;" parent="11" vertex="1">
                     <mxGeometry x="490" y="470" width="60" height="60" as="geometry"/>
@@ -46,11 +46,11 @@
                 <mxCell id="28" value="Khóa offline?" style="rhombus;whiteSpace=wrap;html=1;" parent="11" vertex="1">
                     <mxGeometry x="675" y="570" width="105" height="95" as="geometry"/>
                 </mxCell>
-                <mxCell id="29" value="Chờ admin&#xa;duyệt" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
-                    <mxGeometry x="840" y="430" width="140" height="55" as="geometry"/>
+                <mxCell id="29" value="Chờ admin duyệt&#xa;(chỉ khi setting&#xa;auto-approve OFF)" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
+                    <mxGeometry x="840" y="425" width="160" height="65" as="geometry"/>
                 </mxCell>
-                <mxCell id="30" value="Tự động duyệt&#xa;và mở học" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
-                    <mxGeometry x="840" y="610" width="140" height="55" as="geometry"/>
+                <mxCell id="30" value="Tự động duyệt&#xa;(online HOẶC offline với&#xa;auto-approve ON)" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
+                    <mxGeometry x="840" y="605" width="160" height="65" as="geometry"/>
                 </mxCell>
                 <mxCell id="31" style="ellipse;html=1;aspect=fixed;fillColor=#ffffff;strokeColor=#000000;strokeWidth=3;" parent="11" vertex="1">
                     <mxGeometry x="896" y="540" width="28" height="28" as="geometry"/>
@@ -106,8 +106,8 @@
                 <mxCell id="62" style="endArrow=block;html=1;" parent="11" source="19" target="32" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="63" value="Ghi chú: Học viên offline có phí được giữ chỗ trước (offerDirectSeatHold) — không trừ ví ngay.&#xa;Chỉ khi học viên bấm 'Xác nhận thanh toán' (confirmSeatHold) mới trừ ví và ghi nhận payment.&#xa;Scheduler enrollments:expire-seat-holds chạy mỗi 5 phút tự hủy hồ sơ quá hạn." style="text;html=1;strokeColor=#999999;fillColor=#fff2cc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingRight=8;" parent="11" vertex="1">
-                    <mxGeometry x="160" y="675" width="800" height="60" as="geometry"/>
+                <mxCell id="63" value="Ghi chú offline:&#xa;• Ví đủ tiền → trừ ví ngay + auto-approve trong 1 lần submit (1-click flow).&#xa;• Ví thiếu → tạo seat hold (default 48h, đọc Setting offline_seat_hold_hours), học viên nạp ví rồi bấm 'Xác nhận thanh toán' (confirmSeatHold) — sau đó trừ ví + auto-approve.&#xa;• Setting offline_auto_approve_after_payment (default ON) quyết định bỏ qua bước admin duyệt sau thanh toán.&#xa;• Scheduler enrollments:expire-seat-holds (mỗi 5 phút) tự hủy seat hold quá hạn." style="text;html=1;strokeColor=#999999;fillColor=#fff2cc;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;spacingLeft=8;spacingRight=8;" parent="11" vertex="1">
+                    <mxGeometry x="160" y="675" width="820" height="90" as="geometry"/>
                 </mxCell>
                 <mxCell id="27" value="Tạo hồ sơ&#xa;ghi danh" style="rounded=1;whiteSpace=wrap;html=1;" parent="11" vertex="1">
                     <mxGeometry x="415" y="590" width="210" height="55" as="geometry"/>
