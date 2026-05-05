@@ -17,6 +17,7 @@ class User extends Authenticatable
         'password',
         'avatar',
         'otp',
+        'otp_sent_at',
         'is_verified',
         'role',
         'google_id',
@@ -36,6 +37,7 @@ class User extends Authenticatable
     protected $casts = [
         'is_verified' => 'boolean',
         'email_verified_at' => 'datetime',
+        'otp_sent_at' => 'datetime',
         'rating' => 'decimal:1',
         'total_rating' => 'integer',
     ];

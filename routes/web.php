@@ -76,19 +76,23 @@ Route::get('/_diag/svc', function () {
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
 
     Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.forgot');
-    Route::post('/forgot-password', [AuthController::class, 'sendPasswordOtp'])->name('password.send-otp');
+    Route::post('/forgot-password', [AuthController::class, 'sendPasswordOtp'])
+        ->middleware('throttle:5,1')
+        ->name('password.send-otp');
     Route::get('/forgot-password/reset', [AuthController::class, 'showResetPasswordForm'])->name('password.reset.form');
     Route::post('/forgot-password/reset', [AuthController::class, 'resetPassword'])->name('password.reset');
 });
 
 Route::get('/verify', [AuthController::class, 'showVerify'])->name('verify');
-Route::post('/verify', [AuthController::class, 'verify']);
-Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->name('resend.otp');
+Route::post('/verify', [AuthController::class, 'verify'])->middleware('throttle:10,1');
+Route::post('/resend-otp', [AuthController::class, 'resendOtp'])
+    ->middleware('throttle:5,1')
+    ->name('resend.otp');
 
 Route::middleware('guest')->group(function () {
     Route::get('/auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('auth.google');

@@ -23,6 +23,14 @@ class AuthController extends Controller
     public function register(Request $req)
     {
         $this->purgeExpiredUnverifiedUsers();
+
+        $remaining = $this->reusableUnverifiedCooldown($req->input('email'));
+        if ($remaining > 0) {
+            return back()
+                ->withErrors(['email' => "Email này vừa được dùng để đăng ký. Vui lòng kiểm tra hộp thư hoặc đợi {$remaining} giây trước khi gửi lại OTP."])
+                ->withInput($req->except(['password', 'password_confirmation']));
+        }
+
         $this->purgeReusableUnverifiedUser($req->input('email'), $req->input('username'));
 
         $req->validate([
@@ -47,6 +55,7 @@ class AuthController extends Controller
             'password' => Hash::make($req->password),
             'avatar' => $avatarPath,
             'otp' => $otp,
+            'otp_sent_at' => now(),
             'is_verified' => false,
             'role' => 'student',
         ]);
@@ -135,6 +144,7 @@ class AuthController extends Controller
             $user->update([
                 'is_verified' => true,
                 'otp' => null,
+                'otp_sent_at' => null,
                 'email_verified_at' => now(),
             ]);
 
@@ -211,9 +221,22 @@ class AuthController extends Controller
             ], 410);
         }
 
+        $cooldown = $this->resendCooldownRemaining($user);
+        if ($cooldown > 0) {
+            return response()->json([
+                'success' => false,
+                'message' => "Vui lòng đợi {$cooldown} giây trước khi gửi lại OTP.",
+                'retry_after' => $cooldown,
+            ], 429);
+        }
+
         $oldOtp = $user->otp;
+        $oldOtpSentAt = $user->otp_sent_at;
         $newOtp = random_int(100000, 999999);
-        $user->update(['otp' => $newOtp]);
+        $user->update([
+            'otp' => $newOtp,
+            'otp_sent_at' => now(),
+        ]);
 
         try {
             $this->sendOtpMail(
@@ -228,7 +251,10 @@ class AuthController extends Controller
                 'message' => 'Mã OTP mới đã được gửi đến email của bạn.',
             ]);
         } catch (Throwable $exception) {
-            $user->update(['otp' => $oldOtp]);
+            $user->update([
+                'otp' => $oldOtp,
+                'otp_sent_at' => $oldOtpSentAt,
+            ]);
 
             return response()->json([
                 'success' => false,
@@ -270,9 +296,20 @@ class AuthController extends Controller
             ])->withInput();
         }
 
+        $cooldown = $this->resendCooldownRemaining($user);
+        if ($cooldown > 0) {
+            return back()->withErrors([
+                'email' => "Vui lòng đợi {$cooldown} giây trước khi gửi lại mã OTP đặt lại mật khẩu.",
+            ])->withInput();
+        }
+
         $oldOtp = $user->otp;
+        $oldOtpSentAt = $user->otp_sent_at;
         $otp = random_int(100000, 999999);
-        $user->update(['otp' => $otp]);
+        $user->update([
+            'otp' => $otp,
+            'otp_sent_at' => now(),
+        ]);
 
         \App\Services\SystemLogService::record('security', 'password_reset_requested', ['user_id' => $user->id]);
 
@@ -284,7 +321,10 @@ class AuthController extends Controller
                 'Mã OTP đặt lại mật khẩu - Khai Trí Edu'
             );
         } catch (Throwable $exception) {
-            $user->update(['otp' => $oldOtp]);
+            $user->update([
+                'otp' => $oldOtp,
+                'otp_sent_at' => $oldOtpSentAt,
+            ]);
 
             return back()->withErrors([
                 'email' => $this->friendlyOtpMailErrorMessage($exception),
@@ -338,6 +378,7 @@ class AuthController extends Controller
         $user->update([
             'password' => Hash::make($req->password),
             'otp' => null,
+            'otp_sent_at' => null,
         ]);
 
         \App\Services\SystemLogService::record('security', 'password_changed', ['user_id' => $user->id]);
@@ -485,6 +526,41 @@ class AuthController extends Controller
     private function otpLifetimeMinutes(): int
     {
         return 10;
+    }
+
+    private function otpResendCooldownSeconds(): int
+    {
+        return 60;
+    }
+
+    private function resendCooldownRemaining(User $user): int
+    {
+        if (! $user->otp_sent_at) {
+            return 0;
+        }
+
+        $elapsed = now()->getTimestamp() - $user->otp_sent_at->getTimestamp();
+        $remaining = $this->otpResendCooldownSeconds() - $elapsed;
+
+        return max(0, (int) $remaining);
+    }
+
+    private function reusableUnverifiedCooldown(?string $email): int
+    {
+        $email = trim((string) $email);
+        if ($email === '') {
+            return 0;
+        }
+
+        $user = User::where('email', $email)
+            ->where('is_verified', false)
+            ->first();
+
+        if (! $user) {
+            return 0;
+        }
+
+        return $this->resendCooldownRemaining($user);
     }
 
     private function purgeExpiredUnverifiedUsers(): void
