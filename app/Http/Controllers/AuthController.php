@@ -685,11 +685,15 @@ class AuthController extends Controller
                 'services.resend.key' => 'RESEND_API_KEY',
                 'mail.from.address' => 'MAIL_FROM_ADDRESS',
             ],
+            'brevo' => [
+                'services.brevo.key' => 'BREVO_API_KEY',
+                'mail.from.address' => 'MAIL_FROM_ADDRESS',
+            ],
             default => null,
         };
 
         if ($required === null) {
-            $issues[] = 'MAIL_MAILER phải là smtp hoặc resend để gửi OTP thật.';
+            $issues[] = 'MAIL_MAILER phải là smtp / resend / brevo để gửi OTP thật.';
 
             return $issues;
         }

@@ -95,6 +95,8 @@ services:
         value: Khai Tri Edu
       - key: RESEND_API_KEY
         sync: false
+      - key: BREVO_API_KEY
+        sync: false
       - key: VNPAY_URL
         value: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
       - key: VNPAY_ALLOW_SANDBOX_IN_PRODUCTION

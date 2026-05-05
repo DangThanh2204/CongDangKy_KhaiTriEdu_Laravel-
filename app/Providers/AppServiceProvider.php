@@ -6,9 +6,12 @@ use App\Models\Setting;
 use App\View\Composers\AdminLayoutComposer;
 use App\View\Composers\AppLayoutComposer;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoApiTransportFactory;
+use Symfony\Component\Mailer\Transport\Dsn;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -48,6 +51,14 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('layouts.app', AppLayoutComposer::class);
         View::composer('layouts.admin', AdminLayoutComposer::class);
+
+        Mail::extend('brevo', function () {
+            $key = (string) config('services.brevo.key');
+
+            return (new BrevoApiTransportFactory())->create(
+                new Dsn('brevo+api', 'default', $key)
+            );
+        });
 
         require_once app_path('Helpers/youtube.php');
     }
