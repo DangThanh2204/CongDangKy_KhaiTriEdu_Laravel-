@@ -47,7 +47,7 @@ class EnrollmentController extends Controller
                 : 'Khóa học này hiện chưa mở đăng ký.');
         }
 
-        if ($course->isOffline()) {
+        if ($course->isOffline() && $class->is_full) {
             $this->enrollmentQueue->syncClassQueue($class);
             $class = $class->fresh();
         }

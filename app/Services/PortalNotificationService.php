@@ -355,11 +355,13 @@ class PortalNotificationService
         }
 
         if ($mail && filled($user->email)) {
-            try {
-                $user->notify(new PortalAlertNotification($payload, ['mail']));
-            } catch (\Throwable $exception) {
-                report($exception);
-            }
+            app()->terminating(function () use ($user, $payload) {
+                try {
+                    $user->notify(new PortalAlertNotification($payload, ['mail']));
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            });
         }
 
         return true;
