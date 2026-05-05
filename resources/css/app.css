@@ -1916,6 +1916,16 @@ html.dark #themeToggle.theme-toggle-floating,
     border: 1px solid rgba(148, 163, 184, 0.18);
     border-radius: 18px;
     box-shadow: 0 22px 45px rgba(15, 23, 42, 0.12);
+    margin-top: 0;
+}
+.navbar-dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: transparent;
 }
 .navbar-dropdown-menu .dropdown-item {
     border-radius: 12px;

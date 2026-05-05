@@ -443,29 +443,50 @@
 
         function bindDropdownHover() {
             const desktopNavbar = window.matchMedia('(min-width: 1200px)');
+            const closeDelay = 220;
 
             document.querySelectorAll('.navbar-nav .nav-item.dropdown').forEach(item => {
-                item.addEventListener('mouseenter', () => {
+                const toggleEl = item.querySelector('[data-bs-toggle="dropdown"]');
+                if (!toggleEl) {
+                    return;
+                }
+
+                const menuEl = item.querySelector('.dropdown-menu');
+                let closeTimer = null;
+
+                const cancelClose = () => {
+                    if (closeTimer) {
+                        clearTimeout(closeTimer);
+                        closeTimer = null;
+                    }
+                };
+
+                const showMenu = () => {
                     if (!desktopNavbar.matches) {
                         return;
                     }
+                    cancelClose();
+                    bootstrap.Dropdown.getOrCreateInstance(toggleEl).show();
+                };
 
-                    const toggleEl = item.querySelector('[data-bs-toggle="dropdown"]');
-                    if (toggleEl) {
-                        bootstrap.Dropdown.getOrCreateInstance(toggleEl).show();
-                    }
-                });
-
-                item.addEventListener('mouseleave', () => {
+                const scheduleClose = () => {
                     if (!desktopNavbar.matches) {
                         return;
                     }
-
-                    const toggleEl = item.querySelector('[data-bs-toggle="dropdown"]');
-                    if (toggleEl) {
+                    cancelClose();
+                    closeTimer = setTimeout(() => {
                         bootstrap.Dropdown.getOrCreateInstance(toggleEl).hide();
-                    }
-                });
+                        closeTimer = null;
+                    }, closeDelay);
+                };
+
+                item.addEventListener('mouseenter', showMenu);
+                item.addEventListener('mouseleave', scheduleClose);
+
+                if (menuEl) {
+                    menuEl.addEventListener('mouseenter', cancelClose);
+                    menuEl.addEventListener('mouseleave', scheduleClose);
+                }
             });
         }
 
