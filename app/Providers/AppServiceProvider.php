@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoApiTransportFactory;
+use Symfony\Component\Mailer\Bridge\Brevo\Transport\BrevoTransportFactory;
 use Symfony\Component\Mailer\Transport\Dsn;
 
 class AppServiceProvider extends ServiceProvider
@@ -55,7 +55,7 @@ class AppServiceProvider extends ServiceProvider
         Mail::extend('brevo', function () {
             $key = (string) config('services.brevo.key');
 
-            return (new BrevoApiTransportFactory())->create(
+            return (new BrevoTransportFactory())->create(
                 new Dsn('brevo+api', 'default', $key)
             );
         });
