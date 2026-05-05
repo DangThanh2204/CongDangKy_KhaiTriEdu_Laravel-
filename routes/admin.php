@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminClassChangeLogController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminCertificateController;
 use App\Http\Controllers\Admin\AdminCourseCategoryController;
 use App\Http\Controllers\Admin\AdminCourseController;
 use App\Http\Controllers\Admin\AdminEnrollmentController;
@@ -111,6 +112,13 @@ Route::middleware(['web', 'auth', 'admin'])->group(function () {
                 Route::delete('/{enrollment}', [AdminEnrollmentController::class, 'destroy'])->name('destroy');
                 Route::get('/manual-create', [AdminEnrollmentController::class, 'showManualCreate'])->name('manual-create');
                 Route::post('/manual-enroll', [AdminEnrollmentController::class, 'manualEnroll'])->name('manual-enroll');
+            });
+
+            Route::prefix('certificates')->as('certificates.')->group(function () {
+                Route::get('/', [AdminCertificateController::class, 'index'])->name('index');
+                Route::get('/export', [AdminCertificateController::class, 'export'])->name('export');
+                Route::post('/{enrollment}/issue', [AdminCertificateController::class, 'issue'])->name('issue');
+                Route::delete('/{certificate}', [AdminCertificateController::class, 'revoke'])->name('revoke');
             });
 
             Route::prefix('payments')->as('payments.')->group(function () {

@@ -144,6 +144,13 @@
                         'badge_title' => $adminPendingPaymentCount > 0 ? $adminPendingPaymentCount . ' thanh toán chờ xử lý' : null,
                     ],
                     [
+                        'route' => 'admin.certificates.index',
+                        'patterns' => ['admin.certificates.*'],
+                        'label' => 'Chứng chỉ học viên',
+                        'icon' => 'fas fa-certificate',
+                        'title' => 'Quản lý chứng chỉ học viên đã hoàn thành',
+                    ],
+                    [
                         'route' => 'admin.wallet-transactions.index',
                         'route_params' => ['status' => 'pending'],
                         'patterns' => ['admin.wallet-transactions.*'],
