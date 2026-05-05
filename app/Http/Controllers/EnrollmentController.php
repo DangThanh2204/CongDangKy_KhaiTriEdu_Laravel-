@@ -145,11 +145,13 @@ class EnrollmentController extends Controller
                         return $response;
                     }
 
-                    $enrollment = $this->storeEnrollmentRequest(
-                        Auth::id(),
-                        $class,
-                        $this->buildPricingAttributes($pricing)
-                    );
+                    $attrs = $this->buildPricingAttributes($pricing);
+
+                    if (! $shouldKeepPending) {
+                        $attrs = array_merge($attrs, $this->approvedAttributes());
+                    }
+
+                    $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class, $attrs);
 
                     if ($shouldKeepPending) {
                         $this->sendRegistrationSuccessMail($enrollment, true);
@@ -157,8 +159,7 @@ class EnrollmentController extends Controller
                         return back()->with('success', 'Thanh toán thành công. Yêu cầu đăng ký đang chờ admin duyệt.');
                     }
 
-                    $enrollment->approve();
-                    $this->sendRegistrationSuccessMail($enrollment, true);
+                    $this->deferApprovedSideEffects($enrollment, true);
 
                     $startDate = optional($class->start_date)->format('d/m/Y');
 
@@ -187,11 +188,13 @@ class EnrollmentController extends Controller
                 $this->recordPromotionOnlyPayment($course, $class, $pricing, $shouldKeepPending);
             }
 
-            $enrollment = $this->storeEnrollmentRequest(
-                Auth::id(),
-                $class,
-                $this->buildPricingAttributes($pricing)
-            );
+            $attrs = $this->buildPricingAttributes($pricing);
+
+            if (! $shouldKeepPending) {
+                $attrs = array_merge($attrs, $this->approvedAttributes());
+            }
+
+            $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class, $attrs);
 
             if ($shouldKeepPending) {
                 $this->sendRegistrationSuccessMail($enrollment);
@@ -199,8 +202,7 @@ class EnrollmentController extends Controller
                 return back()->with('success', 'Đăng ký thành công, vui lòng chờ admin duyệt.');
             }
 
-            $enrollment->approve();
-            $this->sendRegistrationSuccessMail($enrollment);
+            $this->deferApprovedSideEffects($enrollment);
 
             return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
         }
@@ -216,7 +218,7 @@ class EnrollmentController extends Controller
                 ->exists();
 
             if ($existingSeries) {
-                $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class, [
+                $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class, array_merge([
                     'base_price' => $this->promotionService->resolveBasePrice($course, $class),
                     'discount_amount' => 0,
                     'final_price' => 0,
@@ -226,9 +228,9 @@ class EnrollmentController extends Controller
                         'payable_amount' => 0,
                         'applied_items' => [],
                     ],
-                ]);
-                $enrollment->approve();
-                $this->sendRegistrationSuccessMail($enrollment);
+                ], $this->approvedAttributes()));
+
+                $this->deferApprovedSideEffects($enrollment);
 
                 return back()->with('success', 'Đăng ký thành công, bạn có thể học ngay.');
             }
@@ -285,11 +287,13 @@ class EnrollmentController extends Controller
             $paymentRecord = $this->recordPromotionOnlyPayment($course, $class, $pricing, $requiresManualApproval);
         }
 
-        $enrollment = $this->storeEnrollmentRequest(
-            Auth::id(),
-            $class,
-            $this->buildPricingAttributes($pricing)
-        );
+        $attrs = $this->buildPricingAttributes($pricing);
+
+        if (! $requiresManualApproval) {
+            $attrs = array_merge($attrs, $this->approvedAttributes());
+        }
+
+        $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class, $attrs);
 
         if ($requiresManualApproval) {
             $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
@@ -299,8 +303,7 @@ class EnrollmentController extends Controller
                 : 'Đăng ký thành công, vui lòng chờ admin duyệt.');
         }
 
-        $enrollment->approve();
-        $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
+        $this->deferApprovedSideEffects($enrollment, $walletPaid);
 
         return back()->with('success', $walletPaid
             ? 'Thanh toán bằng ví thành công, bạn có thể học ngay.'
@@ -325,14 +328,10 @@ class EnrollmentController extends Controller
             return back()->with('error', 'Yêu cầu này không áp dụng giữ chỗ.');
         }
 
-        $this->enrollmentQueue->syncClassQueue($class);
-        $enrollment->refresh();
-
         if (! $enrollment->hasActiveSeatHold()) {
             return back()->with('error', 'Thời gian giữ chỗ đã hết hoặc chưa tới lượt của bạn.');
         }
 
-        $class = $enrollment->courseClass?->fresh();
         $pricing = $this->promotionService->preview(
             Auth::user(),
             $course,
@@ -376,13 +375,15 @@ class EnrollmentController extends Controller
             $paymentRecord = $this->recordPromotionOnlyPayment($course, $class, $pricing, $shouldKeepPending);
         }
 
-        $enrollment = $this->storeEnrollmentRequest(
-            Auth::id(),
-            $class,
-            $this->buildPricingAttributes($pricing, [
-                'notes' => $walletPaid ? 'seat_hold_confirmed_with_wallet' : 'seat_hold_confirmed',
-            ])
-        );
+        $attrs = $this->buildPricingAttributes($pricing, [
+            'notes' => $walletPaid ? 'seat_hold_confirmed_with_wallet' : 'seat_hold_confirmed',
+        ]);
+
+        if (! $shouldKeepPending) {
+            $attrs = array_merge($attrs, $this->approvedAttributes());
+        }
+
+        $enrollment = $this->storeEnrollmentRequest(Auth::id(), $class, $attrs);
 
         if ($shouldKeepPending) {
             $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
@@ -390,8 +391,7 @@ class EnrollmentController extends Controller
             return back()->with('success', 'Bạn đã xác nhận thanh toán thành công. Yêu cầu đăng ký đang chờ admin duyệt.');
         }
 
-        $enrollment->approve();
-        $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
+        $this->deferApprovedSideEffects($enrollment, $walletPaid);
 
         $startDate = optional($class->start_date)->format('d/m/Y');
 
@@ -654,6 +654,39 @@ $payment = Payment::create([
         }
     }
 
+    private function approvedAttributes(): array
+    {
+        $now = now();
+
+        return [
+            'status' => 'approved',
+            'enrolled_at' => $now,
+            'approved_at' => $now,
+        ];
+    }
+
+    private function deferApprovedSideEffects(CourseEnrollment $enrollment, bool $walletPaid = false): void
+    {
+        $enrollmentId = $enrollment->id;
+        $courseId = $enrollment->course_id;
+
+        app()->terminating(function () use ($enrollmentId, $courseId, $walletPaid) {
+            try {
+                if ($courseId) {
+                    Course::query()->whereKey($courseId)->increment('students_count');
+                }
+
+                $fresh = CourseEnrollment::find($enrollmentId);
+
+                if ($fresh) {
+                    app(PortalNotificationService::class)->notifyEnrollmentApproved($fresh, $walletPaid);
+                }
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        });
+    }
+
     private function resolveSelectedClass(Request $request, Course $course): ?CourseClass
     {
         if ($course->isOffline()) {
@@ -697,6 +730,7 @@ $payment = Payment::create([
         ]);
 
         $enrollment->forceFill(array_merge([
+            'course_id' => $class->course_id,
             'status' => 'pending',
             'notes' => null,
             'enrolled_at' => null,

@@ -12,11 +12,7 @@ class CourseEnrollment extends Model
     protected static function booted(): void
     {
         static::saving(function (self $enrollment): void {
-            if (! filled($enrollment->class_id)) {
-                return;
-            }
-
-            if (filled($enrollment->course_id) && ! $enrollment->isDirty('class_id')) {
+            if (! filled($enrollment->class_id) || filled($enrollment->course_id)) {
                 return;
             }
 
