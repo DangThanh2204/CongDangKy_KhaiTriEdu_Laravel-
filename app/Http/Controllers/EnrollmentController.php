@@ -119,8 +119,53 @@ class EnrollmentController extends Controller
             }
 
             $payableAmount = (float) ($pricing['payable_amount'] ?? 0);
+            $shouldKeepPending = $course->requiresManualApproval() && ! $this->offlineAutoApproveAfterPayment();
 
             if ($payableAmount > 0) {
+                $walletBalance = (float) (Auth::user()->wallet?->balance ?? 0);
+
+                if ($walletBalance >= $payableAmount) {
+                    $purchaseResult = $this->processWalletCoursePurchase(
+                        $request,
+                        $course,
+                        $class,
+                        $pricing,
+                        $shouldKeepPending,
+                        'Thanh toán bằng ví offline (1-click), chờ admin duyệt đăng ký.',
+                        'Thanh toán bằng ví offline (1-click), tự động duyệt sau thanh toán.'
+                    );
+
+                    if (isset($purchaseResult['error'])) {
+                        $response = back()->withInput()->with('error', $purchaseResult['error']);
+
+                        if (! empty($purchaseResult['required_topup'])) {
+                            $response->with('required_topup', true);
+                        }
+
+                        return $response;
+                    }
+
+                    $enrollment = $this->storeEnrollmentRequest(
+                        Auth::id(),
+                        $class,
+                        $this->buildPricingAttributes($pricing)
+                    );
+
+                    if ($shouldKeepPending) {
+                        $this->sendRegistrationSuccessMail($enrollment, true);
+
+                        return back()->with('success', 'Thanh toán thành công. Yêu cầu đăng ký đang chờ admin duyệt.');
+                    }
+
+                    $enrollment->approve();
+                    $this->sendRegistrationSuccessMail($enrollment, true);
+
+                    $startDate = optional($class->start_date)->format('d/m/Y');
+
+                    return back()->with('success', 'Đăng ký và thanh toán thành công.'
+                        . ($startDate ? ' Lớp khai giảng ngày ' . $startDate . '.' : ''));
+                }
+
                 $enrollment = $this->enrollmentQueue->offerDirectSeatHold(
                     Auth::id(),
                     $class,
@@ -139,7 +184,7 @@ class EnrollmentController extends Controller
             }
 
             if ((float) ($pricing['base_price'] ?? 0) > 0 && (float) ($pricing['discount_amount'] ?? 0) > 0) {
-                $this->recordPromotionOnlyPayment($course, $class, $pricing, $course->requiresManualApproval());
+                $this->recordPromotionOnlyPayment($course, $class, $pricing, $shouldKeepPending);
             }
 
             $enrollment = $this->storeEnrollmentRequest(
@@ -148,7 +193,7 @@ class EnrollmentController extends Controller
                 $this->buildPricingAttributes($pricing)
             );
 
-            if ($course->requiresManualApproval()) {
+            if ($shouldKeepPending) {
                 $this->sendRegistrationSuccessMail($enrollment);
 
                 return back()->with('success', 'Đăng ký thành công, vui lòng chờ admin duyệt.');
@@ -300,7 +345,7 @@ class EnrollmentController extends Controller
         }
 
         $payableAmount = (float) ($pricing['payable_amount'] ?? 0);
-        $requiresManualApproval = $course->requiresManualApproval();
+        $shouldKeepPending = $course->requiresManualApproval() && ! $this->offlineAutoApproveAfterPayment();
         $walletPaid = false;
         $paymentRecord = null;
 
@@ -310,9 +355,9 @@ class EnrollmentController extends Controller
                 $course,
                 $class,
                 $pricing,
-                $requiresManualApproval,
+                $shouldKeepPending,
                 'Thanh toán bằng ví nội bộ sau khi được giữ chỗ, chờ admin duyệt đăng ký.',
-                'Thanh toán bằng ví nội bộ sau khi xác nhận giữ chỗ.'
+                'Thanh toán bằng ví nội bộ sau khi xác nhận giữ chỗ, tự động duyệt.'
             );
 
             if (isset($purchaseResult['error'])) {
@@ -328,7 +373,7 @@ class EnrollmentController extends Controller
             $walletPaid = true;
             $paymentRecord = $purchaseResult['payment'] ?? null;
         } elseif ((float) ($pricing['base_price'] ?? 0) > 0 && (float) ($pricing['discount_amount'] ?? 0) > 0) {
-            $paymentRecord = $this->recordPromotionOnlyPayment($course, $class, $pricing, $requiresManualApproval);
+            $paymentRecord = $this->recordPromotionOnlyPayment($course, $class, $pricing, $shouldKeepPending);
         }
 
         $enrollment = $this->storeEnrollmentRequest(
@@ -339,16 +384,24 @@ class EnrollmentController extends Controller
             ])
         );
 
-        if ($requiresManualApproval) {
+        if ($shouldKeepPending) {
             $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
-            return back()->with('success', 'Bạn đã xác nhận giữ chỗ thành công. Yêu cầu đăng ký đang chờ admin duyệt.');
+            return back()->with('success', 'Bạn đã xác nhận thanh toán thành công. Yêu cầu đăng ký đang chờ admin duyệt.');
         }
 
         $enrollment->approve();
         $this->sendRegistrationSuccessMail($enrollment, $walletPaid);
 
-        return back()->with('success', 'Bạn đã xác nhận giữ chỗ thành công và có thể bắt đầu học ngay.');
+        $startDate = optional($class->start_date)->format('d/m/Y');
+
+        return back()->with('success', 'Bạn đã xác nhận thanh toán thành công.'
+            . ($startDate ? ' Lớp khai giảng ngày ' . $startDate . '.' : ' Bạn có thể bắt đầu học ngay khi tới lịch.'));
+    }
+
+    private function offlineAutoApproveAfterPayment(): bool
+    {
+        return (string) Setting::get('offline_auto_approve_after_payment', '1') === '1';
     }
 
     public function unenroll(Request $request, Course $course)

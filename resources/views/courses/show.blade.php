@@ -530,11 +530,23 @@
                                                         <input type="hidden" name="discount_code" value="{{ $selectedDiscountCode }}" data-discount-code-target>
                                                         <input type="hidden" name="payment_method" value="wallet">
                                                         <button type="submit" class="btn btn-primary btn-sm w-100">
-                                                            {{ $requiresPaidCheckout ? 'Đăng ký giữ chỗ' : 'Gửi yêu cầu đăng ký' }}
+                                                            @if(! $requiresPaidCheckout)
+                                                                Gửi yêu cầu đăng ký
+                                                            @elseif($walletEnough)
+                                                                Đăng ký + thanh toán
+                                                            @else
+                                                                Đăng ký giữ chỗ
+                                                            @endif
                                                         </button>
                                                     </form>
                                                     @if($requiresPaidCheckout)
-                                                        <small class="text-muted d-block mt-2">Đăng ký trước, thanh toán sau. Quá hạn giữ chỗ chưa đóng tiền sẽ tự hủy.</small>
+                                                        <small class="text-muted d-block mt-2">
+                                                            @if($walletEnough)
+                                                                Hệ thống sẽ trừ tiền từ ví ({{ number_format($displayPayableAmount, 0) }}đ) và tự động duyệt đăng ký.
+                                                            @else
+                                                                Ví chưa đủ — đăng ký giữ chỗ trước, nạp ví và thanh toán sau. Quá hạn giữ chỗ chưa đóng tiền sẽ tự hủy.
+                                                            @endif
+                                                        </small>
                                                     @endif
                                                 @endif
                                             </div>
