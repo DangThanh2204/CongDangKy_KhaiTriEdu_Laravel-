@@ -13,7 +13,7 @@
             lastClosedKey: 'khai_tri_last_auth_browser_close',
             heartbeatMs: 15000,
             staleMs: 90000,
-            reopenGapMs: 5000,
+            reopenGapMs: 90000,
         };
 
         function readSessionValue(key) {

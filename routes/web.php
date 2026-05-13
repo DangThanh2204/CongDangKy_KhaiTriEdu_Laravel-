@@ -103,6 +103,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/logout', fn () => redirect()->route('home'))->name('logout.get');
 Route::post('/logout/browser-close', [AuthController::class, 'logoutOnBrowserClose'])->name('logout.browser-close');
 
 Route::get('/courses', [CourseController::class, 'index'])->name('courses.index');
