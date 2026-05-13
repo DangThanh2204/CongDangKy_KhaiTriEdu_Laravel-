@@ -49,18 +49,7 @@
                             </div>
                         </div>
 
-                        <!-- Hidden instructors template for JS -->
-                        <select id="instructors-options-template" style="display:none;">
-                            <option value="">-- Chọn giảng viên --</option>
-                            @foreach(
-                                \App\Models\User::whereIn('role', ['instructor'])->get(['id','fullname','email'])
-                                as $instructor
-                            )
-                                <option value="{{ $instructor->id }}">{{ $instructor->fullname }} ({{ $instructor->email }})</option>
-                            @endforeach
-                        </select>
-
-                        <div class="mb-3">
+<div class="mb-3">
                             <label class="form-label">Thông báo cho học viên</label>
                             <textarea name="announcement" class="form-control" rows="3" placeholder="Thông báo quan trọng về khóa học">{{ old('announcement') }}</textarea>
                             <small class="text-muted">Thông báo sẽ hiển thị cho học viên đã đăng ký</small>
@@ -192,8 +181,8 @@
         const classesContainer = document.getElementById('classes-container');
         const addClassBtn = document.getElementById('add-class-btn');
         let classIndex = 0;
-        const instructorsOptions = document.getElementById('instructors-options-template') ? document.getElementById('instructors-options-template').innerHTML : '';
         const currentUserId = '{{ auth()->id() }}';
+        const currentUserName = '{{ auth()->user()->fullname ?? auth()->user()->username }}';
 
         function createClassForm(index) {
             const wrapper = document.createElement('div');
@@ -212,10 +201,8 @@
                     </div>
                     <div class="col-md-6 mb-2">
                         <label class="form-label">Giảng viên</label>
-                        <select name="classes[${index}][instructor_id]" class="form-select">
-                            <option value="">-- Chọn giảng viên --</option>
-                            ${instructorsOptions}
-                        </select>
+                        <input type="text" class="form-control" value="${currentUserName}" disabled>
+                        <input type="hidden" name="classes[${index}][instructor_id]" value="${currentUserId}">
                     </div>
                     <div class="col-md-6 mb-2">
                         <label class="form-label">Ngày bắt đầu</label>
@@ -251,11 +238,6 @@
                     </div>
                 </div>
             `;
-
-            const instructorSelect = wrapper.querySelector('select[name*="instructor_id"]');
-            if (instructorSelect && currentUserId) {
-                instructorSelect.value = currentUserId;
-            }
 
             return wrapper;
         }
