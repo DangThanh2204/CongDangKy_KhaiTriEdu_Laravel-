@@ -133,14 +133,14 @@ class BackupManagerService
             throw new RuntimeException('Backup không đọc được hoặc bị hỏng.');
         }
 
-        DB::connection()->getPdo();
+        $this->db()->getPdo();
 
         try {
             $this->disableForeignKeys();
             foreach ($this->fetchTables() as $table) {
-                DB::statement('DROP TABLE IF EXISTS ' . $this->quoteIdentifier($table));
+                $this->db()->statement('DROP TABLE IF EXISTS ' . $this->quoteIdentifier($table));
             }
-            DB::unprepared($sql);
+            $this->db()->unprepared($sql);
             $this->enableForeignKeys();
         } catch (\Throwable $exception) {
             try {
@@ -204,7 +204,7 @@ class BackupManagerService
             $dump[] = rtrim($createTableSql, ';') . ';';
             $dump[] = '';
 
-            $rows = collect(DB::table($table)->get())->map(fn ($row) => (array) $row);
+            $rows = collect($this->db()->table($table)->get())->map(fn ($row) => (array) $row);
             if ($rows->isEmpty()) {
                 continue;
             }
@@ -242,14 +242,14 @@ class BackupManagerService
     private function fetchTables(): array
     {
         if ($this->driver() === 'sqlite') {
-            return collect(DB::select("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"))
+            return collect($this->db()->select("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"))
                 ->map(fn ($row) => data_get((array) $row, 'name'))
                 ->filter()
                 ->values()
                 ->all();
         }
 
-        $rows = DB::select('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"');
+        $rows = $this->db()->select('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"');
 
         return collect($rows)
             ->map(fn ($row) => array_values((array) $row)[0] ?? null)
@@ -261,13 +261,13 @@ class BackupManagerService
     private function fetchCreateTableSql(string $table): ?string
     {
         if ($this->driver() === 'sqlite') {
-            $row = DB::selectOne('SELECT sql FROM sqlite_master WHERE type = ? AND name = ?', ['table', $table]);
+            $row = $this->db()->selectOne('SELECT sql FROM sqlite_master WHERE type = ? AND name = ?', ['table', $table]);
 
             return $row?->sql ?: null;
         }
 
         $escapedTable = str_replace('`', '``', $table);
-        $createTableRow = (array) (DB::select('SHOW CREATE TABLE `' . $escapedTable . '`')[0] ?? []);
+        $createTableRow = (array) ($this->db()->select('SHOW CREATE TABLE `' . $escapedTable . '`')[0] ?? []);
 
         return array_values($createTableRow)[1] ?? null;
     }
@@ -275,21 +275,21 @@ class BackupManagerService
     private function disableForeignKeys(): void
     {
         if ($this->driver() === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = OFF');
+            $this->db()->statement('PRAGMA foreign_keys = OFF');
             return;
         }
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        $this->db()->statement('SET FOREIGN_KEY_CHECKS=0');
     }
 
     private function enableForeignKeys(): void
     {
         if ($this->driver() === 'sqlite') {
-            DB::statement('PRAGMA foreign_keys = ON');
+            $this->db()->statement('PRAGMA foreign_keys = ON');
             return;
         }
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        $this->db()->statement('SET FOREIGN_KEY_CHECKS=1');
     }
 
     private function quoteIdentifier(string $identifier): string
@@ -361,7 +361,7 @@ class BackupManagerService
         }
 
         if ($value instanceof DateTimeInterface) {
-            return DB::getPdo()->quote($value->format('Y-m-d H:i:s'));
+            return $this->db()->getPdo()->quote($value->format('Y-m-d H:i:s'));
         }
 
         if (is_bool($value)) {
@@ -372,7 +372,7 @@ class BackupManagerService
             return (string) $value;
         }
 
-        return DB::getPdo()->quote((string) $value);
+        return $this->db()->getPdo()->quote((string) $value);
     }
 
     private function ensureZipAvailable(): void
@@ -404,12 +404,27 @@ class BackupManagerService
 
     private function databaseName(): ?string
     {
-        return DB::connection()->getDatabaseName();
+        return $this->db()->getDatabaseName();
     }
 
     private function driver(): string
     {
-        return DB::connection()->getDriverName();
+        return $this->db()->getDriverName();
+    }
+
+    private function db(): \Illuminate\Database\Connection
+    {
+        $default = config('database.default', 'mysql');
+        if (in_array($default, ['mysql', 'sqlite', 'pgsql', 'sqlsrv'])) {
+            return DB::connection($default);
+        }
+        // Default connection is non-SQL (e.g. mongodb) — find first SQL connection
+        foreach (['mysql', 'sqlite', 'pgsql'] as $name) {
+            if (config("database.connections.{$name}")) {
+                return DB::connection($name);
+            }
+        }
+        return DB::connection($default);
     }
 
     private function formatBytes(int $bytes): string

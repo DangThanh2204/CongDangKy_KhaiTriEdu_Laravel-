@@ -193,6 +193,7 @@
         const addClassBtn = document.getElementById('add-class-btn');
         let classIndex = 0;
         const instructorsOptions = document.getElementById('instructors-options-template') ? document.getElementById('instructors-options-template').innerHTML : '';
+        const currentUserId = '{{ auth()->id() }}';
 
         function createClassForm(index) {
             const wrapper = document.createElement('div');
@@ -250,6 +251,11 @@
                     </div>
                 </div>
             `;
+
+            const instructorSelect = wrapper.querySelector('select[name*="instructor_id"]');
+            if (instructorSelect && currentUserId) {
+                instructorSelect.value = currentUserId;
+            }
 
             return wrapper;
         }
