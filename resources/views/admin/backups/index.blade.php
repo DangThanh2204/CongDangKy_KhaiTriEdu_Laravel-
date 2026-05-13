@@ -139,7 +139,7 @@
                                                 <td><strong>{{ $backup['size_label'] }}</strong></td>
                                                 <td>
                                                     <div class="backup-manifest-list">
-                                                        <span><i class="fas fa-table me-2"></i>{{ number_format((int) ($manifest['tables_count'] ?? 0)) }} bảng dữ liệu</span>
+                                                        <span><i class="fas fa-table me-2"></i>{{ number_format((int) ($manifest['collections_count'] ?? $manifest['tables_count'] ?? 0)) }} collections</span>
                                                         <span><i class="fas fa-folder-open me-2"></i>{{ number_format((int) ($manifest['public_files_count'] ?? 0)) }} file upload</span>
                                                     </div>
                                                 </td>

@@ -2,12 +2,19 @@
 
 namespace App\Services;
 
-use DateTimeInterface;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use MongoDB\BSON\Binary;
+use MongoDB\BSON\Decimal128;
+use MongoDB\BSON\ObjectId;
+use MongoDB\BSON\Regex;
+use MongoDB\BSON\UTCDateTime;
+use MongoDB\Database as MongoDatabase;
+use MongoDB\Model\BSONArray;
+use MongoDB\Model\BSONDocument;
 use RuntimeException;
 use ZipArchive;
 
@@ -29,22 +36,23 @@ class BackupManagerService
         $this->ensureZipAvailable();
         File::ensureDirectoryExists($this->backupDirectory());
 
-        $tables = $this->fetchTables();
+        $db = $this->mongoDb();
+        $collections = $this->fetchCollections($db);
         $publicFiles = $this->publicFiles();
+
         $manifest = [
-            'generated_at' => now()->toIso8601String(),
-            'app_name' => config('app.name', 'Khai Tri Edu'),
-            'environment' => config('app.env'),
-            'database' => $this->databaseName(),
-            'driver' => $this->driver(),
-            'tables_count' => count($tables),
+            'generated_at'       => now()->toIso8601String(),
+            'app_name'           => config('app.name', 'Khai Tri Edu'),
+            'environment'        => config('app.env'),
+            'database'           => $this->databaseName(),
+            'driver'             => 'mongodb',
+            'collections_count'  => count($collections),
             'public_files_count' => count($publicFiles),
-            'generated_by' => $actor,
+            'generated_by'       => $actor,
         ];
 
         $fileName = 'khai-tri-backup-' . now()->format('Ymd-His') . '.zip';
-        $zipPath = $this->backupDirectory() . DIRECTORY_SEPARATOR . $fileName;
-        $databaseDump = $this->buildDatabaseDump($tables);
+        $zipPath  = $this->backupDirectory() . DIRECTORY_SEPARATOR . $fileName;
 
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
@@ -52,7 +60,11 @@ class BackupManagerService
         }
 
         $zip->addFromString('manifest.json', json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        $zip->addFromString('database.sql', $databaseDump);
+
+        foreach ($collections as $name) {
+            $json = $this->dumpCollection($db, $name);
+            $zip->addFromString('collections/' . $name . '.json', $json);
+        }
 
         $publicRoot = $this->publicStoragePath();
         foreach ($publicFiles as $filePath) {
@@ -114,7 +126,16 @@ class BackupManagerService
             throw new RuntimeException('Không thể mở file backup để khôi phục.');
         }
 
-        if ($zip->locateName('database.sql') === false || $zip->locateName('manifest.json') === false) {
+        $hasManifest    = $zip->locateName('manifest.json') !== false;
+        $hasCollections = false;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            if (str_starts_with($zip->getNameIndex($i), 'collections/')) {
+                $hasCollections = true;
+                break;
+            }
+        }
+
+        if (! $hasManifest || ! $hasCollections) {
             $zip->close();
             File::deleteDirectory($extractPath);
             throw new RuntimeException('File backup không hợp lệ hoặc thiếu dữ liệu cần thiết.');
@@ -123,35 +144,39 @@ class BackupManagerService
         $zip->extractTo($extractPath);
         $zip->close();
 
-        $databaseDumpPath = $extractPath . DIRECTORY_SEPARATOR . 'database.sql';
-        $manifestPath = $extractPath . DIRECTORY_SEPARATOR . 'manifest.json';
-        $manifest = json_decode((string) File::get($manifestPath), true);
-        $sql = (string) File::get($databaseDumpPath);
-
-        if (! is_array($manifest) || trim($sql) === '') {
+        $manifest = json_decode((string) File::get($extractPath . '/manifest.json'), true);
+        if (! is_array($manifest)) {
             File::deleteDirectory($extractPath);
             throw new RuntimeException('Backup không đọc được hoặc bị hỏng.');
         }
 
-        $this->db()->getPdo();
+        $collectionsPath = $extractPath . DIRECTORY_SEPARATOR . 'collections';
+        $collectionFiles = File::isDirectory($collectionsPath) ? File::files($collectionsPath) : [];
+
+        $db = $this->mongoDb();
 
         try {
-            $this->disableForeignKeys();
-            foreach ($this->fetchTables() as $table) {
-                $this->db()->statement('DROP TABLE IF EXISTS ' . $this->quoteIdentifier($table));
-            }
-            $this->db()->unprepared($sql);
-            $this->enableForeignKeys();
-        } catch (\Throwable $exception) {
-            try {
-                $this->enableForeignKeys();
-            } catch (\Throwable $innerException) {
+            // Drop existing collections
+            foreach ($this->fetchCollections($db) as $name) {
+                $db->dropCollection($name);
             }
 
+            // Restore each collection
+            foreach ($collectionFiles as $file) {
+                $name      = $file->getFilenameWithoutExtension();
+                $documents = json_decode((string) File::get($file->getRealPath()), true);
+
+                if (! empty($documents)) {
+                    $docs = array_map(fn ($doc) => $this->arrayToBson($doc), $documents);
+                    $db->selectCollection($name)->insertMany($docs);
+                }
+            }
+        } catch (\Throwable $e) {
             File::deleteDirectory($extractPath);
-            throw new RuntimeException('Khôi phục cơ sở dữ liệu thất bại: ' . $exception->getMessage(), 0, $exception);
+            throw new RuntimeException('Khôi phục cơ sở dữ liệu thất bại: ' . $e->getMessage(), 0, $e);
         }
 
+        // Restore public files
         $publicPath = $this->publicStoragePath();
         File::ensureDirectoryExists($publicPath);
         File::cleanDirectory($publicPath);
@@ -164,141 +189,116 @@ class BackupManagerService
         File::deleteDirectory($extractPath);
 
         return [
-            'manifest' => $manifest,
-            'restored_at' => now(),
-            'database' => $manifest['database'] ?? $this->databaseName(),
-            'tables_count' => (int) ($manifest['tables_count'] ?? 0),
+            'manifest'           => $manifest,
+            'restored_at'        => now(),
+            'database'           => $manifest['database'] ?? $this->databaseName(),
+            'collections_count'  => count($collectionFiles),
             'public_files_count' => (int) ($manifest['public_files_count'] ?? 0),
         ];
     }
 
-    private function buildDatabaseDump(array $tables): string
+    private function mongoDb(): MongoDatabase
     {
-        $dump = $this->driver() === 'sqlite'
-            ? [
-                '-- Khai Tri Edu backup',
-                '-- Generated at: ' . now()->toDateTimeString(),
-                'PRAGMA foreign_keys=OFF;',
-                'BEGIN TRANSACTION;',
-                '',
-            ]
-            : [
-                '-- Khai Tri Edu backup',
-                '-- Generated at: ' . now()->toDateTimeString(),
-                'SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";',
-                'SET time_zone = "+00:00";',
-                'SET FOREIGN_KEY_CHECKS=0;',
-                '',
-            ];
+        return DB::connection('mongodb')->getMongoDB();
+    }
 
-        foreach ($tables as $table) {
-            $createTableSql = $this->fetchCreateTableSql($table);
+    private function fetchCollections(MongoDatabase $db): array
+    {
+        $names = [];
+        foreach ($db->listCollectionNames() as $name) {
+            $names[] = $name;
+        }
+        sort($names);
+        return $names;
+    }
 
-            if (! $createTableSql) {
-                continue;
+    private function dumpCollection(MongoDatabase $db, string $name): string
+    {
+        $documents = [];
+        foreach ($db->selectCollection($name)->find() as $doc) {
+            $documents[] = $this->bsonToArray($doc);
+        }
+        return json_encode($documents, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    // Convert BSON types → plain PHP array (JSON-safe)
+    private function bsonToArray(mixed $value): mixed
+    {
+        if ($value instanceof ObjectId) {
+            return ['$oid' => (string) $value];
+        }
+
+        if ($value instanceof UTCDateTime) {
+            return ['$date' => $value->toDateTime()->format('c')];
+        }
+
+        if ($value instanceof Decimal128) {
+            return ['$numberDecimal' => (string) $value];
+        }
+
+        if ($value instanceof Binary) {
+            return ['$binary' => base64_encode($value->getData()), '$type' => $value->getType()];
+        }
+
+        if ($value instanceof Regex) {
+            return ['$regex' => $value->getPattern(), '$options' => $value->getFlags()];
+        }
+
+        if ($value instanceof BSONDocument || (is_object($value) && ! ($value instanceof \JsonSerializable))) {
+            $result = [];
+            foreach ((array) $value as $k => $v) {
+                $result[$k] = $this->bsonToArray($v);
             }
+            return $result;
+        }
 
-            $dump[] = '-- --------------------------------------------------------';
-            $dump[] = '-- Table structure for ' . $this->quoteIdentifier($table);
-            $dump[] = 'DROP TABLE IF EXISTS ' . $this->quoteIdentifier($table) . ';';
-            $dump[] = rtrim($createTableSql, ';') . ';';
-            $dump[] = '';
+        if ($value instanceof BSONArray) {
+            return array_values(array_map(fn ($v) => $this->bsonToArray($v), (array) $value));
+        }
 
-            $rows = collect($this->db()->table($table)->get())->map(fn ($row) => (array) $row);
-            if ($rows->isEmpty()) {
-                continue;
+        if (is_array($value)) {
+            $result = [];
+            foreach ($value as $k => $v) {
+                $result[$k] = $this->bsonToArray($v);
             }
-
-            $columns = array_keys($rows->first());
-            $columnSql = collect($columns)
-                ->map(fn ($column) => $this->quoteIdentifier($column))
-                ->implode(', ');
-
-            foreach ($rows->chunk(200) as $chunk) {
-                $valueSql = $chunk->map(function (array $row) use ($columns) {
-                    $values = collect($columns)
-                        ->map(fn ($column) => $this->quoteValue($row[$column] ?? null))
-                        ->implode(', ');
-
-                    return '(' . $values . ')';
-                })->implode(",\n");
-
-                $dump[] = 'INSERT INTO ' . $this->quoteIdentifier($table) . ' (' . $columnSql . ') VALUES';
-                $dump[] = $valueSql . ';';
-                $dump[] = '';
-            }
+            return $result;
         }
 
-        if ($this->driver() === 'sqlite') {
-            $dump[] = 'COMMIT;';
-            $dump[] = 'PRAGMA foreign_keys=ON;';
-        } else {
-            $dump[] = 'SET FOREIGN_KEY_CHECKS=1;';
-        }
-
-        return implode("\n", $dump);
+        return $value;
     }
 
-    private function fetchTables(): array
+    // Convert plain PHP array → BSON types (for restore)
+    private function arrayToBson(mixed $value): mixed
     {
-        if ($this->driver() === 'sqlite') {
-            return collect($this->db()->select("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"))
-                ->map(fn ($row) => data_get((array) $row, 'name'))
-                ->filter()
-                ->values()
-                ->all();
+        if (! is_array($value)) {
+            return $value;
         }
 
-        $rows = $this->db()->select('SHOW FULL TABLES WHERE Table_type = "BASE TABLE"');
-
-        return collect($rows)
-            ->map(fn ($row) => array_values((array) $row)[0] ?? null)
-            ->filter()
-            ->values()
-            ->all();
-    }
-
-    private function fetchCreateTableSql(string $table): ?string
-    {
-        if ($this->driver() === 'sqlite') {
-            $row = $this->db()->selectOne('SELECT sql FROM sqlite_master WHERE type = ? AND name = ?', ['table', $table]);
-
-            return $row?->sql ?: null;
+        if (isset($value['$oid']) && count($value) === 1) {
+            return new ObjectId($value['$oid']);
         }
 
-        $escapedTable = str_replace('`', '``', $table);
-        $createTableRow = (array) ($this->db()->select('SHOW CREATE TABLE `' . $escapedTable . '`')[0] ?? []);
-
-        return array_values($createTableRow)[1] ?? null;
-    }
-
-    private function disableForeignKeys(): void
-    {
-        if ($this->driver() === 'sqlite') {
-            $this->db()->statement('PRAGMA foreign_keys = OFF');
-            return;
+        if (isset($value['$date']) && count($value) === 1) {
+            return new UTCDateTime(new \DateTime($value['$date']));
         }
 
-        $this->db()->statement('SET FOREIGN_KEY_CHECKS=0');
-    }
-
-    private function enableForeignKeys(): void
-    {
-        if ($this->driver() === 'sqlite') {
-            $this->db()->statement('PRAGMA foreign_keys = ON');
-            return;
+        if (isset($value['$numberDecimal']) && count($value) === 1) {
+            return new Decimal128($value['$numberDecimal']);
         }
 
-        $this->db()->statement('SET FOREIGN_KEY_CHECKS=1');
-    }
-
-    private function quoteIdentifier(string $identifier): string
-    {
-        if ($this->driver() === 'sqlite') {
-            return '"' . str_replace('"', '""', $identifier) . '"';
+        if (isset($value['$binary'], $value['$type'])) {
+            return new Binary(base64_decode($value['$binary']), (int) $value['$type']);
         }
 
-        return '`' . str_replace('`', '``', $identifier) . '`';
+        if (isset($value['$regex'])) {
+            return new Regex($value['$regex'], $value['$options'] ?? '');
+        }
+
+        $result = [];
+        foreach ($value as $k => $v) {
+            $result[$k] = $this->arrayToBson($v);
+        }
+        return $result;
     }
 
     private function publicFiles(): array
@@ -318,16 +318,16 @@ class BackupManagerService
 
     private function describeBackup(string $path): array
     {
-        $manifest = $this->readManifest($path);
+        $manifest  = $this->readManifest($path);
         $createdAt = $manifest['generated_at'] ?? date(DATE_ATOM, filemtime($path));
 
         return [
-            'name' => basename($path),
-            'path' => $path,
-            'size' => filesize($path) ?: 0,
+            'name'       => basename($path),
+            'path'       => $path,
+            'size'       => filesize($path) ?: 0,
             'size_label' => $this->formatBytes(filesize($path) ?: 0),
             'created_at' => $createdAt,
-            'manifest' => $manifest,
+            'manifest'   => $manifest,
         ];
     }
 
@@ -342,37 +342,21 @@ class BackupManagerService
             return [];
         }
 
-        $manifestContent = $zip->getFromName('manifest.json');
+        $content = $zip->getFromName('manifest.json');
         $zip->close();
 
-        if (! is_string($manifestContent) || trim($manifestContent) === '') {
+        if (! is_string($content) || trim($content) === '') {
             return [];
         }
 
-        $manifest = json_decode($manifestContent, true);
+        $manifest = json_decode($content, true);
 
         return is_array($manifest) ? $manifest : [];
     }
 
-    private function quoteValue(mixed $value): string
+    private function databaseName(): string
     {
-        if ($value === null) {
-            return 'NULL';
-        }
-
-        if ($value instanceof DateTimeInterface) {
-            return $this->db()->getPdo()->quote($value->format('Y-m-d H:i:s'));
-        }
-
-        if (is_bool($value)) {
-            return $value ? '1' : '0';
-        }
-
-        if (is_int($value) || is_float($value)) {
-            return (string) $value;
-        }
-
-        return $this->db()->getPdo()->quote((string) $value);
+        return DB::connection('mongodb')->getDatabaseName();
     }
 
     private function ensureZipAvailable(): void
@@ -400,31 +384,6 @@ class BackupManagerService
     private function publicStoragePath(): string
     {
         return storage_path('app/public');
-    }
-
-    private function databaseName(): ?string
-    {
-        return $this->db()->getDatabaseName();
-    }
-
-    private function driver(): string
-    {
-        return $this->db()->getDriverName();
-    }
-
-    private function db(): \Illuminate\Database\Connection
-    {
-        $default = config('database.default', 'mysql');
-        if (in_array($default, ['mysql', 'sqlite', 'pgsql', 'sqlsrv'])) {
-            return DB::connection($default);
-        }
-        // Default connection is non-SQL (e.g. mongodb) — find first SQL connection
-        foreach (['mysql', 'sqlite', 'pgsql'] as $name) {
-            if (config("database.connections.{$name}")) {
-                return DB::connection($name);
-            }
-        }
-        return DB::connection($default);
     }
 
     private function formatBytes(int $bytes): string
