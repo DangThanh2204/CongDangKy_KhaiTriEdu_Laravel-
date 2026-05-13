@@ -24,6 +24,56 @@
                         @csrf
 
                         <div class="mb-3">
+                            <label class="form-label fw-semibold">Tên khóa học <span class="text-danger">*</span></label>
+                            <input type="text" name="title" class="form-control @error('title') is-invalid @enderror" value="{{ old('title') }}" placeholder="Ví dụ: Lập trình Python cơ bản" required>
+                            @error('title')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Danh mục <span class="text-danger">*</span></label>
+                            <select name="category_id" class="form-select @error('category_id') is-invalid @enderror" required>
+                                <option value="">-- Chọn danh mục --</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('category_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Mô tả ngắn</label>
+                            <textarea name="short_description" class="form-control" rows="2" maxlength="500" placeholder="Tóm tắt nội dung khóa học (tối đa 500 ký tự)">{{ old('short_description') }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Mô tả chi tiết</label>
+                            <textarea name="description" class="form-control" rows="4" placeholder="Nội dung, mục tiêu, đối tượng học viên...">{{ old('description') }}</textarea>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Giá khóa học (VNĐ) <span class="text-danger">*</span></label>
+                                <input type="number" name="price" class="form-control @error('price') is-invalid @enderror" value="{{ old('price', 0) }}" min="0" step="1000" required>
+                                @error('price')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Giá khuyến mãi (tùy chọn)</label>
+                                <input type="number" name="sale_price" class="form-control" value="{{ old('sale_price') }}" min="0" step="1000" placeholder="Để trống nếu không giảm giá">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Ảnh thumbnail (tùy chọn)</label>
+                            <input type="file" name="thumbnail" class="form-control" accept="image/jpeg,image/png,image/jpg,image/gif">
+                            <small class="text-muted">Tối đa 2MB. Định dạng: JPG, PNG, GIF.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Link video giới thiệu (tùy chọn)</label>
+                            <input type="url" name="video_url" class="form-control" value="{{ old('video_url') }}" placeholder="https://youtube.com/...">
+                        </div>
+
+                        <div class="mb-3">
     <label class="form-label">Hình thức đào tạo</label>
     <select name="learning_type" class="form-select">
         <option value="online" {{ old('learning_type', 'online') === 'online' ? 'selected' : '' }}>Online</option>
