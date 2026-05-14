@@ -12,9 +12,15 @@ use Illuminate\Support\Collection;
 
 class PromotionService
 {
+    private ?array $cachedAutomaticSettings = null;
+
     public function getAutomaticSettings(): array
     {
-        return [
+        if ($this->cachedAutomaticSettings !== null) {
+            return $this->cachedAutomaticSettings;
+        }
+
+        return $this->cachedAutomaticSettings = [
             'early_bird_enabled' => (string) Setting::get('promotion_early_bird_enabled', '1') === '1',
             'early_bird_days_before_start' => max(1, (int) Setting::get('promotion_early_bird_days_before_start', '14')),
             'early_bird_discount_type' => Setting::get('promotion_early_bird_discount_type', DiscountCode::VALUE_PERCENT),
@@ -313,21 +319,25 @@ class PromotionService
 
     protected function countEligibleComboCourses(User $user, Course $course): int
     {
-        $query = CourseEnrollment::query()
+        $eligibleCourseIds = Course::query()
+            ->where('id', '!=', $course->id)
+            ->when(
+                filled($course->series_key),
+                fn ($q) => $q->where('series_key', $course->series_key),
+                fn ($q) => $q->where('category_id', $course->category_id),
+            )
+            ->pluck('id')
+            ->all();
+
+        if (empty($eligibleCourseIds)) {
+            return 0;
+        }
+
+        return CourseEnrollment::query()
             ->where('user_id', $user->id)
             ->whereIn('status', ['approved', 'completed'])
-            ->whereHas('courseClass', function ($classQuery) use ($course) {
-                $classQuery->where('course_id', '!=', $course->id)
-                    ->whereHas('course', function ($courseQuery) use ($course) {
-                        if (filled($course->series_key)) {
-                            $courseQuery->where('series_key', $course->series_key);
-                        } else {
-                            $courseQuery->where('category_id', $course->category_id);
-                        }
-                    });
-            });
-
-        return $query->count();
+            ->whereIn('course_id', $eligibleCourseIds)
+            ->count();
     }
 
     protected function computeDiscount(float $basePrice, string $type, float $value): float

@@ -27,8 +27,9 @@ class EnrollmentQueueService
         }
 
         $freshClass = $class->fresh();
+        $remainingSlots = $freshClass ? ($freshClass->remaining_slots ?? 0) : 0;
 
-        while ($freshClass && ($freshClass->remaining_slots ?? 0) > 0) {
+        while ($remainingSlots > 0) {
             $nextEnrollment = $this->nextWaitlistedEnrollment($freshClass);
 
             if (! $nextEnrollment) {
@@ -36,7 +37,7 @@ class EnrollmentQueueService
             }
 
             $this->offerSeatHold($nextEnrollment);
-            $freshClass = $freshClass->fresh();
+            $remainingSlots--;
         }
     }
 

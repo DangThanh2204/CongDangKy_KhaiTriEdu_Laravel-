@@ -47,16 +47,16 @@ class EnrollmentController extends Controller
                 : 'Khóa học này hiện chưa mở đăng ký.');
         }
 
-        if ($course->isOffline() && $class->is_full) {
-            $this->enrollmentQueue->syncClassQueue($class);
-            $class = $class->fresh();
-        }
-
         $existing = CourseEnrollment::where('user_id', Auth::id())
             ->forCourse($course)
             ->whereIn('status', ['pending', 'approved', 'completed'])
             ->latest('id')
             ->first();
+
+        if ($course->isOffline() && $class->is_full) {
+            $this->enrollmentQueue->syncClassQueue($class);
+            $class = $class->fresh();
+        }
 
         if ($existing) {
             $currentClassName = $existing->courseClass->name ?? null;
