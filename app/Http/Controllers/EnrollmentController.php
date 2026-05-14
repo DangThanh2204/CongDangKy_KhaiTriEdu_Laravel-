@@ -14,6 +14,7 @@ use App\Services\PortalNotificationService;
 use App\Services\PromotionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class EnrollmentController extends Controller
@@ -427,7 +428,15 @@ class EnrollmentController extends Controller
         $class = $enrollment->class;
         $now = now();
 
-        if ($class && $class->start_date && $now->lt($class->start_date) && ! $wasWaitlisted && ! $hadSeatHold) {
+        $refundAmount = 0.0;
+        $refundError = null;
+
+        $eligibleForRefund = $class
+            && ! $wasWaitlisted
+            && ! $hadSeatHold
+            && (! $class->start_date || $now->lt($class->start_date));
+
+        if ($eligibleForRefund) {
             try {
                 $wallet = Auth::user()->getOrCreateWallet();
                 $purchase = $wallet->transactions()
@@ -439,36 +448,53 @@ class EnrollmentController extends Controller
                     ->first();
 
                 if ($purchase) {
-                    $refundTx = $wallet->deposit($purchase->amount, [
-                        'refunded_purchase_id' => $purchase->id,
-                        'course_id' => $course->id,
-                        'class_id' => $class->id,
-                        'reason' => 'refund_on_unenroll_before_start',
-                    ]);
+                    DB::transaction(function () use ($wallet, $purchase, $course, $class, $enrollment, &$refundAmount) {
+                        $refundTx = $wallet->deposit($purchase->amount, [
+                            'refunded_purchase_id' => $purchase->id,
+                            'course_id' => $course->id,
+                            'class_id' => $class->id,
+                            'reason' => 'refund_on_unenroll_before_start',
+                        ]);
 
-                    if ($refundTx) {
-                        \App\Services\SystemLogService::record('transaction', 'refund_issued', [
-                            'purchase_id' => $purchase->id,
-                            'refund_tx_id' => $refundTx->id,
-                            'amount' => $refundTx->amount,
-                        ], $refundTx->reference ?? null);
-                    }
+                        $enrollment->cancel('student_cancelled');
 
-                    try {
                         if ($refundTx) {
-                            Auth::user()->notify(new RefundIssuedNotification($refundTx->amount, $course->title ?? null, $class->name ?? null));
+                            $refundAmount = (float) $refundTx->amount;
+                            \App\Services\SystemLogService::record('transaction', 'refund_issued', [
+                                'purchase_id' => $purchase->id,
+                                'refund_tx_id' => $refundTx->id,
+                                'amount' => $refundTx->amount,
+                            ], $refundTx->reference ?? null);
                         }
-                    } catch (\Exception $exception) {
+                    });
+
+                    if ($refundAmount > 0) {
+                        $notifyUser = Auth::user();
+                        $notifyAmount = $refundAmount;
+                        app()->terminating(function () use ($notifyUser, $notifyAmount, $course, $class) {
+                            try {
+                                $notifyUser->notify(new RefundIssuedNotification($notifyAmount, $course->title ?? null, $class->name ?? null));
+                            } catch (\Exception $e) {}
+                        });
                     }
                 }
             } catch (\Exception $exception) {
+                $refundError = $exception->getMessage();
+                report($exception);
             }
         }
 
-        $enrollment->cancel($hadSeatHold ? 'student_cancelled_held_seat' : ($wasWaitlisted ? 'student_left_waitlist' : 'student_cancelled'));
+        // nếu chưa bị cancel trong transaction ở trên thì cancel ở đây
+        if (! $enrollment->isCancelled()) {
+            $enrollment->cancel($hadSeatHold ? 'student_cancelled_held_seat' : ($wasWaitlisted ? 'student_left_waitlist' : 'student_cancelled'));
+        }
 
         if ($class && $course->isOffline()) {
             $this->enrollmentQueue->syncClassQueue($class);
+        }
+
+        if ($refundError) {
+            return back()->with('error', 'Hủy đăng ký thành công nhưng có lỗi khi hoàn tiền. Vui lòng liên hệ admin.');
         }
 
         if ($hadSeatHold) {
@@ -477,6 +503,10 @@ class EnrollmentController extends Controller
 
         if ($wasWaitlisted) {
             return back()->with('success', 'Bạn đã rời khỏi hàng chờ của đợt học này.');
+        }
+
+        if ($refundAmount > 0) {
+            return back()->with('success', 'Đã hủy đăng ký. ' . number_format($refundAmount, 0, ',', '.') . 'đ đã được hoàn về ví của bạn.');
         }
 
         return back()->with('success', $wasPending
