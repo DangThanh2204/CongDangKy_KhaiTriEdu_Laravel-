@@ -208,12 +208,13 @@ class EnrollmentController extends Controller
         }
 
         if ($course->isOnline() && $course->series_key) {
-            $existingSeries = CourseEnrollment::where('user_id', Auth::id())
-                ->whereHas('courseClass', function ($query) use ($course) {
-                    $query->whereHas('course', function ($courseQuery) use ($course) {
-                        $courseQuery->where('series_key', $course->series_key);
-                    });
-                })
+            $seriesCourseIds = \App\Models\Course::where('series_key', $course->series_key)
+                ->where('id', '!=', $course->id)
+                ->pluck('id')
+                ->all();
+
+            $existingSeries = $seriesCourseIds !== [] && CourseEnrollment::where('user_id', Auth::id())
+                ->whereIn('course_id', $seriesCourseIds)
                 ->whereIn('status', ['approved', 'completed'])
                 ->exists();
 

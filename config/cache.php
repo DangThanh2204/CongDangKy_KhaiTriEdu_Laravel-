@@ -39,6 +39,13 @@ return [
             'serialize' => false,
         ],
 
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'connection' => env('MONGODB_CONNECTION', 'mongodb'),
+            'collection' => 'cache',
+            'lock_collection' => 'cache_locks',
+        ],
+
         'database' => [
             'driver' => 'database',
             'connection' => env('DB_CACHE_CONNECTION'),
