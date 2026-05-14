@@ -13,6 +13,7 @@ use Illuminate\Support\Collection;
 class PromotionService
 {
     private ?array $cachedAutomaticSettings = null;
+    private array $comboCountCache = [];
 
     public function getAutomaticSettings(): array
     {
@@ -319,6 +320,11 @@ class PromotionService
 
     protected function countEligibleComboCourses(User $user, Course $course): int
     {
+        $cacheKey = $user->id . '|' . $course->id;
+        if (isset($this->comboCountCache[$cacheKey])) {
+            return $this->comboCountCache[$cacheKey];
+        }
+
         $eligibleCourseIds = Course::query()
             ->where('id', '!=', $course->id)
             ->when(
@@ -330,10 +336,10 @@ class PromotionService
             ->all();
 
         if (empty($eligibleCourseIds)) {
-            return 0;
+            return $this->comboCountCache[$cacheKey] = 0;
         }
 
-        return CourseEnrollment::query()
+        return $this->comboCountCache[$cacheKey] = CourseEnrollment::query()
             ->where('user_id', $user->id)
             ->whereIn('status', ['approved', 'completed'])
             ->whereIn('course_id', $eligibleCourseIds)

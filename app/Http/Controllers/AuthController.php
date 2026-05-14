@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -565,6 +566,13 @@ class AuthController extends Controller
 
     private function purgeExpiredUnverifiedUsers(): void
     {
+        // chạy tối đa 1 lần mỗi 5 phút — tránh query/delete MongoDB mỗi request
+        $cacheKey = 'purge_unverified_users_last_run';
+        if (Cache::get($cacheKey)) {
+            return;
+        }
+        Cache::put($cacheKey, true, 300);
+
         $cutoff = now()->subMinutes($this->otpLifetimeMinutes());
 
         User::query()

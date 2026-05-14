@@ -206,7 +206,7 @@ class CourseController extends Controller
         $similarCourses = Course::published()
             ->where('id', '!=', $course->id)
             ->where('category_id', $course->category_id)
-            ->with(['category', 'modules'])
+            ->with(['category'])
             ->limit(4)
             ->get();
         $similarCourses = $this->attachModulesCount($similarCourses);
@@ -781,8 +781,11 @@ class CourseController extends Controller
     private function attachModulesCount(Collection $courses): Collection
     {
         return $courses->map(function (Course $course) {
-            $modules = $course->relationLoaded('modules') ? $course->modules : $course->modules()->get();
-            $course->setAttribute('modules_count', $modules->count());
+            if ($course->relationLoaded('modules')) {
+                $course->setAttribute('modules_count', $course->modules->count());
+            } else {
+                $course->setAttribute('modules_count', $course->modules()->count());
+            }
 
             return $course;
         });
