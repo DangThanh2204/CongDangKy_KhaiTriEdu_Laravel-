@@ -15,6 +15,7 @@ use App\Services\PromotionService;
 use App\Support\CollectionPaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -90,14 +91,14 @@ class CourseController extends Controller
                 ->all();
         }
 
-        $categories = \App\Models\CourseCategory::orderBy('name')->get();
+        $categories = Cache::remember('course_categories', 600, fn () => CourseCategory::orderBy('name')->get());
 
         return view('courses.index', compact('courses', 'enrolledCourses', 'pendingCourses', 'categories'));
     }
 
     public function intakes(Request $request)
     {
-        $categories = CourseCategory::query()->orderBy('name')->get();
+        $categories = Cache::remember('course_categories', 600, fn () => CourseCategory::orderBy('name')->get());
         $baseIntakes = $this->openIntakesBaseCollection();
 
         $stats = [
@@ -636,9 +637,7 @@ class CourseController extends Controller
                 'user:id,fullname,username,email',
                 'enrollment:id,class_id,completed_at',
                 'enrollment.courseClass:id,name,start_date',
-            ])->get()->first(function (CourseCertificate $item) use ($code) {
-                return Str::upper((string) $item->certificate_no) === $code;
-            });
+            ])->where('certificate_no', $code)->first();
 
             if ($certificate) {
                 $verification = $this->buildCertificateVerification($certificate);

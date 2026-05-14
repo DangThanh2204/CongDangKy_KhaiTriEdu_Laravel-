@@ -19,12 +19,11 @@ class HomeController extends Controller
         $featuredCourses = Cache::remember('home.featured_courses', self::CACHE_TTL, function () {
             try {
                 $courses = Course::published()
-                    ->with(['category', 'modules'])
+                    ->with(['category'])
+                    ->withCount('modules')
                     ->orderByDesc('created_at')
                     ->limit(4)
                     ->get();
-
-                $courses->each(fn ($course) => $course->setAttribute('modules_count', $course->modules->count()));
 
                 return $courses;
             } catch (\Throwable $exception) {

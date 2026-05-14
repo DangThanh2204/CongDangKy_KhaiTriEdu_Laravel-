@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\CsvExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -28,12 +29,12 @@ class AdminCourseController extends Controller
             ->withQueryString();
         $this->attachRelationCounts($courses->getCollection());
 
-        $stats = [
+        $stats = Cache::remember('admin.course_stats', 300, fn () => [
             'totalCourses' => Course::count(),
             'publishedCourses' => Course::where('status', 'published')->count(),
             'draftCourses' => Course::where('status', 'draft')->count(),
             'featuredCourses' => Course::where('is_featured', true)->count(),
-        ];
+        ]);
 
         $categories = CourseCategory::active()->get();
 
